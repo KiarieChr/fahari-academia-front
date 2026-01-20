@@ -1,0 +1,197 @@
+/* LeaveDashboard.css */
+
+:root {
+    --leave-primary: #4f46e5;
+    /* Indigo 600 */
+    --leave-bg: #f8fafc;
+    /* Slate 50 */
+    --leave-card-bg: #ffffff;
+    --leave-text-main: #1e293b;
+    /* Slate 800 */
+    --leave-text-muted: #64748b;
+    /* Slate 500 */
+    --leave-border: #e2e8f0;
+    /* Slate 200 */
+
+    /* Status Colors */
+    --status-approved-bg: #ecfdf5;
+    --status-approved-text: #047857;
+    --status-pending-bg: #fff7ed;
+    --status-pending-text: #c2410c;
+    --status-rejected-bg: #fef2f2;
+    --status-rejected-text: #b91c1c;
+}
+
+/* Dashboard Container */
+.leave-dashboard {
+    background-color: var(--leave-bg);
+    min-height: 100vh;
+}
+
+/* Card Styles */
+.leave-card {
+    background: var(--leave-card-bg);
+    border: 1px solid var(--leave-border);
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.leave-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+}
+
+/* Metric Cards */
+.metric-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: white;
+    border: 1px solid var(--leave-border);
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+
+.metric-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+/* Table Styles */
+.leave-table-container {
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    border: 1px solid var(--leave-border);
+}
+
+.leave-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.leave-table th {
+    background-color: #f8fafc;
+    color: var(--leave-text-muted);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--leave-border);
+}
+
+.leave-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--leave-border);
+    color: var(--leave-text-main);
+    font-size: 0.875rem;
+}
+
+.leave-table tr:last-child td {
+    border-bottom: none;
+}
+
+.leave-table tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-approved {
+    background-color: var(--status-approved-bg);
+    color: var(--status-approved-text);
+    border: 1px solid #d1fae5;
+}
+
+.status-pending {
+    background-color: var(--status-pending-bg);
+    color: var(--status-pending-text);
+    border: 1px solid #ffedd5;
+}
+
+.status-rejected {
+    background-color: var(--status-rejected-bg);
+    color: var(--status-rejected-text);
+    border: 1px solid #fee2e2;
+}
+
+/* Quick Actions Button */
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--leave-border);
+    background: white;
+    transition: all 0.2s;
+    height: 110px;
+}
+
+.quick-action-btn:hover {
+    border-color: var(--leave-primary);
+    background-color: #eef2ff;
+    /* Indigo 50 */
+}
+
+/* Custom Scrollbar for Timeline */
+.activity-timeline {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.activity-timeline::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activity-timeline::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.activity-timeline::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.activity-timeline::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Balance Widget */
+.balance-widget-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.balance-progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #f1f5f9;
+    overflow: hidden;
+}
+
+.balance-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease-in-out;
+}

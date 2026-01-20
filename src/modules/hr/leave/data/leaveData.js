@@ -1,0 +1,192 @@
+import { Calendar, CheckCircle, Clock, FileText, XCircle } from 'lucide-react';
+
+export const leaveMetrics = [
+    {
+        id: 1,
+        title: 'Total Leaves Taken',
+        value: 24,
+        change: '+12%',
+        icon: FileText,
+        color: 'bg-blue-500',
+        lightColor: 'bg-blue-100',
+        textColor: 'text-blue-600',
+    },
+    {
+        id: 2,
+        title: 'Pending Requests',
+        value: 8,
+        change: '+2',
+        icon: Clock,
+        color: 'bg-yellow-500',
+        lightColor: 'bg-yellow-100',
+        textColor: 'text-yellow-600',
+    },
+    {
+        id: 3,
+        title: 'Approved Leaves',
+        value: 12,
+        change: '+5%',
+        icon: CheckCircle,
+        color: 'bg-green-500',
+        lightColor: 'bg-green-100',
+        textColor: 'text-green-600',
+    },
+    {
+        id: 4,
+        title: 'Rejected Leaves',
+        value: 4,
+        change: '-2%',
+        icon: XCircle,
+        color: 'bg-red-500',
+        lightColor: 'bg-red-100',
+        textColor: 'text-red-600',
+    },
+    {
+        id: 5,
+        title: 'Available Days',
+        value: 15,
+        change: 'Yearly',
+        icon: Calendar,
+        color: 'bg-purple-500',
+        lightColor: 'bg-purple-100',
+        textColor: 'text-purple-600',
+    },
+];
+
+export const leaveRequests = [
+    {
+        id: 1,
+        employee: 'Alice Johnson',
+        type: 'Sick Leave',
+        startDate: '2023-10-25',
+        endDate: '2023-10-27',
+        days: 3,
+        status: 'Pending',
+        avatar: 'AJ',
+    },
+    {
+        id: 2,
+        employee: 'Bob Smith',
+        type: 'Annual Leave',
+        startDate: '2023-11-01',
+        endDate: '2023-11-05',
+        days: 5,
+        status: 'Approved',
+        avatar: 'BS',
+    },
+    {
+        id: 3,
+        employee: 'Charlie Brown',
+        type: 'Casual Leave',
+        startDate: '2023-10-28',
+        endDate: '2023-10-28',
+        days: 1,
+        status: 'Rejected',
+        avatar: 'CB',
+    },
+    {
+        id: 4,
+        employee: 'Diana Prince',
+        type: 'Maternity Leave',
+        startDate: '2023-12-01',
+        endDate: '2024-03-01',
+        days: 90,
+        status: 'Pending',
+        avatar: 'DP',
+    },
+    {
+        id: 5,
+        employee: 'Evan Wright',
+        type: 'Sick Leave',
+        startDate: '2023-10-20',
+        endDate: '2023-10-21',
+        days: 2,
+        status: 'Approved',
+        avatar: 'EW',
+    },
+];
+
+export const leaveHistory = [
+    {
+        id: 1,
+        title: 'Leave Approved',
+        description: 'Your leave request for Nov 1 - 5 has been approved.',
+        date: '2 hours ago',
+        icon: CheckCircle,
+        color: 'text-green-500',
+        bg: 'bg-green-100',
+    },
+    {
+        id: 2,
+        title: 'New Policy Update',
+        description: 'The annual leave policy has been updated.',
+        date: '1 day ago',
+        icon: FileText,
+        color: 'text-blue-500',
+        bg: 'bg-blue-100',
+    },
+    {
+        id: 3,
+        title: 'Leave Rejected',
+        description: 'Casual leave request for Oct 28 was rejected.',
+        date: '2 days ago',
+        icon: XCircle,
+        color: 'text-red-500',
+        bg: 'bg-red-100',
+    },
+];
+
+export const analyticsData = {
+    monthlyTrend: [
+        { name: 'Jan', leaves: 12 },
+        { name: 'Feb', leaves: 19 },
+        { name: 'Mar', leaves: 15 },
+        { name: 'Apr', leaves: 22 },
+        { name: 'May', leaves: 10 },
+        { name: 'Jun', leaves: 25 },
+        { name: 'Jul', leaves: 18 },
+        { name: 'Aug', leaves: 14 },
+        { name: 'Sep', leaves: 20 },
+        { name: 'Oct', leaves: 24 },
+        { name: 'Nov', leaves: 8 },
+        { name: 'Dec', leaves: 16 },
+    ],
+    typeDistribution: [
+        { name: 'Annual', value: 45, color: '#3b82f6' },
+        { name: 'Sick', value: 25, color: '#ef4444' },
+        { name: 'Casual', value: 15, color: '#f59e0b' },
+        { name: 'Maternity', value: 10, color: '#8b5cf6' },
+        { name: 'Other', value: 5, color: '#64748b' },
+    ],
+};
+
+export const employeeBalance = [
+    { type: 'Annual Leave', total: 20, used: 12, color: 'bg-blue-500' },
+    { type: 'Sick Leave', total: 10, used: 3, color: 'bg-red-500' },
+    { type: 'Casual Leave', total: 8, used: 6, color: 'bg-yellow-500' },
+    { type: 'Maternity Paternity', total: 90, used: 0, color: 'bg-purple-500' },
+];
+
+export const notifications = [
+    {
+        id: 1,
+        title: 'Leave Approved',
+        message: 'Your leave request #1234 has been approved by HR.',
+        time: '10 mins ago',
+        read: false,
+    },
+    {
+        id: 2,
+        title: 'New Leave Request',
+        message: 'John Doe has submitted a new leave request.',
+        time: '1 hour ago',
+        read: false,
+    },
+    {
+        id: 3,
+        title: 'System Update',
+        message: 'The leave management module will be under maintenance tonight.',
+        time: 'Yesterday',
+        read: true,
+    },
+];
