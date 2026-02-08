@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserPlus, CreditCard, FileText, Bell, Calendar, Clock, UserCheck, FilePlus, Download } from 'lucide-react';
-
+export { default as ResourceUsage } from './ResourceUsage';
 const iconMap = {
     'user-plus': UserPlus,
     'credit-card': CreditCard,

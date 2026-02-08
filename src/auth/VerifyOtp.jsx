@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { KeyRound, Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthLayout from './AuthLayout';
-import './auth.css';
+
+
 
 const itemVariants = {
     hidden: { opacity: 0, y: 15 },

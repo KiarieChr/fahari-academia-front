@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../dashboard/DashboardLayout';
+import { api } from '../../services/api';
+import './users.css';
 import {
     Users,
     UserPlus,
@@ -18,69 +20,54 @@ import {
     ChevronDown,
     Briefcase
 } from 'lucide-react';
-import './users.css';
-
-// Mock initial data
-const initialUsers = [
-    {
-        id: 1,
-        name: "Eleanor Pena",
-        role: "Admin",
-        email: "eleanor.pena@example.com",
-        phone: "(254) 712-345-678",
-        status: "Active",
-        lastLogin: "2 mins ago",
-        avatar: "EP"
-    },
-    {
-        id: 2,
-        name: "Cameron Williamson",
-        role: "Teacher",
-        email: "cameron.w@example.com",
-        phone: "(254) 723-456-789",
-        status: "Active",
-        lastLogin: "1 hour ago",
-        avatar: "CW"
-    },
-    {
-        id: 3,
-        name: "Esther Howard",
-        role: "Management",
-        email: "esther.h@example.com",
-        phone: "(254) 734-567-890",
-        status: "Inactive",
-        lastLogin: "2 days ago",
-        avatar: "EH"
-    },
-    {
-        id: 4,
-        name: "Jenny Wilson",
-        role: "Finance",
-        email: "jenny.w@example.com",
-        phone: "(254) 745-678-901",
-        status: "Suspended",
-        lastLogin: "1 week ago",
-        avatar: "JW"
-    },
-    {
-        id: 5,
-        name: "Robert Fox",
-        role: "Parent",
-        email: "robert.f@example.com",
-        phone: "(254) 756-789-012",
-        status: "Active",
-        lastLogin: "5 hours ago",
-        avatar: "RF"
-    }
-];
 
 const UsersManagement = () => {
-    const [users, setUsers] = useState(initialUsers);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     const [activeActionDropdown, setActiveActionDropdown] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Fetch users from API
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.get('/api/users/');
+            const data = response?.data;
+            
+            if (data) {
+                const usersList = data.success ? data.results : (Array.isArray(data) ? data : []);
+                const mappedUsers = usersList.map(u => ({
+                    id: u.id,
+                    name: `${u.first_name} ${u.last_name}`.trim() || u.username,
+                    email: u.email,
+                    phone: u.phone || "N/A",
+                    role: u.groups?.[0]?.name || u.role || "User",
+                    status: u.is_active ? 'Active' : 'Inactive',
+                    lastLogin: u.last_login ? new Date(u.last_login).toLocaleString() : "Never",
+                    avatar: `${u.first_name?.[0] || u.username?.[0]?.toUpperCase()}${u.last_name?.[0] || u.username?.[1]?.toUpperCase()}`.toUpperCase()
+                }));
+                setUsers(mappedUsers);
+            } else {
+                setUsers([]);
+            }
+        } catch (err) {
+            console.error('Failed to fetch users:', err);
+            setError('Failed to load users');
+            setUsers([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Stats Logic
     const totalUsers = users.length;
@@ -88,28 +75,65 @@ const UsersManagement = () => {
     const inactiveUsers = users.filter(u => u.status === 'Inactive').length;
     const suspendedUsers = users.filter(u => u.status === 'Suspended').length;
 
-    const handleAddUser = (userData) => {
-        const newUser = {
-            id: users.length + 1,
-            ...userData,
-            lastLogin: "Never",
-            avatar: userData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-            status: "Active"
-        };
-        setUsers([...users, newUser]);
-        setIsAddUserOpen(false);
-    };
-
-    const handleDeleteUser = (id) => {
-        if (confirm("Are you sure you want to delete this user?")) {
-            setUsers(users.filter(u => u.id !== id));
+    const handleAddUser = async (userData) => {
+        try {
+            setSubmitting(true);
+            const payload = {
+                username: userData.email.split('@')[0],
+                email: userData.email,
+                first_name: userData.name.split(' ')[0],
+                last_name: userData.name.split(' ').slice(1).join(' ') || '',
+                phone: userData.phone
+            };
+            
+            const response = await api.post('/api/users/', payload);
+            if (response?.data?.success || response?.data?.id) {
+                setIsAddUserOpen(false);
+                fetchUsers();
+                alert('User created successfully');
+            }
+        } catch (error) {
+            console.error('Failed to add user:', error);
+            alert(error.response?.data?.message || 'Failed to add user');
+        } finally {
+            setSubmitting(false);
         }
-        setActiveActionDropdown(null);
     };
 
-    const handleStatusChange = (id, newStatus) => {
-        setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
-        setActiveActionDropdown(null);
+    const handleDeleteUser = async (userId) => {
+        if (!confirm("Are you sure you want to delete this user?")) return;
+
+        try {
+            setSubmitting(true);
+            await api.delete(`/api/users/${userId}/`);
+            alert('User deleted successfully');
+            fetchUsers();
+            setActiveActionDropdown(null);
+        } catch (error) {
+            console.error('Failed to delete user:', error);
+            alert(error.response?.data?.message || 'Failed to delete user');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleStatusChange = async (userId, newStatus) => {
+        try {
+            setSubmitting(true);
+            const payload = {
+                is_active: newStatus === 'Active'
+            };
+            
+            await api.put(`/api/users/${userId}/`, payload);
+            fetchUsers();
+            setActiveActionDropdown(null);
+            alert(`User status changed to ${newStatus}`);
+        } catch (error) {
+            console.error('Failed to change user status:', error);
+            alert(error.response?.data?.message || 'Failed to change user status');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     // Filter Logic
@@ -124,9 +148,20 @@ const UsersManagement = () => {
     return (
         <DashboardLayout title="Users Management">
             <div className="users-page-container">
-
-                {/* Header */}
-                <div className="users-header-container">
+                {loading ? (
+                    <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px' }}>
+                        <div className="loading-spinner"></div>
+                        <p>Loading users...</p>
+                    </div>
+                ) : error ? (
+                    <div className="error-container" style={{ background: '#fee2e2', color: '#991b1b', padding: '2rem', borderRadius: '8px', textAlign: 'center' }}>
+                        <p>{error}</p>
+                        <button onClick={fetchUsers} className="btn btn-primary" style={{ marginTop: '1rem' }}>Retry</button>
+                    </div>
+                ) : (
+                    <>
+                        {/* Header */}
+                        <div className="users-header-container">
                     <div className="users-title-group">
                         <h1><Users size={28} /> Users Management</h1>
                         <p className="users-subtitle">Manage system users, roles, and permissions</p>
@@ -320,7 +355,8 @@ const UsersManagement = () => {
                 {isAddUserOpen && (
                     <AddUserDialog onClose={() => setIsAddUserOpen(false)} onSubmit={handleAddUser} />
                 )}
-
+                    </>
+                )}
             </div>
         </DashboardLayout>
     );
@@ -366,10 +402,19 @@ const AddUserDialog = ({ onClose, onSubmit }) => {
         phone: '',
         role: 'Teacher'
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
+        setIsSubmitting(true);
+        try {
+            await onSubmit(formData);
+            setFormData({ name: '', email: '', phone: '', role: 'Teacher' });
+        } catch (error) {
+            console.error('Form submission error:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -440,11 +485,11 @@ const AddUserDialog = ({ onClose, onSubmit }) => {
                     </div>
 
                     <div className="modal-footer">
-                        <button type="button" onClick={onClose} className="btn" style={{ background: 'var(--bg-white)', border: '1px solid var(--border-color-light)' }}>
+                        <button type="button" onClick={onClose} className="btn" style={{ background: 'var(--bg-white)', border: '1px solid var(--border-color-light)' }} disabled={isSubmitting}>
                             Cancel
                         </button>
-                        <button type="submit" className="btn btn-primary">
-                            Create User
+                        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Creating...' : 'Create User'}
                         </button>
                     </div>
                 </form>

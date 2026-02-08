@@ -25,7 +25,8 @@ import ActivityTimeline from './components/ActivityTimeline';
 
 import { motion } from 'framer-motion';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
-import './LeaveDashboard.css';
+
+
 
 const LeaveDashboard = () => {
     const [activeTab, setActiveTab] = useState('Overview');

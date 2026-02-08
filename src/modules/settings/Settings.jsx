@@ -1,6 +1,7 @@
 import React from 'react';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 
+
 const Settings = () => {
     return (
         <DashboardLayout title="Settings">

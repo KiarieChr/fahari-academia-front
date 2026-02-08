@@ -1,0 +1,119 @@
+/* E-Government Procurement (E-GP) Dashboard Styles */
+
+.egp-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Premium KPI Card Styles */
+.egp-kpi-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.egp-kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.egp-kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.egp-kpi-card:hover::before {
+    opacity: 1;
+}
+
+.egp-icon-wrapper {
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.egp-kpi-card:hover .egp-icon-wrapper {
+    background: #6366f1;
+    color: white;
+    transform: rotate(5deg) scale(1.1);
+}
+
+/* Tab Navigation */
+.egp-tab-button {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.egp-tab-button.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    box-shadow: inset 0 0 0 1px rgba(29, 78, 216, 0.1);
+}
+
+.egp-tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 3px;
+    background: #1d4ed8;
+    border-radius: 3px 3px 0 0;
+}
+
+/* Table Enhancements */
+.egp-table-row {
+    transition: background-color 0.15s ease;
+}
+
+.egp-table-row:hover {
+    background-color: #f8fafc;
+}
+
+.egp-status-badge {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Audit Log Styling */
+.egp-log-item {
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.egp-log-item:hover {
+    background: #fafafa;
+    border-left-color: #6366f1;
+    padding-left: 1.25rem;
+    /* Slight shift */
+}
+
+/* Chart/Progress Bar Animations */
+.egp-progress-bar {
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}

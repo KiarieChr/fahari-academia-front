@@ -3,9 +3,10 @@ import { motion } from 'framer-motion';
 import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import AuthLayout from './AuthLayout';
-import './auth.css';
+
+
 
 const itemVariants = {
     hidden: { opacity: 0, y: 15 },
@@ -164,3 +165,4 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+

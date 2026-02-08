@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Loader2, AlertCircle, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import toast from 'react-hot-toast';
-import './auth.css';
+import { toast } from 'react-toastify';
+
+
 
 const REGISTRATION_ENABLED = false; // Set to true to enable registration
 
@@ -65,9 +66,16 @@ const LoginForm = () => {
           password: formData.password
         });
 
-        // Save token if present (adjust based on actual response structure)
-        if (response.token) {
-          localStorage.setItem('token', response.token);
+        console.log("LOGIN RESPONSE:", response); // Debugging log
+
+        // Save token if present (handle common variations: token, access, key, auth_token)
+        const authToken = response.token || response.access || response.key || response.auth_token;
+
+        if (authToken) {
+          localStorage.setItem('token', authToken);
+          // console.log("Token saved successfully"); 
+        } else {
+          console.warn("No token found in login response", response);
         }
 
         // Check if first time login (adjust property name based on backend)
@@ -78,6 +86,7 @@ const LoginForm = () => {
           navigate('/reset-password');
         } else {
           toast.success("Welcome Back " + (response.user?.first_name || 'User') + "!");
+          // Force a small delay or reload to ensure api.js picks up the new token if needed, usually not necessary but good for safety
           navigate('/dashboard');
         }
       } else {
@@ -367,3 +376,4 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
+

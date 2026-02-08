@@ -1,6 +1,7 @@
 import React from 'react';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 
+
 const Payroll = () => {
     return (
         <DashboardLayout title="Payroll">

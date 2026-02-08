@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
     LayoutDashboard,
     ShoppingCart,
@@ -21,75 +21,16 @@ import {
     Moon
 } from 'lucide-react';
 import { api } from '../services/api';
-import toast from 'react-hot-toast';
-import './dashboard.css';
+import { toast } from 'react-toastify';
 
-const DashboardLayout = ({ children, title = "Overview" }) => {
+const DashboardLayout = ({ children, title }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [expandedItems, setExpandedItems] = React.useState({});
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
     const [isDarkMode, setIsDarkMode] = React.useState(false);
     const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
-
-    // Close sidebar when resizing to larger screens
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-            if (window.innerWidth >= 768 && isSidebarOpen) {
-                setIsSidebarOpen(false);
-            }
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [isSidebarOpen]);
-
-    // Close sidebar when clicking outside on mobile
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (windowWidth < 768 && isSidebarOpen &&
-                !event.target.closest('.sidebar') &&
-                !event.target.closest('.menu-toggle-btn')) {
-                setIsSidebarOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isSidebarOpen, windowWidth]);
-
-    const toggleExpand = (path) => {
-        setExpandedItems(prev => ({ ...prev, [path]: !prev[path] }));
-    };
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
-
-    const toggleDarkMode = () => {
-        setIsDarkMode(!isDarkMode);
-        document.documentElement.classList.toggle('dark-mode');
-    };
-
-    const handleLogout = async () => {
-        try {
-            await api.logout();
-            localStorage.removeItem('token');
-            toast.success("Logged out successfully");
-            navigate('/');
-        } catch (error) {
-            localStorage.removeItem('token');
-            navigate('/');
-        }
-    };
-
-    // Auto-close submenus on mobile when navigating
-    const handleNavClick = () => {
-        if (windowWidth < 768) {
-            setIsSidebarOpen(false);
-        }
-    };
+    const [pageTitle, setPageTitle] = useState('Overview');
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -166,13 +107,13 @@ const DashboardLayout = ({ children, title = "Overview" }) => {
             label: 'Human Resource',
             path: '/dashboard/hr',
             subItems: [
-                { label: 'Staff Register', path: '/hr/staff-register' },
-                { label: 'Staff Attendance', path: '/hr/staff-attendance' },
-                { label: 'Staff Performance', path: '/hr/staff-performance' },
-                { label: 'Recruitments', path: '/hr/recruitments' },
+                { label: 'Staff Register', path: '/dashboard/hr/staff-register' },
+                { label: 'Staff Attendance', path: '/dashboard/hr/staff-attendance' },
+                { label: 'Staff Performance', path: '/dashboard/hr/staff-performance' },
+                { label: 'Recruitments', path: '/dashboard/hr/recruitments' },
                 { label: 'Leave Management', path: '/dashboard/hr/leave' },
-                { label: 'HR Reports', path: '/hr/hr-reports' },
-                { label: 'HR Settings', path: '/hr/hr-settings' }
+                { label: 'HR Reports', path: '/dashboard/hr/hr-reports' },
+                { label: 'HR Settings', path: '/dashboard/hr/hr-settings' }
             ]
         },
         {
@@ -199,6 +140,93 @@ const DashboardLayout = ({ children, title = "Overview" }) => {
         },
         { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ];
+
+    // Determine Page Title based on current path
+    useEffect(() => {
+        const currentPath = location.pathname;
+        let title = 'Dashboard';
+
+        // Exact match
+        const exactMatch = navItems.find(item => item.path === currentPath);
+        if (exactMatch) {
+            title = exactMatch.label;
+        } else {
+            // Check subItems
+            for (const item of navItems) {
+                if (item.subItems) {
+                    const subItem = item.subItems.find(sub => sub.path === currentPath);
+                    if (subItem) {
+                        title = `${item.label} / ${subItem.label}`;
+                        break;
+                    }
+                }
+                // Check if path starts with item path (for dynamic module pages)
+                if (currentPath.startsWith(item.path) && item.path !== '/dashboard') {
+                    title = item.label;
+                }
+            }
+        }
+        setPageTitle(title);
+    }, [location, navItems]);
+
+    // Close sidebar when resizing to larger screens
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+            if (window.innerWidth >= 768 && isSidebarOpen) {
+                setIsSidebarOpen(false);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isSidebarOpen]);
+
+    // Close sidebar when clicking outside on mobile
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (windowWidth < 768 && isSidebarOpen &&
+                !event.target.closest('.sidebar') &&
+                !event.target.closest('.menu-toggle-btn')) {
+                setIsSidebarOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isSidebarOpen, windowWidth]);
+
+    const toggleExpand = (path) => {
+        setExpandedItems(prev => ({ ...prev, [path]: !prev[path] }));
+    };
+
+    const toggleSidebar = () => {
+        setIsSidebarOpen(!isSidebarOpen);
+    };
+
+    const toggleDarkMode = () => {
+        setIsDarkMode(!isDarkMode);
+        document.documentElement.classList.toggle('dark-mode');
+    };
+
+    const handleLogout = async () => {
+        try {
+            await api.logout();
+            localStorage.removeItem('token');
+            toast.success("Logged out successfully");
+            navigate('/');
+        } catch (error) {
+            localStorage.removeItem('token');
+            navigate('/');
+        }
+    };
+
+    // Auto-close submenus on mobile when navigating
+    const handleNavClick = () => {
+        if (windowWidth < 768) {
+            setIsSidebarOpen(false);
+        }
+    };
 
     return (
         <div className="dashboard-container">
@@ -315,7 +343,7 @@ const DashboardLayout = ({ children, title = "Overview" }) => {
                             <Menu size={24} />
                         </button>
                         <div className="header-title">
-                            <h1>{title}</h1>
+                            <h1>{title || pageTitle}</h1>
                             {windowWidth >= 1024 && (
                                 <span className="header-subtitle">Welcome back, Admin</span>
                             )}
@@ -354,7 +382,7 @@ const DashboardLayout = ({ children, title = "Overview" }) => {
                 </header>
 
                 <div className="content-wrapper">
-                    <div className="content-container">
+                    <div className="content-container h-full">
                         {children}
                     </div>
                 </div>

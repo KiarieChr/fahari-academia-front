@@ -1,7 +1,10 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
-const handleResponse = async (response) => {
+const handleResponse = async (response, options = {}) => {
     const contentType = response.headers.get("content-type");
+    if (options.responseType === 'blob') {
+        return response.blob();
+    }
     if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         if (!response.ok) {
@@ -9,6 +12,7 @@ const handleResponse = async (response) => {
             // Create error object but attach the full data for component handling
             const error = new Error(data.detail || data.message || response.statusText || "Something went wrong");
             error.data = data;
+            error.status = response.status;
             throw error;
         }
         return data;
@@ -20,7 +24,120 @@ const handleResponse = async (response) => {
     return response.text();
 };
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { 'Authorization': `Token ${token}` } : {};
+};
+
 export const api = {
+    // Generic HTTP methods
+    get: async (url, options = {}) => {
+        try {
+            const separator = url.includes('?') ? '&' : '?';
+            const queryString = options.params ? `${separator}${new URLSearchParams(options.params)}` : '';
+            const response = await fetch(`${API_URL}${url}${queryString}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders(),
+                    ...(options.headers || {})
+                },
+            });
+            return handleResponse(response, options);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    post: async (url, data, options = {}) => {
+        try {
+            const isFormData = data instanceof FormData;
+            const headers = {
+                ...getAuthHeaders(),
+                ...(options.headers || {})
+            };
+
+            if (!isFormData && !headers['Content-Type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            // Handle FormData specifically if needed, but for now assume JSON unless specified
+            const body = options.body || (isFormData ? data : JSON.stringify(data));
+
+            const response = await fetch(`${API_URL}${url}`, {
+                method: 'POST',
+                headers,
+                body,
+            });
+            return handleResponse(response, options);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    put: async (url, data, options = {}) => {
+        try {
+            const isFormData = data instanceof FormData;
+            const headers = {
+                ...getAuthHeaders(),
+                ...(options.headers || {})
+            };
+
+            if (!isFormData && !headers['Content-Type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            const response = await fetch(`${API_URL}${url}`, {
+                method: 'PUT',
+                headers,
+                body: isFormData ? data : JSON.stringify(data),
+            });
+            return handleResponse(response, options);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    patch: async (url, data, options = {}) => {
+        try {
+            const isFormData = data instanceof FormData;
+            const headers = {
+                ...getAuthHeaders(),
+                ...(options.headers || {})
+            };
+
+            if (!isFormData && !headers['Content-Type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+
+            const response = await fetch(`${API_URL}${url}`, {
+                method: 'PATCH',
+                headers,
+                body: isFormData ? data : JSON.stringify(data),
+            });
+            return handleResponse(response, options);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    delete: async (url, options = {}) => {
+        try {
+            const response = await fetch(`${API_URL}${url}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders(),
+                    ...(options.headers || {})
+                },
+            });
+            return handleResponse(response, options);
+        } catch (error) {
+            throw error;
+        }
+    },
+
     login: async (credentials) => {
         try {
             // Assuming DRF/Django, endpoint likely requires username & password
