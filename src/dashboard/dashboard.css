@@ -213,9 +213,20 @@ body {
 
 .nav-item.active {
     background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: var(--sidebar-active-text);
+    color: #ffffff !important;
+    /* Force white text */
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(63, 81, 181, 0.4);
+}
+
+.nav-item.active .nav-icon,
+.nav-item.active .nav-label,
+.nav-item.active .nav-chevron {
+    color: #ffffff !important;
+}
+
+.nav-item.active:hover {
+    color: #ffffff !important;
 }
 
 .nav-item-content {
@@ -1202,7 +1213,7 @@ body {
     .stats-grid-8col {
         grid-template-columns: repeat(6, 1fr);
     }
-    
+
     .charts-grid-4col {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -1212,15 +1223,15 @@ body {
     .stats-grid-6col {
         grid-template-columns: repeat(4, 1fr);
     }
-    
+
     .stats-grid-8col {
         grid-template-columns: repeat(4, 1fr);
     }
-    
+
     .charts-grid-3col {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .charts-grid-4col {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1230,15 +1241,15 @@ body {
     .stats-grid-compact {
         grid-template-columns: repeat(3, 1fr);
     }
-    
+
     .stats-grid-6col {
         grid-template-columns: repeat(3, 1fr);
     }
-    
+
     .stats-grid-8col {
         grid-template-columns: repeat(3, 1fr);
     }
-    
+
     .charts-grid-2col,
     .charts-grid-3col,
     .charts-grid-4col {
@@ -1250,24 +1261,24 @@ body {
     .stats-grid-compact {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .stats-grid-6col {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .stats-grid-8col {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .stat-card-mini {
         padding: 0.75rem;
         min-height: 90px;
     }
-    
+
     .stat-card-mini .stat-value {
         font-size: 1.25rem;
     }
-    
+
     .stat-card-mini .stat-icon {
         width: 32px;
         height: 32px;
@@ -1276,12 +1287,13 @@ body {
 }
 
 @media (max-width: 480px) {
+
     .stats-grid-compact,
     .stats-grid-6col,
     .stats-grid-8col {
         grid-template-columns: 1fr;
     }
-    
+
     .stat-card-mini {
         min-height: 80px;
     }
@@ -1305,7 +1317,7 @@ body {
     border-radius: 3px;
 }
 
-.stats-scrollable > * {
+.stats-scrollable>* {
     flex: 0 0 auto;
     width: 180px;
 }
