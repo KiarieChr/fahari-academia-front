@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Filter, FileSpreadsheet, Printer, Bell } from 'lucide-react';
+import { Calendar, Filter, FileSpreadsheet, Printer, Bell, Building2, Plus } from 'lucide-react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import DashboardSummary from './components/DashboardSummary';
 import CustomerInvoicesTab from './components/CustomerInvoicesTab';
 import ProcurementAPTab from './components/ProcurementAPTab';
 import PaymentVouchersTab from './components/PaymentVouchersTab';
+import EnhancedPaymentVouchersTab from './components/EnhancedPaymentVouchersTab';
 import VoucherPostingTab from './components/VoucherPostingTab';
 import RefundsTab from './components/RefundsTab';
 import ReportsTab from './components/ReportsTab';
 import CreateCustomerInvoiceModal from './components/CreateCustomerInvoiceModal.jsx';
 import CreateVendorBillModal from './components/CreateVendorBillModal.jsx';
+// New Accounts Payable Components
+import SupplierInvoicesTab from './components/SupplierInvoicesTab';
+import ImprestRetirementTab from './components/ImprestRetirementTab';
+import SupplierManagementModal from './components/SupplierManagementModal';
+import CreatePaymentVoucherModal from './components/CreatePaymentVoucherModal';
+import PaymentVoucherDetailModal from './components/PaymentVoucherDetailModal';
 import './AccountsPayable.css';
 import {
     customerInvoices,
@@ -42,15 +49,22 @@ const AccountsPayableDashboard = () => {
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [showBillModal, setShowBillModal] = useState(false);
 
+    // New modal states for enhanced AP functionality
+    const [showSupplierModal, setShowSupplierModal] = useState(false);
+    const [showCreateVoucherModal, setShowCreateVoucherModal] = useState(false);
+    const [showVoucherDetailModal, setShowVoucherDetailModal] = useState(false);
+    const [selectedVoucherId, setSelectedVoucherId] = useState(null);
+    const [voucherPrefilledData, setVoucherPrefilledData] = useState(null);
+
     const loadHbData = async () => {
         setLoading(true);
         try {
             const [invoicesRes, billsRes] = await Promise.all([
-                financeService.getInvoices(),
-                financeService.getBills()
+                financeService.getInvoices().catch(() => null),
+                financeService.getBills().catch(() => null)
             ]);
-            setLocalCustomerInvoices(invoicesRes.data.results || invoicesRes.data || []);
-            setLocalProcurementInvoices(billsRes.data.results || billsRes.data || []);
+            setLocalCustomerInvoices(invoicesRes?.results || invoicesRes || []);
+            setLocalProcurementInvoices(billsRes?.results || billsRes || []);
         } catch (error) {
             console.error("Failed to load Finance data", error);
         } finally {
@@ -98,12 +112,40 @@ const AccountsPayableDashboard = () => {
     const tabs = [
         { id: 'summary', label: 'Summary', icon: '📊' },
         { id: 'customer-invoices', label: 'Customer Invoices', icon: '💰' },
+        { id: 'supplier-invoices', label: 'Supplier Invoices', icon: '🏢' },
         { id: 'ap-invoices', label: 'AP Invoices', icon: '📦' },
         { id: 'vouchers', label: 'Payment Vouchers', icon: '💳' },
+        { id: 'imprest', label: 'Imprest Retirement', icon: '🧾' },
         { id: 'posting', label: 'Voucher Posting', icon: '✅' },
         { id: 'refunds', label: 'Refunds', icon: '💸' },
         { id: 'reports', label: 'Reports', icon: '📈' }
     ];
+
+    // Helper functions for new voucher workflow
+    const handleOpenVoucherDetail = (voucherId) => {
+        setSelectedVoucherId(voucherId);
+        setShowVoucherDetailModal(true);
+    };
+
+    const handleCreateVoucherFromSupplierInvoice = (invoice) => {
+        setVoucherPrefilledData({
+            voucher_type: 'AP',
+            supplier_invoice: invoice.id,
+            amount: invoice.balance,
+            description: `Payment for invoice ${invoice.invoice_number}`
+        });
+        setShowCreateVoucherModal(true);
+    };
+
+    const handleVoucherModalClose = () => {
+        setShowCreateVoucherModal(false);
+        setVoucherPrefilledData(null);
+    };
+
+    const handleVoucherDetailClose = () => {
+        setShowVoucherDetailModal(false);
+        setSelectedVoucherId(null);
+    };
 
     const overdueCount = localProcurementInvoices.filter(inv => {
         const dueDate = new Date(inv.dueDate);
@@ -125,7 +167,19 @@ const AccountsPayableDashboard = () => {
                             </span>
                         </div>
                     </div>
-                    <div className="dashboard-actions">
+                    <div className="dashboard-actions d-flex gap-2">
+                        <button
+                            className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
+                            onClick={() => setShowSupplierModal(true)}
+                        >
+                            <Building2 size={14} /> Suppliers
+                        </button>
+                        <button
+                            className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                            onClick={() => setShowCreateVoucherModal(true)}
+                        >
+                            <Plus size={14} /> New Voucher
+                        </button>
                         <div className="btn-group btn-group-sm">
                             <button className="btn btn-outline-secondary d-flex align-items-center gap-1">
                                 <Printer size={14} /> Print
@@ -201,9 +255,14 @@ const AccountsPayableDashboard = () => {
 
                     {activeTab === 'customer-invoices' && (
                         <CustomerInvoicesTab
-                            invoices={localCustomerInvoices}
                             onCreateRefund={handleCreateRefund}
                             onCreateInvoice={() => setShowInvoiceModal(true)}
+                        />
+                    )}
+
+                    {activeTab === 'supplier-invoices' && (
+                        <SupplierInvoicesTab 
+                            onCreateVoucher={handleCreateVoucherFromSupplierInvoice}
                         />
                     )}
 
@@ -216,13 +275,14 @@ const AccountsPayableDashboard = () => {
                     )}
 
                     {activeTab === 'vouchers' && (
-                        <PaymentVouchersTab
-                            vouchers={localVouchers}
-                            onVoucherCreated={handleVoucherCreated}
-                            procurementInvoices={localProcurementInvoices}
-                            customerInvoices={localCustomerInvoices}
-                            chartOfAccounts={chartOfAccounts}
+                        <EnhancedPaymentVouchersTab
+                            onViewDetail={handleOpenVoucherDetail}
+                            onCreateVoucher={() => setShowCreateVoucherModal(true)}
                         />
+                    )}
+
+                    {activeTab === 'imprest' && (
+                        <ImprestRetirementTab />
                     )}
 
                     {activeTab === 'posting' && (
@@ -257,6 +317,32 @@ const AccountsPayableDashboard = () => {
                 show={showBillModal}
                 onClose={() => setShowBillModal(false)}
                 onSave={() => loadHbData()} // Refresh data
+            />
+
+            {/* New AP Module Modals */}
+            <SupplierManagementModal
+                show={showSupplierModal}
+                onClose={() => setShowSupplierModal(false)}
+            />
+
+            <CreatePaymentVoucherModal
+                show={showCreateVoucherModal}
+                onClose={handleVoucherModalClose}
+                onCreated={() => {
+                    handleVoucherModalClose();
+                    // Refresh vouchers list if we're on that tab
+                    if (activeTab === 'vouchers') {
+                        loadHbData();
+                    }
+                }}
+                prefilledData={voucherPrefilledData}
+            />
+
+            <PaymentVoucherDetailModal
+                show={showVoucherDetailModal}
+                voucherId={selectedVoucherId}
+                onClose={handleVoucherDetailClose}
+                onUpdated={loadHbData}
             />
         </DashboardLayout>
     );

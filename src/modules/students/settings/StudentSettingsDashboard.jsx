@@ -34,15 +34,15 @@ const StudentSettingsDashboard = () => {
       <div className="min-h-screen bg-gray-50/50 pb-12">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Student Settings & Setup</h1>
+          <h1 className="text-1xl font-bold text-gray-900 mb-2">Student Settings & Setup</h1>
           <p className="text-gray-500 max-w-2xl">
             Configure academic structure, curriculum, student identification, and assessment criteria to ensure smooth operations.
           </p>
         </div>
 
         {/* Tabs Navigation */}
-        <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 mb-6 overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:rounded-xl sm:border shadow-sm">
-          <div className="flex gap-1 p-1 min-w-max">
+        <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 mb-6 overflow-x-auto hide-scrollbar -mx-4 px-4 py-1 sm:mx-0 sm:px-0 sm:rounded-xl sm:border shadow-sm">
+          <div className="flex gap-1 p-3 min-w-max">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -63,7 +63,7 @@ const StudentSettingsDashboard = () => {
         </div>
 
         {/* Content Area */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm min-h-[500px] transition-all duration-300">
+        <div className="bg-white rounded-2xl border border-gray-200 py-6 px-6 md:p-8 shadow-sm min-h-[500px] transition-all duration-300">
           {tabs.find(t => t.id === activeTab)?.component}
         </div>
       </div>

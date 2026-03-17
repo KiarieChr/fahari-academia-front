@@ -1,20 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, User, Calendar, DollarSign, FileText } from 'lucide-react';
+import { X, Plus, Trash2, Save, User, Calendar, DollarSign, FileText, Zap } from 'lucide-react';
 import { financeService } from '../../../../services/financeService';
 import { formatKES } from '../utils/formatters';
 import QuickAddCustomerModal from './QuickAddCustomerModal.jsx';
+
+// Income account keyword mappings for auto-suggestion (Kenyan school context)
+const INCOME_ACCOUNT_KEYWORDS = {
+    // School Fees
+    'tuition': ['tuition', 'school fee', 'fees income'],
+    'school fee': ['tuition', 'school fee', 'fees income'],
+    'fee': ['tuition', 'school fee', 'fees income'],
+    // Boarding
+    'boarding': ['boarding', 'accommodation', 'hostel'],
+    'hostel': ['boarding', 'hostel', 'accommodation'],
+    'accommodation': ['boarding', 'accommodation', 'hostel'],
+    // Transport
+    'transport': ['transport', 'bus', 'vehicle'],
+    'bus': ['transport', 'bus'],
+    // Meals/Catering
+    'lunch': ['meals', 'lunch', 'catering'],
+    'meals': ['meals', 'lunch', 'catering'],
+    'catering': ['catering', 'meals'],
+    'food': ['meals', 'catering', 'food'],
+    // Uniform
+    'uniform': ['uniform', 'clothing'],
+    'clothing': ['uniform', 'clothing'],
+    // Books & Supplies
+    'book': ['books', 'stationery', 'supplies'],
+    'stationery': ['books', 'stationery', 'supplies'],
+    'supplies': ['supplies', 'stationery'],
+    // Activities
+    'activity': ['activities', 'extra-curricular', 'sports'],
+    'sports': ['sports', 'activities', 'extra-curricular'],
+    'extra': ['extra-curricular', 'activities'],
+    'club': ['clubs', 'activities'],
+    // Exams
+    'exam': ['examination', 'exam', 'assessment'],
+    'examination': ['examination', 'exam'],
+    'assessment': ['assessment', 'examination'],
+    'kcse': ['examination', 'kcse', 'exam'],
+    'kcpe': ['examination', 'kcpe', 'exam'],
+    // Computer/Lab
+    'computer': ['computer', 'ict', 'lab'],
+    'ict': ['computer', 'ict'],
+    'lab': ['laboratory', 'lab', 'science'],
+    'laboratory': ['laboratory', 'lab'],
+    // Medical
+    'medical': ['medical', 'health', 'clinic'],
+    'health': ['health', 'medical'],
+    'clinic': ['clinic', 'medical'],
+    // Library
+    'library': ['library', 'books'],
+    // Registration
+    'registration': ['registration', 'admission'],
+    'admission': ['admission', 'registration'],
+    // Misc
+    'donation': ['donation', 'contribution'],
+    'contribution': ['contribution', 'donation'],
+    'development': ['development', 'building', 'infrastructure'],
+    'building': ['building', 'development', 'infrastructure'],
+};
 
 const CreateCustomerInvoiceModal = ({ show, onClose, onSave }) => {
     const [loading, setLoading] = useState(false);
     const [customers, setCustomers] = useState([]);
     const [incomeAccounts, setIncomeAccounts] = useState([]);
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+    const [autoPost, setAutoPost] = useState(true); // Default to auto-post
 
     const [formData, setFormData] = useState({
         customer: '',
         date_issued: new Date().toISOString().split('T')[0],
         due_date: new Date().toISOString().split('T')[0],
-        invoice_number: `INV-${Date.now().toString().slice(-6)}`, // Temporary auto-gen
+        invoice_number: `INV-${Date.now().toString().slice(-6)}`,
         notes: '',
         status: 'DRAFT',
         is_recurring: false,
@@ -26,20 +84,32 @@ const CreateCustomerInvoiceModal = ({ show, onClose, onSave }) => {
     useEffect(() => {
         if (show) {
             loadDependencies();
+            // Reset form
+            setFormData({
+                customer: '',
+                date_issued: new Date().toISOString().split('T')[0],
+                due_date: new Date().toISOString().split('T')[0],
+                invoice_number: `INV-${Date.now().toString().slice(-6)}`,
+                notes: '',
+                status: 'DRAFT',
+                is_recurring: false,
+                lines: [{ description: '', quantity: 1, unit_price: 0, income_account: '' }]
+            });
+            setAutoPost(true);
         }
     }, [show]);
 
     const loadDependencies = async () => {
         try {
             const [custRes, accRes] = await Promise.all([
-                financeService.getCustomers(),
-                financeService.getAccounts() // We need to filter for Income accounts
+                financeService.getCustomers().catch(() => null),
+                financeService.getAccounts().catch(() => null)
             ]);
 
-            setCustomers(custRes.data.results || custRes.data || []);
+            setCustomers(custRes?.results || custRes || []);
 
             // Filter for INCOME accounts
-            const allAccounts = accRes.data.results || accRes.data || [];
+            const allAccounts = accRes?.results || accRes || [];
             const incomeAccs = allAccounts.filter(acc => acc.type === 'INCOME');
             setIncomeAccounts(incomeAccs);
 
@@ -48,9 +118,43 @@ const CreateCustomerInvoiceModal = ({ show, onClose, onSave }) => {
         }
     };
 
+    // Function to suggest income account based on description
+    const suggestIncomeAccount = (description) => {
+        if (!description || !incomeAccounts.length) return null;
+
+        const descLower = description.toLowerCase();
+
+        // Find matching keywords in description
+        for (const [keyword, relatedTerms] of Object.entries(INCOME_ACCOUNT_KEYWORDS)) {
+            if (descLower.includes(keyword)) {
+                // Search accounts for matching keywords
+                for (const term of relatedTerms) {
+                    const matchingAccount = incomeAccounts.find(acc =>
+                        acc.name?.toLowerCase().includes(term) ||
+                        acc.code?.toLowerCase().includes(term)
+                    );
+                    if (matchingAccount) {
+                        return matchingAccount.id;
+                    }
+                }
+            }
+        }
+
+        return null;
+    };
+
     const handleLineChange = (index, field, value) => {
         const newLines = [...formData.lines];
         newLines[index][field] = value;
+
+        // Auto-suggest income account when description changes
+        if (field === 'description' && value && !newLines[index].income_account) {
+            const suggestedAccount = suggestIncomeAccount(value);
+            if (suggestedAccount) {
+                newLines[index].income_account = suggestedAccount;
+            }
+        }
+
         setFormData({ ...formData, lines: newLines });
     };
 
@@ -79,18 +183,38 @@ const CreateCustomerInvoiceModal = ({ show, onClose, onSave }) => {
 
     const handleSubmit = async () => {
         if (!formData.customer) return alert("Please select a customer");
-        if (formData.lines.some(l => !l.income_account || !l.description || l.unit_price <= 0)) {
+        if (formData.lines.some(l => !l.income_account || !l.description || Number(l.unit_price) <= 0)) {
             return alert("Please complete all line items (Account, Description, Price > 0)");
         }
 
         setLoading(true);
         try {
-            await financeService.createInvoice(formData);
+            // Format data for API
+            const payload = {
+                customer: parseInt(formData.customer, 10),
+                invoice_number: formData.invoice_number.trim(),
+                date_issued: formData.date_issued,
+                due_date: formData.due_date,
+                status: formData.status,
+                is_recurring: formData.is_recurring,
+                notes: formData.notes || '',
+                auto_post: autoPost && formData.status !== 'PROFORMA', // Only auto-post if not proforma
+                lines: formData.lines.map(line => ({
+                    description: line.description.trim(),
+                    quantity: parseFloat(line.quantity) || 1,
+                    unit_price: parseFloat(line.unit_price),
+                    income_account: parseInt(line.income_account, 10)
+                }))
+            };
+
+            await financeService.createInvoice(payload);
             onSave();
             onClose();
         } catch (error) {
             console.error("Failed to create invoice", error);
-            alert("Error: " + (error.response?.data?.detail || error.message));
+            const errorMsg = error.data?.detail || error.data?.message || 
+                             (typeof error.data === 'object' ? JSON.stringify(error.data) : error.message);
+            alert("Error: " + errorMsg);
         } finally {
             setLoading(false);
         }
@@ -165,7 +289,24 @@ const CreateCustomerInvoiceModal = ({ show, onClose, onSave }) => {
                                         />
                                     </div>
                                     <div className="col-md-12">
-                                        <div className="d-flex gap-4">
+                                        <div className="d-flex gap-4 flex-wrap">
+                                            <div className="form-check">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="autoPostCheck"
+                                                    checked={autoPost}
+                                                    onChange={(e) => setAutoPost(e.target.checked)}
+                                                    disabled={formData.status === 'PROFORMA'}
+                                                />
+                                                <label className="form-check-label small fw-bold d-flex align-items-center gap-1" htmlFor="autoPostCheck">
+                                                    <Zap size={14} className="text-success" />
+                                                    Auto-Post to Ledger
+                                                </label>
+                                                <div className="form-text small text-muted" style={{ fontSize: '0.7rem' }}>
+                                                    Automatically creates journal entry
+                                                </div>
+                                            </div>
                                             <div className="form-check">
                                                 <input
                                                     className="form-check-input"

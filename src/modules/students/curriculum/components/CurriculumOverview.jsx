@@ -1,7 +1,9 @@
-import React from 'react';
-import { BookOpen, Layers, Library, Users, CheckSquare, GraduationCap, BarChart3, PieChart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Layers, Library, Users, CheckSquare, GraduationCap, BarChart3, PieChart, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { curriculumService } from '../../../../services/curriculumService';
 
-const MetricCard = ({ title, count, icon: Icon, color, status }) => (
+const MetricCard = ({ title, count, icon: Icon, color, status, loading }) => (
     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
         <div className="flex justify-between items-start">
             <div className={`p-3 rounded-lg ${color}`}>
@@ -14,57 +16,87 @@ const MetricCard = ({ title, count, icon: Icon, color, status }) => (
             )}
         </div>
         <div className="mt-4">
-            <h3 className="text-2xl font-bold text-gray-900">{count}</h3>
+            {loading ? (
+                <div className="h-8 w-12 bg-gray-100 animate-pulse rounded"></div>
+            ) : (
+                <h3 className="text-2xl font-bold text-gray-900">{count}</h3>
+            )}
             <p className="text-gray-500 text-sm">{title}</p>
         </div>
     </div>
 );
 
-const CurriculumOverview = () => {
+const CurriculumOverview = ({ refreshKey = 0 }) => {
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState(null);
+
+    useEffect(() => {
+        fetchDashboardStats();
+    }, [refreshKey]);
+
+    const fetchDashboardStats = async () => {
+        try {
+            setLoading(true);
+            const data = await curriculumService.getDashboardStats();
+            setStats(data);
+        } catch (error) {
+            console.error('Failed to fetch curriculum stats:', error);
+            toast.error('Failed to load curriculum statistics');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Calculate max for percentage bars
+    const maxSubjectCount = stats?.subject_distribution?.length > 0
+        ? Math.max(...stats.subject_distribution.map(s => s.count))
+        : 1;
+
+    const barColors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-indigo-500'];
+
     return (
         <div className="space-y-6">
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <MetricCard
                     title="Total Curricula"
-                    count="4"
+                    count={stats?.metrics?.total_curricula || 0}
                     icon={BookOpen}
                     color="bg-blue-100"
+                    loading={loading}
                 />
                 <MetricCard
-                    title="Active Curriculum"
-                    count="2"
+                    title="Active Curricula"
+                    count={stats?.metrics?.active_curricula || 0}
                     icon={CheckSquare}
                     color="bg-green-100"
                     status="Active"
+                    loading={loading}
                 />
                 <MetricCard
                     title="Total Subjects"
-                    count="42"
+                    count={stats?.metrics?.total_subjects || 0}
                     icon={Library}
                     color="bg-purple-100"
+                    loading={loading}
                 />
                 <MetricCard
                     title="Classes Covered"
-                    count="18"
+                    count={stats?.metrics?.classes_covered || 0}
                     icon={Users}
                     color="bg-orange-100"
+                    loading={loading}
                 />
                 <MetricCard
                     title="Learning Areas"
-                    count="8"
+                    count={stats?.metrics?.learning_areas || 0}
                     icon={Layers}
                     color="bg-pink-100"
-                />
-                <MetricCard
-                    title="Assessment Types"
-                    count="5"
-                    icon={GraduationCap}
-                    color="bg-indigo-100"
+                    loading={loading}
                 />
             </div>
 
-            {/* Charts Section (Mock) */}
+            {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Subjects per Curriculum */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -74,31 +106,33 @@ const CurriculumOverview = () => {
                             Subjects Distribution
                         </h4>
                     </div>
-                    {/* Mock Bar Chart */}
-                    <div className="space-y-4">
-                        {[
-                            { label: 'CBC (Primary)', val: 85, color: 'bg-blue-500' },
-                            { label: '8-4-4 (Secondary)', val: 60, color: 'bg-green-500' },
-                            { label: 'IGCSE', val: 30, color: 'bg-purple-500' },
-                            { label: 'Checkpoints', val: 45, color: 'bg-orange-500' },
-                        ].map((item, idx) => (
-                            <div key={idx}>
-                                <div className="flex justify-between text-xs mb-1">
-                                    <span className="font-medium text-gray-600">{item.label}</span>
-                                    <span className="text-gray-500">{item.val} Subj</span>
+                    {loading ? (
+                        <div className="flex items-center justify-center h-40">
+                            <Loader2 className="animate-spin text-gray-400" size={24} />
+                        </div>
+                    ) : stats?.subject_distribution?.length > 0 ? (
+                        <div className="space-y-4">
+                            {stats.subject_distribution.map((item, idx) => (
+                                <div key={idx}>
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className="font-medium text-gray-600">{item.name}</span>
+                                        <span className="text-gray-500">{item.count} Subjects</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full ${barColors[idx % barColors.length]} rounded-full transition-all duration-500`}
+                                            style={{ width: `${(item.count / maxSubjectCount) * 100}%` }}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full ${item.color} rounded-full`}
-                                        style={{ width: `${item.val}%` }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">No subjects configured yet</div>
+                    )}
                 </div>
 
-                {/* Curriculum Coverage */}
+                {/* Class Coverage */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h4 className="font-bold text-gray-800 flex items-center gap-2">
@@ -106,56 +140,95 @@ const CurriculumOverview = () => {
                             Class Coverage
                         </h4>
                     </div>
-                    {/* Mock Stacked Bar or List */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <p className="text-sm font-bold text-gray-800">Grade 1 - 6</p>
-                                <p className="text-xs text-blue-600">CBC Curriculum</p>
-                            </div>
-                            <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">100%</span>
+                    {loading ? (
+                        <div className="flex items-center justify-center h-40">
+                            <Loader2 className="animate-spin text-gray-400" size={24} />
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <p className="text-sm font-bold text-gray-800">Grade 7 - 9</p>
-                                <p className="text-xs text-purple-600">JSS / CBC</p>
-                            </div>
-                            <span className="text-xs font-bold bg-yellow-100 text-yellow-700 px-2 py-1 rounded">85%</span>
+                    ) : stats?.class_coverage?.length > 0 ? (
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
+                            {stats.class_coverage.map((item, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-800">{item.level}</p>
+                                        <p className="text-xs text-blue-600">{item.curriculum}</p>
+                                    </div>
+                                    <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
+                                        {item.classes} Classes
+                                    </span>
+                                </div>
+                            ))}
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <p className="text-sm font-bold text-gray-800">Form 1 - 4</p>
-                                <p className="text-xs text-green-600">8-4-4 System</p>
-                            </div>
-                            <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">100%</span>
-                        </div>
-                    </div>
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">No classes configured yet</div>
+                    )}
                 </div>
 
-                {/* Assessment Distribution */}
+                {/* Subject Type Distribution */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h4 className="font-bold text-gray-800 flex items-center gap-2">
                             <PieChart size={18} className="text-gray-400" />
-                            Assessment Weight
+                            Subject Types
                         </h4>
                     </div>
-                    <div className="flex items-center justify-center h-48 relative">
-                        {/* CSS-only simple pie representation or placeholder */}
-                        <div className="w-32 h-32 rounded-full border-8 border-indigo-500 border-r-pink-500 border-b-yellow-500 border-l-blue-500 transform rotate-45"></div>
-                        <div className="absolute inset-0 flex items-center justify-center flex-col">
-                            <span className="text-2xl font-bold text-gray-800">100%</span>
-                            <span className="text-xs text-gray-500">Total</span>
+                    {loading ? (
+                        <div className="flex items-center justify-center h-40">
+                            <Loader2 className="animate-spin text-gray-400" size={24} />
                         </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                        <div className="flex items-center gap-2"><span className="w-2 h-2 bg-indigo-500 rounded-full"></span> Exams (40%)</div>
-                        <div className="flex items-center gap-2"><span className="w-2 h-2 bg-pink-500 rounded-full"></span> Projects (20%)</div>
-                        <div className="flex items-center gap-2"><span className="w-2 h-2 bg-yellow-500 rounded-full"></span> CATs (30%)</div>
-                        <div className="flex items-center gap-2"><span className="w-2 h-2 bg-blue-500 rounded-full"></span> Oral (10%)</div>
-                    </div>
+                    ) : stats?.type_distribution?.length > 0 ? (
+                        <>
+                            <div className="flex items-center justify-center h-32 relative">
+                                <div className="text-center">
+                                    <span className="text-3xl font-bold text-gray-800">
+                                        {stats.type_distribution.reduce((acc, t) => acc + t.value, 0)}
+                                    </span>
+                                    <p className="text-xs text-gray-500">Total Subjects</p>
+                                </div>
+                            </div>
+                            <div className="space-y-2 mt-4">
+                                {stats.type_distribution.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className="w-3 h-3 rounded-full"
+                                                style={{ backgroundColor: item.color }}
+                                            ></span>
+                                            <span className="text-gray-600">{item.name}</span>
+                                        </div>
+                                        <span className="font-bold text-gray-800">{item.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">No subject types configured</div>
+                    )}
                 </div>
             </div>
+
+            {/* Learning Area Distribution */}
+            {stats?.area_distribution?.length > 0 && (
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                            <GraduationCap size={18} className="text-gray-400" />
+                            Subjects by Learning Area
+                        </h4>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {stats.area_distribution.map((area, idx) => (
+                            <div
+                                key={idx}
+                                className="p-4 rounded-lg border border-gray-100 text-center hover:shadow-md transition-all"
+                                style={{ borderLeftColor: area.color, borderLeftWidth: '4px' }}
+                            >
+                                <p className="text-2xl font-bold text-gray-800">{area.count}</p>
+                                <p className="text-xs text-gray-500 mt-1">{area.name}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

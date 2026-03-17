@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Printer, Download, Search, AlertCircle } from 'lucide-react';
 import { financeService } from '../../../services/financeService';
 
@@ -51,8 +52,8 @@ const GeneralLedgerModal = ({ isOpen, onClose, accountId, dateRange }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
+    return createPortal(
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }} tabIndex="-1">
             <div className="modal-dialog modal-xl modal-dialog-scrollable">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -64,7 +65,9 @@ const GeneralLedgerModal = ({ isOpen, onClose, accountId, dateRange }) => {
                                 </div>
                             )}
                         </div>
-                        <button type="button" className="btn-close" onClick={onClose}></button>
+                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onClose}>
+                            <X size={18} />
+                        </button>
                     </div>
 
                     <div className="modal-body p-0">
@@ -187,7 +190,8 @@ const GeneralLedgerModal = ({ isOpen, onClose, accountId, dateRange }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

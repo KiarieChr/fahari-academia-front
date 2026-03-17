@@ -31,9 +31,11 @@ const DashboardLayout = ({ children, title }) => {
     const [isDarkMode, setIsDarkMode] = React.useState(false);
     const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
     const [pageTitle, setPageTitle] = useState('Overview');
+    const [currentUser, setCurrentUser] = useState(null);
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+        { sectionLabel: 'ACADEMICS' },
         {
             icon: Users,
             label: 'Student Management',
@@ -73,6 +75,7 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Report Settings', path: '/dashboard/fees/settings' }
             ]
         },
+        { sectionLabel: 'OPERATIONS' },
         {
             icon: DollarSign,
             label: 'Finance',
@@ -102,6 +105,7 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Settings', path: '/dashboard/procurement/settings' }
             ]
         },
+        { sectionLabel: 'PEOPLE' },
         {
             icon: Briefcase,
             label: 'Human Resource',
@@ -129,6 +133,7 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Payroll Settings', path: '/dashboard/payroll/settings' }
             ]
         },
+        { sectionLabel: 'ADMINISTRATION' },
         {
             icon: UserCog,
             label: 'User Management',
@@ -140,6 +145,41 @@ const DashboardLayout = ({ children, title }) => {
         },
         { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ];
+
+    // Auto-expand the parent whose child is currently active
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const data = await api.getCurrentUser();
+                const profile = data.success ? data.profile : data;
+                setCurrentUser({
+                    firstName: profile.first_name || '',
+                    lastName:  profile.last_name  || '',
+                    email:     profile.email      || '',
+                    role:      profile.role        || 'User',
+                    avatar:    profile.avatar      || null,
+                    initials: (
+                        (profile.first_name?.[0] || '') +
+                        (profile.last_name?.[0]  || '')
+                    ).toUpperCase() || '?',
+                });
+            } catch {
+                // silently keep null — fallback UI handles it
+            }
+        };
+        fetchCurrentUser();
+    }, []);
+
+    // Auto-expand the parent whose child is currently active
+    useEffect(() => {
+        const autoExpand = {};
+        navItems.forEach(item => {
+            if (item.subItems && location.pathname.startsWith(item.path)) {
+                autoExpand[item.path] = true;
+            }
+        });
+        setExpandedItems(prev => ({ ...prev, ...autoExpand }));
+    }, [location.pathname]);
 
     // Determine Page Title based on current path
     useEffect(() => {
@@ -264,53 +304,75 @@ const DashboardLayout = ({ children, title }) => {
                 </div>
 
                 <nav className="sidebar-nav">
-                    {navItems.map((item) => (
-                        <div key={item.path} className="nav-item-wrapper">
-                            {item.subItems ? (
-                                <>
-                                    <div
-                                        className={`nav-item ${location.pathname.startsWith(item.path) ? 'active' : ''}`}
-                                        onClick={() => toggleExpand(item.path)}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyPress={(e) => e.key === 'Enter' && toggleExpand(item.path)}
+                    {navItems.map((item, idx) => {
+                        if (item.sectionLabel) {
+                            return (
+                                <div key={`section-${idx}`} className="nav-section-label">
+                                    {item.sectionLabel}
+                                </div>
+                            );
+                        }
+
+                        const isChildActive = item.subItems &&
+                            item.subItems.some(sub => location.pathname === sub.path);
+                        const isParentActive = item.subItems
+                            ? location.pathname.startsWith(item.path)
+                            : location.pathname === item.path;
+
+                        return (
+                            <div key={item.path} className="nav-item-wrapper">
+                                {item.subItems ? (
+                                    <>
+                                        <div
+                                            className={[
+                                                'nav-item',
+                                                isParentActive ? 'parent-active' : '',
+                                                isChildActive ? 'has-active-child' : '',
+                                                expandedItems[item.path] ? 'is-expanded' : '',
+                                            ].filter(Boolean).join(' ')}
+                                            onClick={() => toggleExpand(item.path)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyPress={(e) => e.key === 'Enter' && toggleExpand(item.path)}
+                                        >
+                                            <div className="nav-item-content">
+                                                <item.icon size={20} className="nav-icon" />
+                                                <span className="nav-label">{item.label}</span>
+                                            </div>
+                                            <ChevronDown
+                                                size={15}
+                                                className={`nav-chevron ${expandedItems[item.path] ? 'rotated' : ''}`}
+                                            />
+                                        </div>
+                                        <div className={`nav-sub-items ${expandedItems[item.path] ? 'expanded' : ''}`}>
+                                            {item.subItems.map(sub => (
+                                                <Link
+                                                    key={sub.path}
+                                                    to={sub.path}
+                                                    className={`nav-sub-item ${location.pathname === sub.path ? 'active' : ''}`}
+                                                    onClick={handleNavClick}
+                                                >
+                                                    <span className="sub-item-dot" />
+                                                    {sub.label}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <Link
+                                        to={item.path}
+                                        className={`nav-item ${isParentActive ? 'active' : ''}`}
+                                        onClick={handleNavClick}
                                     >
                                         <div className="nav-item-content">
                                             <item.icon size={20} className="nav-icon" />
                                             <span className="nav-label">{item.label}</span>
                                         </div>
-                                        {expandedItems[item.path] ?
-                                            <ChevronDown size={16} className="nav-chevron" /> :
-                                            <ChevronRight size={16} className="nav-chevron" />
-                                        }
-                                    </div>
-                                    <div className={`nav-sub-items ${expandedItems[item.path] ? 'expanded' : ''}`}>
-                                        {item.subItems.map(sub => (
-                                            <Link
-                                                key={sub.path}
-                                                to={sub.path}
-                                                className={`nav-sub-item ${location.pathname === sub.path ? 'active' : ''}`}
-                                                onClick={handleNavClick}
-                                            >
-                                                {sub.label}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </>
-                            ) : (
-                                <Link
-                                    to={item.path}
-                                    className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-                                    onClick={handleNavClick}
-                                >
-                                    <div className="nav-item-content">
-                                        <item.icon size={20} className="nav-icon" />
-                                        <span className="nav-label">{item.label}</span>
-                                    </div>
-                                </Link>
-                            )}
-                        </div>
-                    ))}
+                                    </Link>
+                                )}
+                            </div>
+                        );
+                    })}
                 </nav>
 
                 <div className="sidebar-footer">
@@ -345,7 +407,9 @@ const DashboardLayout = ({ children, title }) => {
                         <div className="header-title">
                             <h1>{title || pageTitle}</h1>
                             {windowWidth >= 1024 && (
-                                <span className="header-subtitle">Welcome back, Admin</span>
+                                <span className="header-subtitle">
+                                    Welcome back, {currentUser?.firstName || 'Admin'}
+                                </span>
                             )}
                         </div>
                     </div>
@@ -369,10 +433,25 @@ const DashboardLayout = ({ children, title }) => {
                         </div>
 
                         <div className="user-profile">
-                            <div className="avatar">AD</div>
+                            {currentUser?.avatar ? (
+                                <img
+                                    src={currentUser.avatar}
+                                    alt={`${currentUser.firstName} ${currentUser.lastName}`}
+                                    className="avatar"
+                                    style={{ objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <div className="avatar">{currentUser?.initials || '??'}</div>
+                            )}
                             <div className="user-info">
-                                <span className="user-name">Admin User</span>
-                                <span className="user-role">System Administrator</span>
+                                <span className="user-name">
+                                    {currentUser
+                                        ? `${currentUser.firstName} ${currentUser.lastName}`.trim() || currentUser.email
+                                        : 'Loading…'}
+                                </span>
+                                <span className="user-role">
+                                    {currentUser?.role || '…'}
+                                </span>
                             </div>
                             {windowWidth >= 640 && (
                                 <ChevronDown size={16} className="user-dropdown" />

@@ -13,7 +13,7 @@ const CustomerInvoiceModal = ({ invoice, onClose, onCreateRefund }) => {
                 <div className="modal-content shadow-lg">
                     <div className="modal-header border-0 pb-0 d-print-none">
                         <h5 className="modal-title fw-bold">Invoice Details</h5>
-                        <button type="button" className="btn-close" onClick={onClose}></button>
+                        <button type="button" className="btn  btn-outline-secondary" onClick={onClose}><X size={18} /></button>
                     </div>
 
                     <div className="modal-body p-4 position-relative" id="printable-invoice">

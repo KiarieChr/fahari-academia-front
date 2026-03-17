@@ -13,7 +13,7 @@ const AddEditFeeItemModal = ({
         category: '',
         accountId: '',
         amount: '',
-        mandatory: true,
+        is_optional: false, // Backend field: false = mandatory, true = optional
         frequency: 'Termly',
         appliesTo: 'All Students',
         description: '',
@@ -30,7 +30,8 @@ const AddEditFeeItemModal = ({
                 category: feeItem.category || '',
                 accountId: feeItem.accountId || '',
                 amount: feeItem.amount || '',
-                mandatory: feeItem.mandatory !== undefined ? feeItem.mandatory : true,
+                // Convert from legacy mandatory to is_optional
+                is_optional: feeItem.is_optional !== undefined ? feeItem.is_optional : !feeItem.mandatory,
                 frequency: feeItem.frequency || 'Termly',
                 appliesTo: feeItem.appliesTo || 'All Students',
                 description: feeItem.description || '',
@@ -43,7 +44,7 @@ const AddEditFeeItemModal = ({
                 category: '',
                 accountId: '',
                 amount: '',
-                mandatory: true,
+                is_optional: false, // Default to mandatory
                 frequency: 'Termly',
                 appliesTo: 'All Students',
                 description: '',
@@ -103,6 +104,8 @@ const AddEditFeeItemModal = ({
         const feeItemData = {
             ...formData,
             amount: parseFloat(formData.amount),
+            // Convert is_optional to mandatory for compatibility with parent components
+            mandatory: !formData.is_optional,
             classId,
             term,
             academicYear
@@ -247,22 +250,27 @@ const AddEditFeeItemModal = ({
                                     </div>
                                 </div>
 
-                                {/* Mandatory/Optional */}
+                                {/* Optional Fee Checkbox */}
                                 <div className="col-md-6">
-                                    <label className="form-label fw-bold">Configuration</label>
+                                    <label className="form-label fw-bold">Fee Type</label>
                                     <div className="form-check form-switch pt-2">
                                         <input
                                             className="form-check-input"
                                             type="checkbox"
-                                            name="mandatory"
-                                            checked={formData.mandatory}
+                                            name="is_optional"
+                                            checked={formData.is_optional}
                                             onChange={handleChange}
-                                            id="mandatoryInfo"
+                                            id="optionalFeeToggle"
                                         />
-                                        <label className="form-check-label" htmlFor="mandatoryInfo">
-                                            {formData.mandatory ? 'Mandatory Fee' : 'Optional Fee'}
+                                        <label className="form-check-label" htmlFor="optionalFeeToggle">
+                                            {formData.is_optional ? (
+                                                <span className="text-info">Optional Fee <small className="text-muted">(student can opt-out)</small></span>
+                                            ) : (
+                                                <span className="text-danger">Mandatory Fee <small className="text-muted">(required)</small></span>
+                                            )}
                                         </label>
                                     </div>
+                                    <small className="text-muted">Toggle ON for optional fees like Transport, Lunch, etc.</small>
                                 </div>
 
                                 {/* Applies To */}

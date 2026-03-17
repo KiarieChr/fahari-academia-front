@@ -30,10 +30,67 @@ export const financeService = {
     // Invoicing (Customers)
     getCustomers: () => api.get('/api/invoicing/customers/'),
     createCustomer: (data) => api.post('/api/invoicing/customers/', data),
-    getInvoices: () => api.get('/api/invoicing/invoices/'),
+    getInvoices: (params) => api.get('/api/invoicing/invoices/', { params }),
+    getInvoice: (id) => api.get(`/api/invoicing/invoices/${id}/`),
     createInvoice: (data) => api.post('/api/invoicing/invoices/', data),
+    updateInvoice: (id, data) => api.patch(`/api/invoicing/invoices/${id}/`, data),
+    postInvoice: (id) => api.post(`/api/invoicing/invoices/${id}/post_to_ledger/`),
+    voidInvoice: (id) => api.post(`/api/invoicing/invoices/${id}/void/`),
+    issueInvoice: (id) => api.post(`/api/invoicing/invoices/${id}/issue/`),
 
-    // Payables (Bills/Vendors)
+    // =========================================================================
+    // ACCOUNTS PAYABLE - NEW ENDPOINTS
+    // =========================================================================
+
+    // Suppliers
+    getSuppliers: (params) => api.get('/api/payables/suppliers/', { params }),
+    getSupplier: (id) => api.get(`/api/payables/suppliers/${id}/`),
+    createSupplier: (data) => api.post('/api/payables/suppliers/', data),
+    updateSupplier: (id, data) => api.patch(`/api/payables/suppliers/${id}/`, data),
+    deleteSupplier: (id) => api.delete(`/api/payables/suppliers/${id}/`),
+    getSupplierOutstanding: (id) => api.get(`/api/payables/suppliers/${id}/outstanding/`),
+
+    // Approval Thresholds
+    getApprovalThresholds: () => api.get('/api/payables/approval-thresholds/'),
+    createApprovalThreshold: (data) => api.post('/api/payables/approval-thresholds/', data),
+    updateApprovalThreshold: (id, data) => api.patch(`/api/payables/approval-thresholds/${id}/`, data),
+    deleteApprovalThreshold: (id) => api.delete(`/api/payables/approval-thresholds/${id}/`),
+
+    // Supplier Invoices
+    getSupplierInvoices: (params) => api.get('/api/payables/supplier-invoices/', { params }),
+    getSupplierInvoice: (id) => api.get(`/api/payables/supplier-invoices/${id}/`),
+    createSupplierInvoice: (data) => api.post('/api/payables/supplier-invoices/', data),
+    updateSupplierInvoice: (id, data) => api.patch(`/api/payables/supplier-invoices/${id}/`, data),
+    approveSupplierInvoice: (id) => api.post(`/api/payables/supplier-invoices/${id}/approve/`),
+    postSupplierInvoice: (id) => api.post(`/api/payables/supplier-invoices/${id}/post/`),
+    voidSupplierInvoice: (id, reason) => api.post(`/api/payables/supplier-invoices/${id}/void/`, { reason }),
+    getOverdueInvoices: () => api.get('/api/payables/supplier-invoices/overdue/'),
+    getAPAging: () => api.get('/api/payables/supplier-invoices/aging/'),
+
+    // Payment Vouchers
+    getPaymentVouchers: (params) => api.get('/api/payables/payment-vouchers/', { params }),
+    getPaymentVoucher: (id) => api.get(`/api/payables/payment-vouchers/${id}/`),
+    createPaymentVoucher: (data) => api.post('/api/payables/payment-vouchers/', data),
+    updatePaymentVoucher: (id, data) => api.patch(`/api/payables/payment-vouchers/${id}/`, data),
+    approvePaymentVoucher: (id, decision, comments) => api.post(`/api/payables/payment-vouchers/${id}/approve/`, { decision, comments }),
+    payPaymentVoucher: (id) => api.post(`/api/payables/payment-vouchers/${id}/pay/`),
+    voidPaymentVoucher: (id, reason) => api.post(`/api/payables/payment-vouchers/${id}/void/`, { reason }),
+    getPendingApprovalVouchers: () => api.get('/api/payables/payment-vouchers/pending_approval/'),
+    getVouchersByType: () => api.get('/api/payables/payment-vouchers/by_type/'),
+
+    // Imprest Retirement
+    getImprestRetirements: (params) => api.get('/api/payables/imprest-retirements/', { params }),
+    getImprestRetirement: (id) => api.get(`/api/payables/imprest-retirements/${id}/`),
+    createImprestRetirement: (data) => api.post('/api/payables/imprest-retirements/', data),
+    approveImprestRetirement: (id) => api.post(`/api/payables/imprest-retirements/${id}/approve/`),
+    postImprestRetirement: (id) => api.post(`/api/payables/imprest-retirements/${id}/post/`),
+    getPendingRetirements: () => api.get('/api/payables/imprest-retirements/pending/'),
+
+    // =========================================================================
+    // LEGACY PAYABLES ENDPOINTS (kept for backward compatibility)
+    // =========================================================================
+
+    // Payables (Bills/Vendors) - Legacy
     getVendors: () => api.get('/api/payables/vendors/'),
     createVendor: (data) => api.post('/api/payables/vendors/', data),
     getBills: () => api.get('/api/payables/bills/'),

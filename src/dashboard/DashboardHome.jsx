@@ -9,9 +9,10 @@ import WeeklyAttendanceChart from './components/WeeklyAttendanceChart';
 import FeeCollectionChart from './components/FeeCollectionChart';
 import PerformanceChart from './components/PerformanceChart'; // New chart component
 import EnrollmentChart from './components/EnrollmentChart'; // New chart component
+import SmartInsightsWidget from './components/SmartInsightsWidget'; // Smart insights widget
 import { RecentActivity, QuickActions, UpcomingEvents, ResourceUsage } from './components/DashboardWidgets';
 import DashboardLayout from './DashboardLayout';
-import './dashboard.css'; 
+import './dashboard.css';
 
 const DashboardHome = () => {
     const navigate = useNavigate();
@@ -42,12 +43,22 @@ const DashboardHome = () => {
         }
     };
 
+    // Get user display name from API response
+    const getUserDisplayName = () => {
+        if (!data?.user) return 'User';
+        const { first_name, last_name, username } = data.user;
+        if (first_name || last_name) {
+            return `${first_name || ''} ${last_name || ''}`.trim();
+        }
+        return username || 'User';
+    };
+
     return (
         <DashboardLayout title="Dashboard">
             <div className="dashboard-home">
                 {/* Header */}
                 <div className="dashboard-header">
-                    <h1>Welcome back, John!</h1>
+                    <h1>Welcome back, {getUserDisplayName()}!</h1>
                     <p>Here's what's happening at your school today.</p>
                 </div>
 
@@ -64,12 +75,12 @@ const DashboardHome = () => {
                             {data.stats.slice(0, 4).map((stat, index) => (
                                 <StatCardMini key={index} {...stat} />
                             ))}
-                            
+
                             {/* Secondary Stats - Next 4 in smaller format */}
                             {data.stats.slice(4, 8).map((stat, index) => (
-                                <StatCardMini 
-                                    key={index + 4} 
-                                    {...stat} 
+                                <StatCardMini
+                                    key={index + 4}
+                                    {...stat}
                                     variant="secondary"
                                 />
                             ))}
@@ -81,9 +92,9 @@ const DashboardHome = () => {
                                 <h3 className="section-title">Additional Metrics</h3>
                                 <div className="stats-scrollable">
                                     {data.stats.slice(8).map((stat, index) => (
-                                        <StatCardMini 
-                                            key={index + 8} 
-                                            {...stat} 
+                                        <StatCardMini
+                                            key={index + 8}
+                                            {...stat}
                                             variant="compact"
                                         />
                                     ))}
@@ -99,7 +110,7 @@ const DashboardHome = () => {
                                     <h3>Weekly Attendance</h3>
                                     <p>Last 7 days attendance rate</p>
                                 </div>
-                                <WeeklyAttendanceChart 
+                                <WeeklyAttendanceChart
                                     data={data.charts.weekly_attendance}
                                     compact={true}
                                 />
@@ -109,10 +120,11 @@ const DashboardHome = () => {
                             <div className="chart-container-compact">
                                 <div className="chart-header-compact">
                                     <h3>Fee Collection</h3>
-                                    <p>Monthly fee collection trends</p>
+                                    <p>Current term fee collection</p>
                                 </div>
-                                <FeeCollectionChart 
+                                <FeeCollectionChart
                                     data={data.charts.fee_collection}
+                                    currentTerm={data.charts.current_term}
                                     compact={true}
                                 />
                             </div>
@@ -123,7 +135,7 @@ const DashboardHome = () => {
                                     <h3>Student Performance</h3>
                                     <p>Average scores by subject</p>
                                 </div>
-                                <PerformanceChart 
+                                <PerformanceChart
                                     data={data.charts.performance}
                                     compact={true}
                                 />
@@ -138,7 +150,7 @@ const DashboardHome = () => {
                                     <h3>Enrollment Trends</h3>
                                     <p>Monthly new enrollments</p>
                                 </div>
-                                <EnrollmentChart 
+                                <EnrollmentChart
                                     data={data.charts.enrollment}
                                     compact={true}
                                 />
@@ -163,38 +175,62 @@ const DashboardHome = () => {
                             </div>
                         </div>
 
-                        {/* Bottom Widgets Row - Side by side */}
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '2fr 1fr', 
+                        {/* Smart Insights Row */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
                             gap: '1rem',
                             marginTop: '1rem'
                         }}>
-                            {/* Recent Activities - Wider */}
+                            {/* Smart Insights Widget */}
+                            <div className="widget-compact" style={{ minHeight: '400px' }}>
+                                <SmartInsightsWidget />
+                            </div>
+
+                            {/* Recent Activities */}
                             <div className="widget-compact">
                                 <div className="widget-header-compact">
                                     <h3>Recent Activity</h3>
                                     <p>Latest system activities</p>
                                 </div>
                                 <div className="widget-content-compact">
-                                    <RecentActivity 
+                                    <RecentActivity
                                         activities={data.recent_activity}
                                         compact={true}
                                     />
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Upcoming Events - Narrower */}
+                        {/* Bottom Widgets Row - Side by side */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '2fr 1fr',
+                            gap: '1rem',
+                            marginTop: '1rem'
+                        }}>
+                            {/* Upcoming Events - Wider */}
                             <div className="widget-compact">
                                 <div className="widget-header-compact">
                                     <h3>Upcoming Events</h3>
                                     <p>Next 7 days schedule</p>
                                 </div>
                                 <div className="widget-content-compact">
-                                    <UpcomingEvents 
+                                    <UpcomingEvents
                                         events={data.upcoming_events}
                                         compact={true}
                                     />
+                                </div>
+                            </div>
+
+                            {/* Quick Actions */}
+                            <div className="widget-compact">
+                                <div className="widget-header-compact">
+                                    <h3>Quick Links</h3>
+                                    <p>Frequently used</p>
+                                </div>
+                                <div className="widget-content-compact">
+                                    <QuickActions compact={true} />
                                 </div>
                             </div>
                         </div>

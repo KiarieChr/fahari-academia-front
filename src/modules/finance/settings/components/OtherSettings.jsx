@@ -174,6 +174,25 @@ const OtherSettings = ({ settings, accounts = [], onSave }) => {
                                 </select>
                                 <div className="form-text x-small">Used for Student Prepayments/Unallocated Credits</div>
                             </div>
+
+                            <div className="col-md-4 mb-3">
+                                <label className="form-label small">Sundry/Other Debtors Account</label>
+                                <select
+                                    className="form-select"
+                                    name="default_sundry_debtors_account"
+                                    value={formData.default_sundry_debtors_account || ''}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">-- Select Account --</option>
+                                    {accounts
+                                        .filter(a => a.type === 'ASSET' && !a.children?.length)
+                                        .map(a => (
+                                            <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
+                                        ))
+                                    }
+                                </select>
+                                <div className="form-text x-small">Used for Customer Invoices (non-student debtors)</div>
+                            </div>
                         </div>
                     </div>
                 </div>

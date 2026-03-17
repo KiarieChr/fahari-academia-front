@@ -1,12 +1,22 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-const FeeCollectionChart = ({ data }) => {
+const FeeCollectionChart = ({ data, currentTerm }) => {
+    // Format large numbers
+    const formatValue = (value) => {
+        if (value >= 1000000) {
+            return `${(value / 1000000).toFixed(1)}M`;
+        } else if (value >= 1000) {
+            return `${(value / 1000).toFixed(0)}K`;
+        }
+        return value.toLocaleString();
+    };
+
     return (
         <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--border-radius)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color-light)', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)' }}>Fee Collection</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Term 1, 2026</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{currentTerm || 'Current Term'}</span>
             </div>
             <div style={{ width: '100%', height: 260, position: 'relative' }}>
                 <ResponsiveContainer>
@@ -36,7 +46,7 @@ const FeeCollectionChart = ({ data }) => {
                                 {item.name}
                             </div>
                             <div style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.9rem' }}>
-                                KES {item.value}M
+                                KES {formatValue(item.value)}
                             </div>
                         </div>
                     ))}

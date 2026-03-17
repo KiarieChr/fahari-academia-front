@@ -52,7 +52,7 @@ const AcademicYearSetup = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center px-4 md:px-0">
+            <div className="flex justify-between items-center px-4  py-2 md:px-0">
                 <div>
                     <h3 className="text-xl font-bold text-gray-900">Academic Years</h3>
                     <p className="text-sm text-gray-500">Manage school years and set current academic context</p>
@@ -65,7 +65,7 @@ const AcademicYearSetup = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-3">
                 {years.length === 0 ? (
                     <div className="col-span-full py-12 text-center bg-gray-50 rounded-2xl border border-dashed">
                         No academic years configured.

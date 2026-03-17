@@ -52,12 +52,19 @@ const FeeItemsTable = ({
     };
 
     const calculateTotals = () => {
+        // Use is_optional field if available, fallback to mandatory
         const mandatory = feeItems
-            .filter(item => item.mandatory && item.status === 'Active')
+            .filter(item => {
+                const isOptional = item.is_optional !== undefined ? item.is_optional : !item.mandatory;
+                return !isOptional && item.status === 'Active';
+            })
             .reduce((sum, item) => sum + item.amount, 0);
 
         const optional = feeItems
-            .filter(item => !item.mandatory && item.status === 'Active')
+            .filter(item => {
+                const isOptional = item.is_optional !== undefined ? item.is_optional : !item.mandatory;
+                return isOptional && item.status === 'Active';
+            })
             .reduce((sum, item) => sum + item.amount, 0);
 
         return { mandatory, optional, total: mandatory + optional };
@@ -92,10 +99,10 @@ const FeeItemsTable = ({
                             <button className="btn btn-sm btn-outline-danger" onClick={onBulkDelete}>
                                 <Trash2 size={14} className="me-1" /> Delete Selected
                             </button>
-                            <button className="btn btn-sm btn-outline-warning" onClick={() => onBulkStatus(true)}>
+                            <button className="btn btn-sm btn-outline-warning" onClick={() => onBulkStatus(false)}>
                                 Set Mandatory
                             </button>
-                            <button className="btn btn-sm btn-outline-info" onClick={() => onBulkStatus(false)}>
+                            <button className="btn btn-sm btn-outline-info" onClick={() => onBulkStatus(true)}>
                                 Set Optional
                             </button>
                         </div>
@@ -231,9 +238,15 @@ const FeeItemsTable = ({
                                             )}
                                         </td>
                                         <td>
-                                            <span className={`badge ${item.mandatory ? 'bg-danger' : 'bg-info'}`}>
-                                                {item.mandatory ? 'Mandatory' : 'Optional'}
-                                            </span>
+                                            {/* Use is_optional if available, fallback to mandatory */}
+                                            {(() => {
+                                                const isOptional = item.is_optional !== undefined ? item.is_optional : !item.mandatory;
+                                                return (
+                                                    <span className={`badge ${isOptional ? 'bg-info' : 'bg-danger'}`}>
+                                                        {isOptional ? 'Optional' : 'Mandatory'}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td>
                                             <span className="small">{item.frequency}</span>

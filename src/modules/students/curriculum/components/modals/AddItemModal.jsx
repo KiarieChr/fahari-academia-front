@@ -1,46 +1,111 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, BookOpen, Library, Check, ChevronDown } from 'lucide-react';
+import { X, Save, BookOpen, Library, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { curriculumService } from '../../../../../services/curriculumService';
 
-const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum' }) => {
+const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum', onSuccess }) => {
     const [itemType, setItemType] = useState(defaultType); // 'curriculum' or 'subject'
+    const [loading, setLoading] = useState(false);
+    const [options, setOptions] = useState({
+        curricula: [],
+        learningAreas: [],
+        curriculumLevels: []
+    });
 
     // Form States
     const [curriculumData, setCurriculumData] = useState({
         name: '',
-        level: 'Primary',
-        classes: '',
-        description: ''
+        code: '',
+        education_level: 'primary',
+        description: '',
+        status: 'active'
     });
 
     const [subjectData, setSubjectData] = useState({
         name: '',
         code: '',
-        area: 'Sciences',
-        type: 'Compulsory'
+        curriculum: '',
+        curriculum_level: '',
+        learning_area: '',
+        subject_type: 'compulsory',
+        weekly_lessons: 5,
+        color_hex: '#6366f1'
     });
 
-    // Update internal type if defaultType changes when opening
+    // Fetch options when modal opens
     useEffect(() => {
         if (isOpen) {
             setItemType(defaultType);
+            fetchOptions();
         }
     }, [isOpen, defaultType]);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
-        if (itemType === 'curriculum') {
-            toast.success(`Curriculum "${curriculumData.name}" Created Successfully`);
-        } else {
-            toast.success(`Subject "${subjectData.name}" Added Successfully`);
+    const fetchOptions = async () => {
+        try {
+            const [curricula, learningAreas, curriculumLevels] = await Promise.all([
+                curriculumService.getCurricula(),
+                curriculumService.getLearningAreas(),
+                curriculumService.getCurriculumLevels()
+            ]);
+            setOptions({
+                curricula: curricula.results || curricula,
+                learningAreas: learningAreas.results || learningAreas,
+                curriculumLevels: curriculumLevels.results || curriculumLevels
+            });
+        } catch (error) {
+            console.error('Failed to fetch options:', error);
         }
-
-        onClose();
-        // Reset forms
-        setCurriculumData({ name: '', level: 'Primary', classes: '', description: '' });
-        setSubjectData({ name: '', code: '', area: 'Sciences', type: 'Compulsory' });
     };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            if (itemType === 'curriculum') {
+                await curriculumService.createCurriculum(curriculumData);
+                toast.success(`Curriculum "${curriculumData.name}" Created Successfully`);
+            } else {
+                // Build subject payload
+                const payload = {
+                    name: subjectData.name,
+                    code: subjectData.code,
+                    curriculum: subjectData.curriculum,
+                    subject_type: subjectData.subject_type,
+                    weekly_lessons: subjectData.weekly_lessons,
+                    color_hex: subjectData.color_hex
+                };
+                
+                // Add optional fields only if they have values
+                if (subjectData.curriculum_level) {
+                    payload.curriculum_level = subjectData.curriculum_level;
+                }
+                if (subjectData.learning_area) {
+                    payload.learning_area = subjectData.learning_area;
+                }
+                
+                await curriculumService.createSubject(payload);
+                toast.success(`Subject "${subjectData.name}" Added Successfully`);
+            }
+
+            // Reset forms
+            setCurriculumData({ name: '', code: '', education_level: 'primary', description: '', status: 'active' });
+            setSubjectData({ name: '', code: '', curriculum: '', curriculum_level: '', learning_area: '', subject_type: 'compulsory', weekly_lessons: 5, color_hex: '#6366f1' });
+            
+            if (onSuccess) onSuccess();
+            onClose();
+        } catch (error) {
+            console.error('Submit failed:', error);
+            toast.error(error.message || 'Failed to save item');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Filter curriculum levels based on selected curriculum
+    const filteredLevels = options.curriculumLevels.filter(
+        level => !subjectData.curriculum || level.curriculum == subjectData.curriculum
+    );
 
     if (!isOpen) return null;
 
@@ -96,7 +161,7 @@ const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum' }) => {
                     {itemType === 'curriculum' ? (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div>
-                                <label className="text-sm font-medium text-gray-700 block mb-1">Curriculum Name</label>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">Curriculum Name <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     required
@@ -108,28 +173,27 @@ const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum' }) => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-1">Education Level</label>
-                                    <select
-                                        value={curriculumData.level}
-                                        onChange={(e) => setCurriculumData({ ...curriculumData, level: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
-                                    >
-                                        <option>Primary</option>
-                                        <option>Secondary</option>
-                                        <option>Tertiary</option>
-                                        <option>International</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-1">Classes Covered</label>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Code</label>
                                     <input
                                         type="text"
-                                        required
-                                        value={curriculumData.classes}
-                                        onChange={(e) => setCurriculumData({ ...curriculumData, classes: e.target.value })}
+                                        value={curriculumData.code}
+                                        onChange={(e) => setCurriculumData({ ...curriculumData, code: e.target.value })}
                                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                        placeholder="e.g. Grade 1 - 6"
+                                        placeholder="e.g. CBC"
                                     />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Education Level <span className="text-red-500">*</span></label>
+                                    <select
+                                        value={curriculumData.education_level}
+                                        onChange={(e) => setCurriculumData({ ...curriculumData, education_level: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                                    >
+                                        <option value="primary">Primary</option>
+                                        <option value="junior_secondary">Junior Secondary</option>
+                                        <option value="senior_secondary">Senior Secondary</option>
+                                        <option value="international">International</option>
+                                    </select>
                                 </div>
                             </div>
                             <div>
@@ -146,7 +210,7 @@ const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum' }) => {
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-1">Subject Name</label>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Subject Name <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         required
@@ -157,7 +221,7 @@ const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum' }) => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-1">Subject Code</label>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Subject Code <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         required
@@ -168,32 +232,83 @@ const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum' }) => {
                                     />
                                 </div>
                             </div>
+                            
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-1">Curriculum <span className="text-red-500">*</span></label>
+                                <select
+                                    required
+                                    value={subjectData.curriculum}
+                                    onChange={(e) => setSubjectData({ ...subjectData, curriculum: e.target.value, curriculum_level: '' })}
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                                >
+                                    <option value="">Select Curriculum</option>
+                                    {options.curricula.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-1">Learning Area</label>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Curriculum Level</label>
                                     <select
-                                        value={subjectData.area}
-                                        onChange={(e) => setSubjectData({ ...subjectData, area: e.target.value })}
+                                        value={subjectData.curriculum_level}
+                                        onChange={(e) => setSubjectData({ ...subjectData, curriculum_level: e.target.value })}
                                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
                                     >
-                                        <option>Sciences</option>
-                                        <option>Languages</option>
-                                        <option>Humanities</option>
-                                        <option>Technical</option>
-                                        <option>Creative Arts</option>
+                                        <option value="">All Levels</option>
+                                        {filteredLevels.map(l => (
+                                            <option key={l.id} value={l.id}>{l.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-1">Type</label>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Learning Area</label>
                                     <select
-                                        value={subjectData.type}
-                                        onChange={(e) => setSubjectData({ ...subjectData, type: e.target.value })}
+                                        value={subjectData.learning_area}
+                                        onChange={(e) => setSubjectData({ ...subjectData, learning_area: e.target.value })}
                                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
                                     >
-                                        <option>Compulsory</option>
-                                        <option>Optional</option>
-                                        <option>Elective</option>
+                                        <option value="">Select Area</option>
+                                        {options.learningAreas.map(a => (
+                                            <option key={a.id} value={a.id}>{a.name}</option>
+                                        ))}
                                     </select>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Type</label>
+                                    <select
+                                        value={subjectData.subject_type}
+                                        onChange={(e) => setSubjectData({ ...subjectData, subject_type: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                                    >
+                                        <option value="compulsory">Compulsory</option>
+                                        <option value="optional">Optional</option>
+                                        <option value="elective">Elective</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Lessons/Week</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="20"
+                                        value={subjectData.weekly_lessons}
+                                        onChange={(e) => setSubjectData({ ...subjectData, weekly_lessons: parseInt(e.target.value) || 5 })}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">Color</label>
+                                    <input
+                                        type="color"
+                                        value={subjectData.color_hex}
+                                        onChange={(e) => setSubjectData({ ...subjectData, color_hex: e.target.value })}
+                                        className="w-full h-10 px-1 py-1 border rounded-lg cursor-pointer"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -204,19 +319,30 @@ const AddItemModal = ({ isOpen, onClose, defaultType = 'curriculum' }) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                            disabled={loading}
+                            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className={`px-4 py-2 text-black rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 ${itemType === 'curriculum'
+                            disabled={loading}
+                            className={`px-4 py-2 text-white rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 disabled:opacity-70 ${itemType === 'curriculum'
                                 ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
                                 : 'bg-purple-600 hover:bg-purple-700 shadow-purple-200'
                                 }`}
                         >
-                            <Save size={16} />
-                            {itemType === 'curriculum' ? 'Save Curriculum' : 'Save Subject'}
+                            {loading ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={16} />
+                                    {itemType === 'curriculum' ? 'Save Curriculum' : 'Save Subject'}
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>

@@ -129,6 +129,7 @@ const PayrollSettings = () => {
                         </AnimatePresence>
                     </div>
                 </div>
+            </div>
         </DashboardLayout>
     );
 };

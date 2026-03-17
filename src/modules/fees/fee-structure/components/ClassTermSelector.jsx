@@ -17,9 +17,8 @@ const ClassTermSelector = ({
     onCopy,
     onArchive,
     onActivate,
-    currentStructure,
-    propagateToLevel,
-    setPropagateToLevel
+    currentStructure
+    // Removed propagateToLevel - simplified workflow
 }) => {
     // Determine the level for the current selected class
     const currentLevel = classes.find(c => c.id == selectedClass)?.level || 'Current Level';
@@ -137,21 +136,7 @@ const ClassTermSelector = ({
                                 )}
                             </div>
                             <div className="d-flex align-items-center gap-3">
-                                {/* Uniform Structure Toggle */}
-                                {currentStructure.status === 'Draft' && (
-                                    <div className="form-check form-switch" title={`Apply changes to all ${currentLevel} classes automatically`}>
-                                        <input
-                                            className="form-check-input"
-                                            type="checkbox"
-                                            id="propagateSwitch"
-                                            checked={propagateToLevel}
-                                            onChange={(e) => setPropagateToLevel(e.target.checked)}
-                                        />
-                                        <label className="form-check-label small fw-bold text-primary" htmlFor="propagateSwitch">
-                                            Uniform {currentLevel} Structure
-                                        </label>
-                                    </div>
-                                )}
+                                {/* Removed Uniform Structure Toggle - simplified workflow */}
                                 <div className="text-end">
                                     <small className="text-muted d-block">
                                         Version {currentStructure.version} | {currentStructure.studentCount} students

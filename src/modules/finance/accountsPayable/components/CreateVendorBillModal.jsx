@@ -3,10 +3,73 @@ import { X, Plus, Trash2, Save, ShoppingBag, Calendar, DollarSign, FileText } fr
 import { financeService } from '../../../../services/financeService';
 import { formatKES } from '../utils/formatters';
 
+// Expense account keyword mappings for auto-suggestion
+const EXPENSE_ACCOUNT_KEYWORDS = {
+    // Internet/Hosting expenses
+    'hosting': ['hosting', 'internet', 'web hosting', 'server', 'cloud'],
+    'internet': ['hosting', 'internet', 'web hosting', 'bandwidth', 'connectivity'],
+    'web': ['hosting', 'internet', 'web hosting'],
+    'server': ['hosting', 'internet', 'server', 'cloud'],
+    'cloud': ['hosting', 'cloud', 'server', 'aws', 'azure'],
+    // Utilities
+    'electricity': ['electricity', 'power', 'utility', 'utilities'],
+    'power': ['electricity', 'power', 'utility'],
+    'water': ['water', 'utility', 'utilities'],
+    'utility': ['utility', 'utilities', 'electricity', 'water'],
+    // Telecommunications
+    'phone': ['telephone', 'phone', 'communication', 'airtime'],
+    'telephone': ['telephone', 'phone', 'communication'],
+    'airtime': ['telephone', 'phone', 'airtime', 'communication'],
+    'mobile': ['telephone', 'mobile', 'phone'],
+    // Transport & Travel
+    'transport': ['transport', 'travel', 'fuel', 'vehicle'],
+    'travel': ['travel', 'transport', 'accommodation'],
+    'fuel': ['fuel', 'transport', 'vehicle', 'petrol', 'diesel'],
+    'vehicle': ['vehicle', 'transport', 'fuel', 'motor'],
+    // Office & Stationery
+    'stationery': ['stationery', 'office', 'supplies', 'printing'],
+    'office': ['office', 'stationery', 'supplies'],
+    'printing': ['printing', 'stationery', 'office'],
+    'supplies': ['supplies', 'stationery', 'office'],
+    // Repairs & Maintenance
+    'repair': ['repair', 'maintenance', 'service'],
+    'maintenance': ['maintenance', 'repair', 'service'],
+    'service': ['service', 'maintenance', 'repair'],
+    // Food & Catering
+    'food': ['food', 'catering', 'meals', 'kitchen'],
+    'catering': ['catering', 'food', 'meals'],
+    'meals': ['meals', 'food', 'catering'],
+    'kitchen': ['kitchen', 'food', 'catering'],
+    // Cleaning
+    'cleaning': ['cleaning', 'sanitation', 'janitorial'],
+    'sanitation': ['sanitation', 'cleaning'],
+    // Security
+    'security': ['security', 'guard', 'surveillance'],
+    'guard': ['security', 'guard'],
+    // Training & Professional
+    'training': ['training', 'professional development', 'workshop'],
+    'workshop': ['workshop', 'training', 'seminar'],
+    'seminar': ['seminar', 'training', 'workshop'],
+    // Insurance
+    'insurance': ['insurance', 'premium'],
+    // Rent
+    'rent': ['rent', 'lease', 'rental'],
+    'lease': ['lease', 'rent', 'rental'],
+    // Bank charges
+    'bank': ['bank charge', 'bank fee', 'transaction fee'],
+    // General
+    'subscription': ['subscription', 'license', 'software'],
+    'license': ['license', 'subscription', 'software'],
+    'software': ['software', 'subscription', 'license'],
+};
+
 const CreateVendorBillModal = ({ show, onClose, onSave }) => {
     const [loading, setLoading] = useState(false);
     const [vendors, setVendors] = useState([]);
     const [expenseAccounts, setExpenseAccounts] = useState([]);
+    const [showNewVendorForm, setShowNewVendorForm] = useState(false);
+    const [newVendor, setNewVendor] = useState({ name: '', email: '', phone: '', address: '', tax_id: '' });
+    const [creatingVendor, setCreatingVendor] = useState(false);
 
     const [formData, setFormData] = useState({
         vendor: '',
@@ -22,20 +85,31 @@ const CreateVendorBillModal = ({ show, onClose, onSave }) => {
     useEffect(() => {
         if (show) {
             loadDependencies();
+            // Reset form when modal opens
+            setFormData({
+                vendor: '',
+                date_received: new Date().toISOString().split('T')[0],
+                due_date: new Date().toISOString().split('T')[0],
+                bill_number: '',
+                notes: '',
+                lines: [{ description: '', amount: 0, expense_account: '' }]
+            });
+            setShowNewVendorForm(false);
+            setNewVendor({ name: '', email: '', phone: '', address: '', tax_id: '' });
         }
     }, [show]);
 
     const loadDependencies = async () => {
         try {
             const [vendRes, accRes] = await Promise.all([
-                financeService.getVendors(),
-                financeService.getAccounts() // We need to filter for Expense/Asset accounts
+                financeService.getVendors().catch(() => null),
+                financeService.getAccounts().catch(() => null)
             ]);
 
-            setVendors(vendRes.data.results || vendRes.data || []);
+            setVendors(vendRes?.results || vendRes || []);
 
             // Filter for EXPENSE or ASSET accounts
-            const allAccounts = accRes.data.results || accRes.data || [];
+            const allAccounts = accRes?.results || accRes || [];
             const expAccs = allAccounts.filter(acc => ['EXPENSE', 'ASSET'].includes(acc.type));
             setExpenseAccounts(expAccs);
 
@@ -44,9 +118,64 @@ const CreateVendorBillModal = ({ show, onClose, onSave }) => {
         }
     };
 
+    const handleCreateVendor = async () => {
+        if (!newVendor.name.trim()) {
+            alert('Please enter the vendor name');
+            return;
+        }
+        setCreatingVendor(true);
+        try {
+            const created = await financeService.createVendor(newVendor);
+            // Add to vendors list and select it
+            setVendors(prev => [...prev, created]);
+            setFormData(prev => ({ ...prev, vendor: created.id }));
+            setShowNewVendorForm(false);
+            setNewVendor({ name: '', email: '', phone: '', address: '', tax_id: '' });
+        } catch (error) {
+            console.error("Failed to create vendor", error);
+            alert("Error creating vendor: " + (error.message || 'Unknown error'));
+        } finally {
+            setCreatingVendor(false);
+        }
+    };
+
+    // Function to suggest expense account based on description
+    const suggestExpenseAccount = (description) => {
+        if (!description || !expenseAccounts.length) return null;
+
+        const descLower = description.toLowerCase();
+
+        // Find matching keywords in description
+        for (const [keyword, relatedTerms] of Object.entries(EXPENSE_ACCOUNT_KEYWORDS)) {
+            if (descLower.includes(keyword)) {
+                // Search accounts for matching keywords
+                for (const term of relatedTerms) {
+                    const matchingAccount = expenseAccounts.find(acc =>
+                        acc.name?.toLowerCase().includes(term) ||
+                        acc.code?.toLowerCase().includes(term)
+                    );
+                    if (matchingAccount) {
+                        return matchingAccount.id;
+                    }
+                }
+            }
+        }
+
+        return null;
+    };
+
     const handleLineChange = (index, field, value) => {
         const newLines = [...formData.lines];
         newLines[index][field] = value;
+
+        // Auto-suggest expense account when description changes
+        if (field === 'description' && value && !newLines[index].expense_account) {
+            const suggestedAccount = suggestExpenseAccount(value);
+            if (suggestedAccount) {
+                newLines[index].expense_account = suggestedAccount;
+            }
+        }
+
         setFormData({ ...formData, lines: newLines });
     };
 
@@ -71,18 +200,34 @@ const CreateVendorBillModal = ({ show, onClose, onSave }) => {
     const handleSubmit = async () => {
         if (!formData.vendor) return alert("Please select a vendor");
         if (!formData.bill_number) return alert("Please enter the vendor's bill number");
-        if (formData.lines.some(l => !l.expense_account || !l.description || l.amount <= 0)) {
+        if (formData.lines.some(l => !l.expense_account || !l.description || Number(l.amount) <= 0)) {
             return alert("Please complete all line items (Account, Description, Amount > 0)");
         }
 
         setLoading(true);
         try {
-            await financeService.createBill(formData);
+            // Format data for API - ensure correct types
+            const payload = {
+                vendor: parseInt(formData.vendor, 10),
+                bill_number: formData.bill_number.trim(),
+                date_received: formData.date_received,
+                due_date: formData.due_date,
+                notes: formData.notes || '',
+                lines: formData.lines.map(line => ({
+                    description: line.description.trim(),
+                    amount: parseFloat(line.amount),
+                    expense_account: parseInt(line.expense_account, 10)
+                }))
+            };
+
+            await financeService.createBill(payload);
             onSave();
             onClose();
         } catch (error) {
             console.error("Failed to create bill", error);
-            alert("Error: " + (error.response?.data?.detail || error.message));
+            const errorMsg = error.data?.detail || error.data?.message ||
+                (typeof error.data === 'object' ? JSON.stringify(error.data) : error.message);
+            alert("Error: " + errorMsg);
         } finally {
             setLoading(false);
         }
@@ -109,16 +254,26 @@ const CreateVendorBillModal = ({ show, onClose, onSave }) => {
                                 <div className="row g-3">
                                     <div className="col-md-4">
                                         <label className="form-label small text-muted fw-bold">Vendor</label>
-                                        <select
-                                            className="form-select"
-                                            value={formData.vendor}
-                                            onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                                        >
-                                            <option value="">Select Vendor...</option>
-                                            {vendors.map(v => (
-                                                <option key={v.id} value={v.id}>{v.name}</option>
-                                            ))}
-                                        </select>
+                                        <div className="d-flex gap-2">
+                                            <select
+                                                className="form-select"
+                                                value={formData.vendor}
+                                                onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                                            >
+                                                <option value="">Select Vendor...</option>
+                                                {vendors.map(v => (
+                                                    <option key={v.id} value={v.id}>{v.name}</option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                className="btn btn-outline-primary"
+                                                type="button"
+                                                onClick={() => setShowNewVendorForm(!showNewVendorForm)}
+                                                title="Add New Vendor"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label small text-muted fw-bold">Bill / Invoice No.</label>
@@ -151,6 +306,82 @@ const CreateVendorBillModal = ({ show, onClose, onSave }) => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* New Vendor Form (collapsible) */}
+                        {showNewVendorForm && (
+                            <div className="card border-primary mb-4">
+                                <div className="card-header bg-primary text-white py-2">
+                                    <h6 className="mb-0">Add New Vendor</h6>
+                                </div>
+                                <div className="card-body">
+                                    <div className="row g-3">
+                                        <div className="col-md-4">
+                                            <label className="form-label small">Vendor Name *</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="e.g. ABC Supplies Ltd"
+                                                value={newVendor.name}
+                                                onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label small">Email</label>
+                                            <input
+                                                type="email"
+                                                className="form-control form-control-sm"
+                                                placeholder="vendor@example.com"
+                                                value={newVendor.email}
+                                                onChange={(e) => setNewVendor({ ...newVendor, email: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label small">Phone</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="+254..."
+                                                value={newVendor.phone}
+                                                onChange={(e) => setNewVendor({ ...newVendor, phone: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label small">Tax ID (KRA PIN)</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="A000000000A"
+                                                value={newVendor.tax_id}
+                                                onChange={(e) => setNewVendor({ ...newVendor, tax_id: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label small">Address</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="Physical or postal address"
+                                                value={newVendor.address}
+                                                onChange={(e) => setNewVendor({ ...newVendor, address: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-md-2 d-flex align-items-end">
+                                            <button
+                                                className="btn btn-success btn-sm w-100"
+                                                onClick={handleCreateVendor}
+                                                disabled={creatingVendor}
+                                            >
+                                                {creatingVendor ? (
+                                                    <span className="spinner-border spinner-border-sm"></span>
+                                                ) : (
+                                                    'Create Vendor'
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Line Items */}
                         <div className="card border-0 shadow-sm mb-4">

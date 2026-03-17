@@ -1,0 +1,335 @@
+/* ==========================================================================
+   Fahari ERP — Admission Book Dashboard
+   UI Enhancement Stylesheet
+   Design Reference: Odoo ERP · Linear.app · Stripe Dashboard
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Typography enhancement
+   -------------------------------------------------------------------------- */
+.admission-root {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* tabular figures for all numeric values inside the dashboard */
+.admission-root .tabular-nums,
+.admission-root [data-metric-value] {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   2. Pill tab navigation
+   -------------------------------------------------------------------------- */
+
+/* Smooth tab switching — content area entry animation */
+@keyframes tab-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admission-tab-panel {
+    animation: tab-fade-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Pill button press feel */
+.admission-pill-tab:active {
+    transform: scale(0.97);
+}
+
+/* --------------------------------------------------------------------------
+   3. Metric card micro-interactions
+   -------------------------------------------------------------------------- */
+
+/* Icon pop on card hover */
+.metric-card-icon {
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .metric-card-icon {
+    transform: scale(1.12) rotate(-3deg);
+}
+
+/* Card glow on hover — uses CSS variable set inline per card color */
+.metric-card-glow {
+    transition:
+        box-shadow 200ms ease,
+        border-color 200ms ease,
+        transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.metric-card-glow:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(63, 81, 181, 0.10),
+        0 2px 8px rgba(63, 81, 181, 0.06);
+    border-color: #c7d2fe;
+    /* indigo-200 */
+}
+
+/* --------------------------------------------------------------------------
+   4. Action button enhancements
+   -------------------------------------------------------------------------- */
+
+/* Ripple base (can be enhanced via JS for full ripple effect) */
+.btn-primary-admission {
+    position: relative;
+    overflow: hidden;
+    transition:
+        background-color 150ms ease,
+        box-shadow 150ms ease,
+        transform 100ms ease;
+}
+
+.btn-primary-admission:active {
+    transform: scale(0.97);
+}
+
+.btn-primary-admission:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 3px;
+}
+
+/* Secondary */
+.btn-secondary-admission {
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        transform 100ms ease;
+}
+
+.btn-secondary-admission:active {
+    transform: scale(0.97);
+}
+
+/* Tertiary / ghost */
+.btn-ghost-admission {
+    transition:
+        background-color 150ms ease,
+        color 150ms ease,
+        transform 100ms ease;
+}
+
+.btn-ghost-admission:active {
+    transform: scale(0.97);
+}
+
+/* Upload icon float */
+.btn-secondary-admission:hover .upload-icon,
+.btn-primary-admission:hover .plus-icon {
+    animation: icon-float 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes icon-float {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Plus icon rotate on CTA hover */
+.btn-primary-admission:hover .plus-icon {
+    transform: rotate(90deg);
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* --------------------------------------------------------------------------
+   5. Header card
+   -------------------------------------------------------------------------- */
+.dashboard-header-card {
+    transition: box-shadow 200ms ease;
+}
+
+.dashboard-header-card:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+/* Breadcrumb link hover */
+.breadcrumb-link {
+    transition: color 120ms ease;
+}
+
+.breadcrumb-link:hover {
+    color: #4338ca;
+    /* indigo-700 */
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Tab navigation container
+   -------------------------------------------------------------------------- */
+.tab-nav-card {
+    transition: box-shadow 200ms ease;
+}
+
+/* Active dot pulse on newly activated tab */
+@keyframes dot-pop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    70% {
+        transform: scale(1.4);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.tab-active-dot {
+    animation: dot-pop 250ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* --------------------------------------------------------------------------
+   7. Content panel
+   -------------------------------------------------------------------------- */
+.content-panel {
+    animation: tab-fade-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Top accent bar sweep */
+@keyframes accent-sweep {
+    from {
+        transform: scaleX(0);
+        transform-origin: left;
+    }
+
+    to {
+        transform: scaleX(1);
+        transform-origin: left;
+    }
+}
+
+.accent-bar {
+    animation: accent-sweep 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* --------------------------------------------------------------------------
+   8. Chart panels
+   -------------------------------------------------------------------------- */
+.chart-card {
+    transition: box-shadow 200ms ease;
+}
+
+.chart-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+}
+
+/* --------------------------------------------------------------------------
+   9. Key Insights glass cards
+   -------------------------------------------------------------------------- */
+.insight-glass-card {
+    transition:
+        background-color 150ms ease,
+        transform 150ms ease;
+}
+
+.insight-glass-card:hover {
+    transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   10. Live pulse indicator (green dot in header)
+   -------------------------------------------------------------------------- */
+@keyframes live-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.4);
+    }
+}
+
+.live-dot {
+    animation: live-pulse 2s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   11. Modal backdrop blur entry
+   -------------------------------------------------------------------------- */
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97) translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-panel-enter {
+    animation: modal-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* --------------------------------------------------------------------------
+   12. Responsive overrides
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+
+    /* Stack action buttons vertically on mobile */
+    .header-actions-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .header-actions-group>button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Vertically scroll pill tabs */
+    .pill-tab-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .pill-tab-wrapper::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   13. Dark mode compatibility (inherits from index.css variables)
+   -------------------------------------------------------------------------- */
+.dark-mode .metric-card-glow:hover {
+    box-shadow:
+        0 8px 24px rgba(99, 102, 241, 0.15),
+        0 2px 8px rgba(0, 0, 0, 0.25);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.dark-mode .dashboard-header-card,
+.dark-mode .tab-nav-card,
+.dark-mode .content-panel {
+    border-color: rgba(255, 255, 255, 0.06);
+    background-color: var(--bg-white);
+}

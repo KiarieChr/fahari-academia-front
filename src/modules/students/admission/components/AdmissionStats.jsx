@@ -11,6 +11,8 @@ import {
     AlertCircle,
     ChevronUp,
     ChevronDown,
+    ChevronRight,
+    RefreshCw,
     Info
 } from 'lucide-react';
 import {
@@ -34,39 +36,59 @@ import { studentManagementService } from '../../../../services/studentManagement
 const MetricCard = React.memo(({ title, value, subValue, icon: Icon, change, isPositive, color, onClick }) => {
     const getChangeIndicator = useCallback(() => {
         if (change === undefined) return null;
-        
+
         const ChangeIcon = isPositive ? ChevronUp : ChevronDown;
-        const changeColor = isPositive ? 'text-green-600' : 'text-red-600';
-        const bgColor = isPositive ? 'bg-green-50' : 'bg-red-50';
-        
+        const changeColor = isPositive ? 'text-green-700' : 'text-red-600';
+        const bgBadge = isPositive ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100';
+
         return (
-            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-md ${bgColor} ${changeColor} text-sm`}>
-                <ChangeIcon size={14} />
-                <span>{Math.abs(change)}%</span>
+            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${bgBadge} ${changeColor} text-xs font-semibold`}>
+                <ChangeIcon size={11} />
+                <span className="tabular-nums">{Math.abs(change)}%</span>
             </div>
         );
     }, [change, isPositive]);
 
     return (
-        <div 
+        <div
             onClick={onClick}
-            className={`bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 ${onClick ? 'cursor-pointer hover:border-indigo-200 hover:bg-gray-50' : ''} group`}
+            className={[
+                'relative bg-white rounded-2xl border border-gray-100 overflow-hidden',
+                'shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]',
+                'transition-all duration-200 group p-5',
+                onClick
+                    ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(63,81,181,0.12)] hover:border-indigo-100'
+                    : ''
+            ].join(' ')}
         >
-            <div className="flex justify-between items-start mb-3">
-                <div className={`p-2.5 rounded-lg ${color} group-hover:scale-105 transition-transform`}>
+            {/* Top accent strip — brand indigo */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-400 via-indigo-500 to-indigo-400" />
+
+            {/* Icon row */}
+            <div className="flex items-start justify-between mb-4">
+                <div className={`p-3 rounded-xl ${color} shadow-sm transition-all duration-200 group-hover:scale-110`}>
                     <Icon size={20} />
                 </div>
                 {getChangeIndicator()}
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">{value}</h3>
+
+            {/* Value */}
+            <h3 className="text-[1.7rem] font-bold text-gray-900 tracking-tight tabular-nums leading-none mb-1">
+                {value}
+            </h3>
+
+            {/* Sub-value */}
             {subValue && (
-                <p className="text-sm text-gray-600 mb-1">{subValue}</p>
+                <p className="text-xs font-medium text-gray-400">{subValue}</p>
             )}
-            <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500">{title}</p>
+
+            {/* Footer row */}
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                <p className="text-[0.7rem] font-bold text-gray-400 uppercase tracking-widest">{title}</p>
                 {onClick && (
-                    <span className="text-xs text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                        View details →
+                    <span className="inline-flex items-center gap-0.5 text-[0.7rem] text-indigo-500 font-semibold
+                                    opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        Details <ChevronRight size={10} />
                     </span>
                 )}
             </div>
@@ -84,7 +106,7 @@ const TrendChart = React.memo(({ data }) => {
             const admitted = payload[1]?.value || 0;
             const conversionRate = apps > 0 ? ((admitted / apps) * 100).toFixed(1) : 0;
             const conversionGap = apps - admitted;
-            
+
             return (
                 <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
                     <p className="font-semibold text-gray-900 mb-2">{label}</p>
@@ -118,21 +140,21 @@ const TrendChart = React.memo(({ data }) => {
         <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#6b7280', fontSize: 12 }} 
+                <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
                     dy={10}
                 />
-                <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
+                <YAxis
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fill: '#6b7280', fontSize: 12 }}
                     tickFormatter={(value) => value.toLocaleString()}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend 
+                <Legend
                     verticalAlign="top"
                     height={36}
                     iconType="circle"
@@ -140,28 +162,28 @@ const TrendChart = React.memo(({ data }) => {
                 />
                 <defs>
                     <linearGradient id="appsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
                     </linearGradient>
                     <linearGradient id="admittedGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#16a34a" stopOpacity={0.1}/>
+                        <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#16a34a" stopOpacity={0.1} />
                     </linearGradient>
                 </defs>
-                <Line 
-                    type="monotone" 
-                    dataKey="apps" 
-                    name="Applications" 
-                    stroke="url(#appsGradient)" 
+                <Line
+                    type="monotone"
+                    dataKey="apps"
+                    name="Applications"
+                    stroke="url(#appsGradient)"
                     strokeWidth={3}
                     dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
                     activeDot={{ r: 6, fill: '#3b82f6' }}
                 />
-                <Line 
-                    type="monotone" 
-                    dataKey="admitted" 
-                    name="Admitted" 
-                    stroke="url(#admittedGradient)" 
+                <Line
+                    type="monotone"
+                    dataKey="admitted"
+                    name="Admitted"
+                    stroke="url(#admittedGradient)"
                     strokeWidth={3}
                     dot={{ r: 4, fill: '#16a34a', strokeWidth: 2, stroke: '#fff' }}
                     activeDot={{ r: 6, fill: '#16a34a' }}
@@ -183,12 +205,12 @@ const StatusPieChart = React.memo(({ data, total }) => {
         if (active && payload && payload.length) {
             const item = payload[0];
             const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
-            
+
             return (
                 <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
                     <div className="flex items-center gap-2 mb-1">
-                        <div 
-                            className="w-3 h-3 rounded-full" 
+                        <div
+                            className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: item.color }}
                         />
                         <span className="font-semibold text-gray-900">{item.name}</span>
@@ -223,8 +245,8 @@ const StatusPieChart = React.memo(({ data, total }) => {
                     labelLine={false}
                 >
                     {sortedData.map((entry, index) => (
-                        <Cell 
-                            key={`cell-${index}`} 
+                        <Cell
+                            key={`cell-${index}`}
                             fill={entry.color}
                             stroke="#fff"
                             strokeWidth={2}
@@ -232,8 +254,8 @@ const StatusPieChart = React.memo(({ data, total }) => {
                     ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
-                <Legend 
-                    verticalAlign="bottom" 
+                <Legend
+                    verticalAlign="bottom"
                     height={36}
                     iconType="circle"
                     iconSize={10}
@@ -251,13 +273,13 @@ StatusPieChart.displayName = 'StatusPieChart';
 // Memoized Bar Chart Component
 const GenderBarChart = React.memo(({ data }) => {
     const [viewMode, setViewMode] = useState('absolute'); // 'absolute' or 'percentage'
-    
+
     const processedData = useMemo(() => {
         // Sort by total students (boys + girls) descending
-        const sorted = [...data].sort((a, b) => 
+        const sorted = [...data].sort((a, b) =>
             (b.boys + b.girls) - (a.boys + a.girls)
         );
-        
+
         if (viewMode === 'percentage') {
             return sorted.map(item => {
                 const total = item.boys + item.girls;
@@ -269,7 +291,7 @@ const GenderBarChart = React.memo(({ data }) => {
                 };
             });
         }
-        
+
         return sorted.map(item => ({
             ...item,
             total: item.boys + item.girls
@@ -280,7 +302,7 @@ const GenderBarChart = React.memo(({ data }) => {
         if (active && payload && payload.length) {
             const boys = payload.find(p => p.dataKey === 'boys')?.value || 0;
             const girls = payload.find(p => p.dataKey === 'girls')?.value || 0;
-            
+
             return (
                 <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
                     <p className="font-semibold text-gray-900 mb-2">{label}</p>
@@ -334,67 +356,65 @@ const GenderBarChart = React.memo(({ data }) => {
                     <div className="inline-flex rounded-lg border border-gray-200 p-1">
                         <button
                             onClick={() => setViewMode('absolute')}
-                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                                viewMode === 'absolute' 
-                                ? 'bg-indigo-100 text-indigo-700 font-medium' 
+                            className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'absolute'
+                                ? 'bg-indigo-100 text-indigo-700 font-medium'
                                 : 'text-gray-600 hover:bg-gray-50'
-                            }`}
+                                }`}
                         >
                             Count
                         </button>
                         <button
                             onClick={() => setViewMode('percentage')}
-                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                                viewMode === 'percentage' 
-                                ? 'bg-indigo-100 text-indigo-700 font-medium' 
+                            className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'percentage'
+                                ? 'bg-indigo-100 text-indigo-700 font-medium'
                                 : 'text-gray-600 hover:bg-gray-50'
-                            }`}
+                                }`}
                         >
                             Percentage
                         </button>
                     </div>
                 </div>
             </div>
-            
+
             <div className="w-full" style={{ height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                        data={processedData} 
+                    <BarChart
+                        data={processedData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         barSize={40}
                     >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                        <XAxis 
-                            dataKey="name" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: '#6b7280', fontSize: 12 }} 
+                        <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#6b7280', fontSize: 12 }}
                             dy={10}
                         />
-                        <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
+                        <YAxis
+                            axisLine={false}
+                            tickLine={false}
                             tick={{ fill: '#6b7280', fontSize: 12 }}
                             tickFormatter={yAxisFormatter}
                         />
                         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                        <Legend 
+                        <Legend
                             verticalAlign="top"
                             height={36}
                             iconType="circle"
                             iconSize={10}
                         />
-                        <Bar 
-                            dataKey="boys" 
-                            name="Boys" 
-                            fill="#3b82f6" 
+                        <Bar
+                            dataKey="boys"
+                            name="Boys"
+                            fill="#3b82f6"
                             radius={[4, 4, 0, 0]}
                             stackId={viewMode === 'percentage' ? 'a' : undefined}
                         />
-                        <Bar 
-                            dataKey="girls" 
-                            name="Girls" 
-                            fill="#ec4899" 
+                        <Bar
+                            dataKey="girls"
+                            name="Girls"
+                            fill="#ec4899"
                             radius={[4, 4, 0, 0]}
                             stackId={viewMode === 'percentage' ? 'a' : undefined}
                         />
@@ -466,30 +486,30 @@ const AdmissionStats = () => {
     // Frontend-only derived metrics
     const derivedMetrics = useMemo(() => {
         if (!stats) return null;
-        
+
         const { metrics } = stats;
         const totalApps = metrics.total_apps || 0;
         const admitted = metrics.admitted || 0;
         const pending = metrics.pending || 0;
         const repeaters = metrics.repeaters || 0;
         const transfers = Math.abs(metrics.transfers || 0);
-        
+
         // Calculate admission rate
         const admissionRate = totalApps > 0 ? ((admitted / totalApps) * 100) : 0;
-        
+
         // Calculate conversion rate (admitted vs pending)
-        const conversionRate = (admitted + pending) > 0 ? 
+        const conversionRate = (admitted + pending) > 0 ?
             (admitted / (admitted + pending) * 100) : 0;
-        
+
         // Calculate repeater percentage
-        const repeaterPercentage = admitted > 0 ? 
+        const repeaterPercentage = admitted > 0 ?
             ((repeaters / admitted) * 100) : 0;
-        
+
         // Mock trend indicators (frontend-only calculations)
         // These would normally come from comparing with historical data
         const admissionTrend = admissionRate > 25 ? 'up' : 'down';
         const pendingTrend = pending > (totalApps * 0.3) ? 'up' : 'down'; // If pending > 30% of total
-        
+
         return {
             admissionRate: admissionRate.toFixed(1),
             conversionRate: conversionRate.toFixed(1),
@@ -536,18 +556,22 @@ const AdmissionStats = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header with contextual info */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-1">Admission Analytics Dashboard</h1>
-                    <p className="text-gray-600 flex items-center gap-2">
-                        <Info size={16} />
-                        Insights derived from current admission data
+            {/* Section header */}
+            <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                        Admission Analytics
+                    </h2>
+                    <p className="text-xs text-gray-400 flex items-center gap-1.5 font-medium">
+                        <Info size={12} className="text-indigo-400" />
+                        Live insights derived from current admission records
                     </p>
                 </div>
-                <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
-                    Last updated: Today
-                </div>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400
+                                 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    Updated today
+                </span>
             </div>
 
             {/* Metrics Grid with Enhanced Cards */}
@@ -601,20 +625,22 @@ const AdmissionStats = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Line Chart - Application Trends */}
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-2 min-w-0">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100
+                               shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:col-span-2 min-w-0">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-1">Application Trends</h3>
-                            <p className="text-sm text-gray-500 flex items-center gap-1">
-                                Last 6 months • 
-                                <span className="flex items-center gap-1 text-blue-600">
-                                    <TrendingUp size={14} />
-                                    Gap: {Math.max(0, ...stats.trends.map(t => t.apps - t.admitted))} average
+                            <h3 className="text-base font-bold text-gray-900 mb-0.5 tracking-tight">Application Trends</h3>
+                            <p className="text-xs text-gray-400 flex items-center gap-1">
+                                Last 6 months
+                                <span className="mx-1 text-gray-200">•</span>
+                                <span className="inline-flex items-center gap-1 text-indigo-600 font-medium">
+                                    <TrendingUp size={12} />
+                                    Max gap: {Math.max(0, ...stats.trends.map(t => t.apps - t.admitted))}
                                 </span>
                             </p>
                         </div>
-                        <div className="text-sm text-gray-600">
-                            Total trend: {stats.trends.reduce((sum, t) => sum + t.apps, 0).toLocaleString()} applications
+                        <div className="text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                            {stats.trends.reduce((sum, t) => sum + t.apps, 0).toLocaleString()} total apps
                         </div>
                     </div>
                     <div className="w-full" style={{ height: 300 }}>
@@ -623,101 +649,98 @@ const AdmissionStats = () => {
                 </div>
 
                 {/* Pie Chart - Admission Status */}
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm min-w-0">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100
+                               shadow-[0_1px_3px_rgba(0,0,0,0.06)] min-w-0">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-gray-900">Admission Status Distribution</h3>
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <span className="font-medium">{stats.metrics.total_apps?.toLocaleString()}</span>
-                            total
+                        <h3 className="text-base font-bold text-gray-900 tracking-tight">Status Distribution</h3>
+                        <div className="inline-flex items-center gap-1 text-xs font-medium text-gray-500
+                                        bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                            <span className="tabular-nums font-semibold text-gray-700">{stats.metrics.total_apps?.toLocaleString()}</span>
+                            <span>total</span>
                         </div>
                     </div>
                     <div className="w-full relative" style={{ height: 300 }}>
-                        <StatusPieChart 
-                            data={stats.status_distribution} 
-                            total={stats.metrics.total_apps} 
+                        <StatusPieChart
+                            data={stats.status_distribution}
+                            total={stats.metrics.total_apps}
                         />
                         {/* Center Display */}
                         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[60%] text-center pointer-events-none">
-                            <span className="text-3xl font-bold text-gray-900">
+                            <span className="text-3xl font-bold text-gray-900 tabular-nums">
                                 {stats.metrics.total_apps?.toLocaleString()}
                             </span>
-                            <span className="block text-xs text-gray-500">Total Applications</span>
+                            <span className="block text-[0.65rem] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">Applications</span>
                         </div>
                     </div>
-                    <div className="mt-4 text-center text-sm text-gray-500">
-                        Hover over segments for detailed breakdown
-                    </div>
+                    <p className="mt-3 text-center text-xs text-gray-400">
+                        Hover segments for breakdown
+                    </p>
                 </div>
 
                 {/* Bar Chart - Class-wise Gender Distribution */}
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-3 min-w-0">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100
+                               shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:col-span-3 min-w-0">
                     <GenderBarChart data={stats.class_distribution} />
-                    <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-                        <div className="flex items-center gap-4">
+                    <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-5">
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                                <span>Total Boys: {stats.class_distribution.reduce((sum, c) => sum + c.boys, 0).toLocaleString()}</span>
+                                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Boys: <span className="tabular-nums text-gray-700 font-semibold">{stats.class_distribution.reduce((sum, c) => sum + c.boys, 0).toLocaleString()}</span>
+                                </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-pink-500" />
-                                <span>Total Girls: {stats.class_distribution.reduce((sum, c) => sum + c.girls, 0).toLocaleString()}</span>
+                                <div className="w-2.5 h-2.5 rounded-full bg-pink-500" />
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Girls: <span className="tabular-nums text-gray-700 font-semibold">{stats.class_distribution.reduce((sum, c) => sum + c.girls, 0).toLocaleString()}</span>
+                                </span>
                             </div>
                         </div>
-                        <div className="text-gray-600">
-                            Sorted by total students
-                        </div>
+                        <p className="text-[0.68rem] text-gray-400">Sorted by total students</p>
                     </div>
                 </div>
+
             </div>
 
-            {/* Summary Section (Frontend-only derived insights) */}
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
-                <h4 className="text-lg font-semibold text-indigo-900 mb-3">Key Insights</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white p-4 rounded-lg border border-indigo-100">
-                        <div className="text-sm text-gray-600 mb-1">Admission Efficiency</div>
-                        <div className="text-2xl font-bold text-gray-900">{derivedMetrics?.admissionRate}%</div>
-                        <div className="text-sm text-gray-500">Rate of applications converted to admissions</div>
+            {/* ── Key Insights Panel ── full-width below charts grid */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 to-indigo-700
+                rounded-2xl p-6 border border-indigo-500/30
+                shadow-[0_4px_24px_rgba(63,81,181,0.25)]">
+                {/* Decorative background blobs */}
+                <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/5 rounded-full" />
+                <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-white/5 rounded-full" />
+
+                <div className="relative">
+                    <div className="flex items-center gap-2 mb-5">
+                        <h4 className="text-sm font-bold text-white tracking-wide uppercase">Key Insights</h4>
+                        <div className="h-px flex-1 bg-white/20" />
+                        <span className="text-[0.65rem] text-indigo-200 font-medium">Derived from current data</span>
                     </div>
-                    <div className="bg-white p-4 rounded-lg border border-indigo-100">
-                        <div className="text-sm text-gray-600 mb-1">Gender Balance</div>
-                        <div className="text-2xl font-bold text-gray-900">
-                            {stats.class_distribution.reduce((sum, c) => sum + c.boys, 0)}:{stats.class_distribution.reduce((sum, c) => sum + c.girls, 0)}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
+                            <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Admission Efficiency</p>
+                            <p className="text-3xl font-bold text-white tabular-nums">{derivedMetrics?.admissionRate}%</p>
+                            <p className="text-xs text-indigo-200 mt-1">Applications converted to admissions</p>
                         </div>
-                        <div className="text-sm text-gray-500">Overall boys to girls ratio</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg border border-indigo-100">
-                        <div className="text-sm text-gray-600 mb-1">Top Performing Class</div>
-                        <div className="text-2xl font-bold text-gray-900">
-                            {stats.class_distribution.sort((a, b) => (b.boys + b.girls) - (a.boys + a.girls))[0]?.name || 'N/A'}
+                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
+                            <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Gender Balance</p>
+                            <p className="text-3xl font-bold text-white tabular-nums">
+                                {stats.class_distribution.reduce((sum, c) => sum + c.boys, 0)}:{stats.class_distribution.reduce((sum, c) => sum + c.girls, 0)}
+                            </p>
+                            <p className="text-xs text-indigo-200 mt-1">Overall boys to girls ratio</p>
                         </div>
-                        <div className="text-sm text-gray-500">Highest total active students</div>
+                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
+                            <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Top Performing Class</p>
+                            <p className="text-3xl font-bold text-white truncate">
+                                {stats.class_distribution.slice().sort((a, b) => (b.boys + b.girls) - (a.boys + a.girls))[0]?.name || 'N/A'}
+                            </p>
+                            <p className="text-xs text-indigo-200 mt-1">Highest total active students</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    );
-};
-
-// Helper component for refresh button (used in error state)
-const RefreshCw = ({ size = 16 }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width={size} 
-        height={size} 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-        className="rotate-90"
-    >
-        <path d="M21 2v6h-6" />
-        <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
-        <path d="M3 22v-6h6" />
-        <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
-    </svg>
-);
-
+    )
+}
 export default AdmissionStats;

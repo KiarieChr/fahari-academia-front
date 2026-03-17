@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 
 import {
@@ -21,6 +21,7 @@ const CurriculumDashboard = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [isAddItemOpen, setIsAddItemOpen] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -33,6 +34,11 @@ const CurriculumDashboard = () => {
         if (activeTab === 'subjects') return 'subject';
         return 'curriculum';
     };
+
+    // Callback to refresh data when modal creates new item
+    const handleAddItemSuccess = useCallback(() => {
+        setRefreshKey(prev => prev + 1);
+    }, []);
 
     return (
         <DashboardLayout title="Curriculum Dashboard">
@@ -82,7 +88,7 @@ const CurriculumDashboard = () => {
 
                         {/* Main Content Area */}
                         <div className="min-h-[500px] animate-in fade-in duration-300">
-                            {activeTab === 'overview' && <CurriculumOverview />}
+                            {activeTab === 'overview' && <CurriculumOverview refreshKey={refreshKey} />}
 
                             {activeTab === 'curricula' && (
                                 <div className="space-y-6">
@@ -90,7 +96,7 @@ const CurriculumDashboard = () => {
                                         <h3 className="text-lg font-bold text-gray-800">Curriculum List</h3>
                                         <p className="text-sm text-gray-500">Manage education systems and levels</p>
                                     </div>
-                                    <CurriculumList />
+                                    <CurriculumList refreshKey={refreshKey} />
                                 </div>
                             )}
 
@@ -100,7 +106,7 @@ const CurriculumDashboard = () => {
                                         <h3 className="text-lg font-bold text-gray-800">Subject Repository</h3>
                                         <p className="text-sm text-gray-500">Manage subjects and learning areas</p>
                                     </div>
-                                    <SubjectManagement />
+                                    <SubjectManagement refreshKey={refreshKey} />
                                 </div>
                             )}
                         </div>
@@ -110,6 +116,7 @@ const CurriculumDashboard = () => {
                             isOpen={isAddItemOpen}
                             onClose={() => setIsAddItemOpen(false)}
                             defaultType={getModalDefaultType()}
+                            onSuccess={handleAddItemSuccess}
                         />
                     </div>
                 )}

@@ -51,7 +51,7 @@ const FeeStructureDashboard = () => {
     const [currentStructure, setCurrentStructure] = useState(null);
     const [currentFeeItems, setCurrentFeeItems] = useState([]);
     const [selectedFeeItems, setSelectedFeeItems] = useState([]); // Bulk selection
-    const [propagateToLevel, setPropagateToLevel] = useState(false); // Uniform structure toggle
+    // Removed propagateToLevel - simplifies workflow, schools configure each class individually
     const [loading, setLoading] = useState(true);
 
     // Modal states
@@ -140,70 +140,72 @@ const FeeStructureDashboard = () => {
         }
     }, [selectedYear, rawYears, rawTerms]);
 
-    // Fetch Fee Structures
+    // Fetch Fee Structures - extracted to component level for reuse
+    const fetchStructures = async () => {
+        if (!refClasses.length) return; // Wait for refs
+        setLoading(true);
+        try {
+            const response = await api.get('/api/fees/fee-structures/');
+            const structures = Array.isArray(response) ? response : (response.results || []);
+
+            // Transform backend data to UI shape and extract items
+            const uiStructures = [];
+            let allItems = [];
+
+            structures.forEach(s => {
+                // Find class name from ref
+                const cls = refClasses.find(c => c.id === s.grade);
+                const yr = s.academic_year_details?.name;
+                const tm = s.term_details?.name;
+
+                const uiStruct = {
+                    id: s.id,
+                    classId: s.grade,
+                    className: cls ? cls.name : 'Unknown',
+                    academicYear: yr,
+                    term: tm,
+                    status: s.status === 'ACTIVE' ? 'Active' : s.status === 'DRAFT' ? 'Draft' : 'Archived',
+                    version: 1, // Backend doesn't track version yet
+                    billingStarted: false, // Backend assumption
+                    studentCount: 0, // Backend doesn't verify yet
+                    // Keep raw references for API calls
+                    raw: s
+                };
+                uiStructures.push(uiStruct);
+
+                // Extract items - using is_optional (mandatory = !is_optional)
+                if (s.items) {
+                    const structItems = s.items.map(item => ({
+                        id: item.id,
+                        structureId: s.id,
+                        name: item.name,
+                        category: item.category || 'TUITION',
+                        accountId: item.account,
+                        amount: parseFloat(item.amount),
+                        is_optional: item.is_optional || false, // Backend field
+                        mandatory: !item.is_optional, // Computed for UI compatibility
+                        frequency: item.frequency === 'RECURRING' ? 'Termly' : 'One Time',
+                        appliesTo: 'All Students',
+                        status: 'Active',
+                        order: item.priority
+                    }));
+                    allItems = [...allItems, ...structItems];
+                }
+            });
+
+            setFeeStructures(uiStructures);
+            setFeeItems(allItems);
+
+        } catch (error) {
+            console.error("Error fetching fee structures", error);
+            // toast.error("Failed to load fee structures");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Initial fetch of Fee Structures
     useEffect(() => {
-        const fetchStructures = async () => {
-            if (!refClasses.length) return; // Wait for refs
-            setLoading(true);
-            try {
-                const response = await api.get('/api/fees/structures/');
-                const structures = Array.isArray(response) ? response : (response.results || []);
-
-                // Transform backend data to UI shape and extract items
-                const uiStructures = [];
-                let allItems = [];
-
-                structures.forEach(s => {
-                    // Find class name from ref
-                    const cls = refClasses.find(c => c.id === s.grade);
-                    const yr = s.academic_year_details?.name;
-                    const tm = s.term_details?.name;
-
-                    const uiStruct = {
-                        id: s.id,
-                        classId: s.grade,
-                        className: cls ? cls.name : 'Unknown',
-                        academicYear: yr,
-                        term: tm,
-                        status: s.status === 'ACTIVE' ? 'Active' : s.status === 'DRAFT' ? 'Draft' : 'Archived',
-                        version: 1, // Backend doesn't track version yet
-                        billingStarted: false, // Backend assumption
-                        studentCount: 0, // Backend doesn't verify yet
-                        // Keep raw references for API calls
-                        raw: s
-                    };
-                    uiStructures.push(uiStruct);
-
-                    // Extract items
-                    if (s.items) {
-                        const structItems = s.items.map(item => ({
-                            id: item.id,
-                            structureId: s.id,
-                            name: item.name,
-                            category: item.category || 'TUITION', // Use category ID directly usually
-                            accountId: item.account,
-                            amount: parseFloat(item.amount),
-                            mandatory: item.is_mandatory,
-                            frequency: item.frequency === 'RECURRING' ? 'Termly' : 'One Time',
-                            appliesTo: 'All Students', // Default
-                            status: 'Active',
-                            order: item.priority
-                        }));
-                        allItems = [...allItems, ...structItems];
-                    }
-                });
-
-                setFeeStructures(uiStructures);
-                setFeeItems(allItems);
-
-            } catch (error) {
-                console.error("Error fetching fee structures", error);
-                // toast.error("Failed to load fee structures");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchStructures();
     }, [refClasses]); // Re-run if refClasses load (needed for mapping names)
 
@@ -275,7 +277,7 @@ const FeeStructureDashboard = () => {
 
         if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
             try {
-                await api.delete(`/api/fees/items/${item.id}/`);
+                await api.delete(`/api/fees/fee-items/${item.id}/`);
                 setFeeItems(feeItems.filter(fi => fi.id !== item.id));
                 toast.success('Fee item deleted successfully!');
             } catch (error) {
@@ -290,7 +292,7 @@ const FeeStructureDashboard = () => {
         if (confirm(`Delete ${selectedFeeItems.length} items?`)) {
             // Sequential delete for mock backend
             for (const id of selectedFeeItems) {
-                await api.delete(`/api/fees/items/${id}/`);
+                await api.delete(`/api/fees/fee-items/${id}/`);
             }
             setFeeItems(prev => prev.filter(i => !selectedFeeItems.includes(i.id)));
             setSelectedFeeItems([]);
@@ -298,20 +300,24 @@ const FeeStructureDashboard = () => {
         }
     };
 
-    const handleBulkUpdateStatus = async (mandatory) => {
+    const handleBulkUpdateStatus = async (makeOptional) => {
         if (!selectedFeeItems.length) return;
-        // Mock update
-        const updates = feeItems.map(i => selectedFeeItems.includes(i.id) ? { ...i, mandatory } : i);
+        // Update is_optional field (mandatory = !is_optional)
+        const updates = feeItems.map(i =>
+            selectedFeeItems.includes(i.id)
+                ? { ...i, is_optional: makeOptional, mandatory: !makeOptional }
+                : i
+        );
         setFeeItems(updates);
         setSelectedFeeItems([]);
-        toast.success("Bulk update complete");
+        toast.success(`Bulk update complete - items set to ${makeOptional ? 'Optional' : 'Mandatory'}`);
     };
 
     const handleInlineUpdate = async (item, newAmount) => {
         // Optimistic update
         setFeeItems(prev => prev.map(i => i.id === item.id ? { ...i, amount: parseFloat(newAmount) } : i));
         try {
-            await api.patch(`/api/fees/items/${item.id}/`, { amount: newAmount });
+            await api.patch(`/api/fees/fee-items/${item.id}/`, { amount: newAmount });
         } catch (e) {
             toast.error("Failed to update amount");
             // Revert? For now assume success or full refresh
@@ -324,7 +330,6 @@ const FeeStructureDashboard = () => {
 
             if (!structureId) {
                 // Resolve IDs from Local Data instead of API search
-                // Use selectedYear (Name) -> find ID from rawYears
                 const yearObj = rawYears.find(y => y.name === selectedYear);
                 const termObj = rawTerms.find(t => t.name === selectedTerm && t.academic_year === yearObj?.id);
 
@@ -333,7 +338,7 @@ const FeeStructureDashboard = () => {
                     return;
                 }
 
-                const structRes = await api.post('/api/fees/structures/', {
+                const structRes = await api.post('/api/fees/fee-structures/', {
                     academic_year: yearObj.id,
                     term: termObj.id,
                     grade: selectedClass,
@@ -342,29 +347,36 @@ const FeeStructureDashboard = () => {
                 });
                 structureId = structRes.id;
 
-                // Update local state (simplified, better to re-fetch)
+                // Update local state
                 const newStruct = { ...structRes, status: 'Draft', classId: selectedClass, academicYear: selectedYear, term: selectedTerm, items: [] };
                 setFeeStructures([...feeStructures, newStruct]);
                 setCurrentStructure(newStruct);
             }
 
-            // Save Item
+            // Save Item - convert mandatory to is_optional for backend
             const payload = {
                 structure: structureId,
                 name: feeItemData.name,
                 amount: feeItemData.amount,
-                account: feeItemData.accountId || 1, // Needs valid ID
-                is_mandatory: feeItemData.mandatory,
+                account: feeItemData.accountId || 1,
+                is_optional: !feeItemData.mandatory, // Backend uses is_optional
                 frequency: feeItemData.frequency === 'Termly' ? 'RECURRING' : 'ONE_TIME',
                 priority: feeItemData.order || 1
             };
 
             if (editingFeeItem) {
-                const res = await api.patch(`/api/fees/items/${editingFeeItem.id}/`, payload);
-                setFeeItems(feeItems.map(i => i.id === editingFeeItem.id ? { ...i, ...res, name: res.name, amount: parseFloat(res.amount) } : i));
+                const res = await api.patch(`/api/fees/fee-items/${editingFeeItem.id}/`, payload);
+                setFeeItems(feeItems.map(i => i.id === editingFeeItem.id ? {
+                    ...i,
+                    ...res,
+                    name: res.name,
+                    amount: parseFloat(res.amount),
+                    is_optional: res.is_optional,
+                    mandatory: !res.is_optional
+                } : i));
                 toast.success("Item updated");
             } else {
-                const res = await api.post('/api/fees/items/', payload);
+                const res = await api.post('/api/fees/fee-items/', payload);
                 const newItem = {
                     id: res.id,
                     structureId: structureId,
@@ -372,79 +384,18 @@ const FeeStructureDashboard = () => {
                     category: feeItemData.category,
                     accountId: res.account,
                     amount: parseFloat(res.amount),
-                    mandatory: res.is_mandatory,
+                    is_optional: res.is_optional,
+                    mandatory: !res.is_optional, // Computed for UI compatibility
                     frequency: res.frequency === 'RECURRING' ? 'Termly' : 'One Time',
                     status: 'Active',
                     order: res.priority,
                     appliesTo: 'All Students'
                 };
 
-                // Propagate Termly fees to other terms in the same year
-                const propagate = feeItemData.frequency === 'Termly' || propagateToLevel;
-                let propagatedItems = [];
-
-                if (propagate) {
-                    // Logic: 
-                    // 1. If Termly -> Same Class, Other Terms in Year
-                    // 2. If PropagateToLevel -> Same Term/Year, Other Classes in Level
-
-                    const siblingStructures = feeStructures.filter(s => {
-                        if (s.id === structureId) return false;
-
-                        const sameYear = s.academicYear === currentStructure.academicYear;
-                        const sameClass = s.classId === currentStructure.classId;
-                        const sameTerm = s.term === currentStructure.term;
-
-                        // Termly Propagation (Same Class, Diff Term)
-                        if (feeItemData.frequency === 'Termly' && sameYear && sameClass) return true;
-
-                        // Level Propagation (Same Term/Year, Diff Class in Level)
-                        if (propagateToLevel && sameYear && sameTerm) {
-                            // Check level
-                            const sClass = refClasses.find(c => c.id == s.classId);
-                            const cClass = refClasses.find(c => c.id == currentStructure.classId);
-                            if (sClass?.level === cClass?.level) return true;
-                        }
-                        return false;
-                    });
-
-                    // Execute sequentially or parallel? Parallel is fine.
-                    const propgPromises = siblingStructures.map(async (sibling) => {
-                        // Check if item exists to prevent duplicates
-                        const exists = feeItems.some(i => i.structureId === sibling.id && i.name === newItem.name);
-                        if (exists) return null;
-
-                        try {
-                            const sibPayload = { ...payload, structure: sibling.id };
-                            const sibRes = await api.post('/api/fees/items/', sibPayload);
-                            return {
-                                ...newItem,
-                                id: sibRes.id,
-                                ...sibRes, // Spread detailed response
-                                structureId: sibling.id,
-                                status: 'Active',
-                                amount: parseFloat(sibRes.amount),
-                                mandatory: sibRes.is_mandatory,
-                                category: feeItemData.category,
-                                frequency: res.frequency === 'RECURRING' ? 'Termly' : 'One Time'
-                            };
-                        } catch (err) {
-                            console.warn("Failed to propagate fee item", err);
-                            return null;
-                        }
-                    });
-
-                    const results = await Promise.all(propgPromises);
-                    propagatedItems = results.filter(Boolean);
-                }
-
-                setFeeItems(prev => [...prev, newItem, ...propagatedItems]);
-
-                if (propagatedItems.length > 0) {
-                    toast.success(`Item created and added to ${propagatedItems.length} other terms automatically.`);
-                } else {
-                    toast.success("Item created");
-                }
+                // Simplified: No propagation - each structure is configured individually
+                // This is clearer for Kenyan schools that often have different fees per class
+                setFeeItems(prev => [...prev, newItem]);
+                toast.success("Item created");
             }
             setShowAddEditModal(false);
 
@@ -455,7 +406,12 @@ const FeeStructureDashboard = () => {
     };
 
     const handleCopyStructure = async (copyConfig) => {
-        if (!currentStructure) return;
+        // Use sourceStructureId from config (selected in modal) instead of currentStructure
+        const sourceId = copyConfig.sourceStructureId;
+        if (!sourceId) {
+            toast.error("Please select a source structure to copy from.");
+            return;
+        }
 
         try {
             // Resolve Names to IDs
@@ -474,16 +430,13 @@ const FeeStructureDashboard = () => {
                 percentage_increase: parseFloat(copyConfig.percentageIncrease) || 0
             };
 
-            const response = await api.post(`/api/fees/structures/${currentStructure.id}/clone/`, payload);
+            const response = await api.post(`/api/fees/fee-structures/${sourceId}/clone/`, payload);
 
             toast.success(response.detail || "Structure cloned successfully");
 
-            // Refresh to show new structures (if we are looking at them)
-            // Ideally re-fetch or append locally, but re-fetch is safer for bulk ops
-            // Trigger a re-fetch? We can just append to feeStructures state if we construct them properly,
-            // but bulk is messy. Let's just reload.
-            // Using a simple trick to force reload:
-            window.location.reload(); // Simple but effective for now, or extract fetchStructures to function we can call.
+            // Refresh structures list
+            fetchStructures();
+            setShowCopyModal(false);
 
         } catch (error) {
             console.error(error);
@@ -508,7 +461,7 @@ const FeeStructureDashboard = () => {
         // ...
 
         try {
-            await api.patch(`/api/fees/structures/${currentStructure.id}/`, { status: 'ACTIVE' });
+            await api.patch(`/api/fees/fee-structures/${currentStructure.id}/`, { status: 'ACTIVE' });
             setFeeStructures(prev => prev.map(s => s.id === currentStructure.id ? { ...s, status: 'Active' } : s));
             toast.success("Structure Activated");
             setShowActivationModal(false);
@@ -520,7 +473,7 @@ const FeeStructureDashboard = () => {
     const handleArchiveStructure = async () => {
         if (!currentStructure) return;
         try {
-            await api.patch(`/api/fees/structures/${currentStructure.id}/`, { status: 'INACTIVE' });
+            await api.patch(`/api/fees/fee-structures/${currentStructure.id}/`, { status: 'INACTIVE' });
             setFeeStructures(prev => prev.map(s => s.id === currentStructure.id ? { ...s, status: 'Archived' } : s));
             toast.success("Structure Archived");
         } catch (e) {
@@ -674,9 +627,7 @@ const FeeStructureDashboard = () => {
                     onArchive={handleArchiveStructure}
                     onActivate={handleInitiateActivation}
                     currentStructure={currentStructure}
-                    // New Props
-                    propagateToLevel={propagateToLevel}
-                    setPropagateToLevel={setPropagateToLevel}
+                // Removed propagateToLevel - simplified workflow
                 />
 
                 {/* Fee Impact Preview */}
@@ -891,11 +842,13 @@ const FeeStructureDashboard = () => {
                     show={showCopyModal}
                     onClose={() => setShowCopyModal(false)}
                     onCopy={handleCopyStructure}
-                    sourceStructure={currentStructure}
-                    sourceFeeItems={currentFeeItems}
+                    currentStructure={currentStructure}
+                    currentFeeItems={currentFeeItems}
                     classes={refClasses}
                     academicYears={refYears}
                     terms={refTerms}
+                    rawYears={rawYears}
+                    rawTerms={rawTerms}
                 />
 
                 <ActivationConfirmModal

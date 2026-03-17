@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, RefreshCw, FileText, Lock } from 'lucide-react';
+import { Settings, RefreshCw, FileText, Lock, Shield, History } from 'lucide-react';
 
 const SystemDefaults = () => {
     return (

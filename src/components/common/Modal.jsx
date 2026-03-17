@@ -64,7 +64,7 @@ const Modal = ({
                     fade-in 
                     zoom-in-95 
                     duration-200
-                    max-h-[90vh]
+                    max-h-[90vh] px-5 py-5
                 `}
                 role="dialog"
                 aria-modal="true"

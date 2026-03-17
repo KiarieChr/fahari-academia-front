@@ -58,17 +58,17 @@ export const api = {
                 ...(options.headers || {})
             };
 
-            if (!isFormData && !headers['Content-Type']) {
+            // For FormData, remove Content-Type to let browser set it with boundary
+            if (isFormData) {
+                delete headers['Content-Type'];
+            } else if (!headers['Content-Type']) {
                 headers['Content-Type'] = 'application/json';
             }
-
-            // Handle FormData specifically if needed, but for now assume JSON unless specified
-            const body = options.body || (isFormData ? data : JSON.stringify(data));
 
             const response = await fetch(`${API_URL}${url}`, {
                 method: 'POST',
                 headers,
-                body,
+                body: isFormData ? data : JSON.stringify(data),
             });
             return handleResponse(response, options);
         } catch (error) {
@@ -84,7 +84,10 @@ export const api = {
                 ...(options.headers || {})
             };
 
-            if (!isFormData && !headers['Content-Type']) {
+            // For FormData, remove Content-Type to let browser set it with boundary
+            if (isFormData) {
+                delete headers['Content-Type'];
+            } else if (!headers['Content-Type']) {
                 headers['Content-Type'] = 'application/json';
             }
 
@@ -107,7 +110,10 @@ export const api = {
                 ...(options.headers || {})
             };
 
-            if (!isFormData && !headers['Content-Type']) {
+            // For FormData, remove Content-Type to let browser set it with boundary
+            if (isFormData) {
+                delete headers['Content-Type'];
+            } else if (!headers['Content-Type']) {
                 headers['Content-Type'] = 'application/json';
             }
 
@@ -184,9 +190,171 @@ export const api = {
         }
     },
 
+    getCurrentUser: async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/users/profile/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders(),
+                },
+            });
+            return handleResponse(response);
+        } catch (error) {
+            throw error;
+        }
+    },
+
     // Placeholder - Not implemented yet
     forgotPassword: async (email) => {
         console.warn("Forgot password not implemented on backend");
         throw new Error("Feature not available yet.");
-    }
+    },
+
+    // ─── Academics (class sessions, grades, terms) ────────────────
+    academics: {
+        getActiveSessions: (params = {}) =>
+            api.get('/api/academics/sessions/', { params: { is_active: true, ...params } }),
+        getClassSession: (id) =>
+            api.get(`/api/academics/sessions/${id}/`),
+        getTerms: (params = {}) =>
+            api.get('/api/academics/terms/', { params }),
+        getGrades: (params = {}) =>
+            api.get('/api/academics/grades/', { params }),
+    },
+
+    // ─── Timetable ─── Planning layer ────────────────────────────
+    timetable: {
+        // Subjects
+        getSubjects: (params = {}) =>
+            api.get('/api/timetable/subjects/', { params }),
+        createSubject: (data) =>
+            api.post('/api/timetable/subjects/', data),
+        updateSubject: (id, data) =>
+            api.put(`/api/timetable/subjects/${id}/`, data),
+        deleteSubject: (id) =>
+            api.delete(`/api/timetable/subjects/${id}/`),
+
+        // Rooms
+        getRooms: (params = {}) =>
+            api.get('/api/timetable/rooms/', { params }),
+        createRoom: (data) =>
+            api.post('/api/timetable/rooms/', data),
+        updateRoom: (id, data) =>
+            api.put(`/api/timetable/rooms/${id}/`, data),
+        deleteRoom: (id) =>
+            api.delete(`/api/timetable/rooms/${id}/`),
+
+        // Timetable Slots
+        getSlots: (params = {}) =>
+            api.get('/api/timetable/slots/', { params }),
+        getSlot: (id) =>
+            api.get(`/api/timetable/slots/${id}/`),
+        createSlot: (data) =>
+            api.post('/api/timetable/slots/', data),
+        updateSlot: (id, data) =>
+            api.put(`/api/timetable/slots/${id}/`, data),
+        patchSlot: (id, data) =>
+            api.patch(`/api/timetable/slots/${id}/`, data),
+        deleteSlot: (id) =>
+            api.delete(`/api/timetable/slots/${id}/`),
+        // Weekly view: returns slots grouped by day for a given class session
+        getWeeklyView: (classSessionId) =>
+            api.get('/api/timetable/slots/weekly_view/', { params: { class_session: classSessionId } }),
+        // Replace a slot (keeps history, creates new)
+        replaceSlot: (id, data) =>
+            api.post(`/api/timetable/slots/${id}/replace_slot/`, data),
+
+        // Exceptions (holidays / cancelled days)
+        getExceptions: (params = {}) =>
+            api.get('/api/timetable/exceptions/', { params }),
+        createException: (data) =>
+            api.post('/api/timetable/exceptions/', data),
+        updateException: (id, data) =>
+            api.put(`/api/timetable/exceptions/${id}/`, data),
+        deleteException: (id) =>
+            api.delete(`/api/timetable/exceptions/${id}/`),
+
+        // Curriculum units
+        getCurriculumUnits: (params = {}) =>
+            api.get('/api/timetable/curriculum-units/', { params }),
+        createCurriculumUnit: (data) =>
+            api.post('/api/timetable/curriculum-units/', data),
+        updateCurriculumUnit: (id, data) =>
+            api.put(`/api/timetable/curriculum-units/${id}/`, data),
+        deleteCurriculumUnit: (id) =>
+            api.delete(`/api/timetable/curriculum-units/${id}/`),
+    },
+
+    // ─── Planned Lessons ─── Generation layer ────────────────────
+    plannedLessons: {
+        list: (params = {}) =>
+            api.get('/api/scheduled/planned-lessons/', { params }),
+        getToday: (params = {}) =>
+            api.get('/api/scheduled/planned-lessons/today/', { params }),
+        getSummary: (params = {}) =>
+            api.get('/api/scheduled/planned-lessons/summary/', { params }),
+        cancel: (id, data = {}) =>
+            api.post(`/api/scheduled/planned-lessons/${id}/cancel/`, data),
+        regenerate: (data = {}) =>
+            api.post('/api/scheduled/planned-lessons/regenerate/', data),
+    },
+
+    // ─── Lesson Sessions ─── Execution layer ─────────────────────
+    lessonSessions: {
+        list: (params = {}) =>
+            api.get('/api/lesson-sessions/sessions/', { params }),
+        get: (id) =>
+            api.get(`/api/lesson-sessions/sessions/${id}/`),
+        create: (data) =>
+            api.post('/api/lesson-sessions/sessions/', data),
+        update: (id, data) =>
+            api.put(`/api/lesson-sessions/sessions/${id}/`, data),
+        patch: (id, data) =>
+            api.patch(`/api/lesson-sessions/sessions/${id}/`, data),
+        // Actions
+        start: (id, data = {}) =>
+            api.post(`/api/lesson-sessions/sessions/${id}/start/`, data),
+        // Ad-hoc (no planned lesson): pass planned_lesson=null + required fields
+        startAdhoc: (data) =>
+            api.post('/api/lesson-sessions/sessions/', data),
+        complete: (id, data = {}) =>
+            api.post(`/api/lesson-sessions/sessions/${id}/complete/`, data),
+        cancel: (id, data = {}) =>
+            api.post(`/api/lesson-sessions/sessions/${id}/cancel/`, data),
+        // Attendance
+        getAttendance: (id) =>
+            api.get(`/api/lesson-sessions/sessions/${id}/attendance/`),
+        markAttendance: (id, records) =>
+            api.post(`/api/lesson-sessions/sessions/${id}/attendance/`, { records }),
+        // Today's sessions
+        getToday: (params = {}) =>
+            api.get('/api/lesson-sessions/sessions/today/', { params }),
+        // Analytics
+        getAnalytics: (params = {}) =>
+            api.get('/api/lesson-sessions/sessions/analytics/', { params }),
+        // Teacher workload
+        getTeacherWorkload: (params = {}) =>
+            api.get('/api/lesson-sessions/teacher-workload/', { params }),
+    },
+
+    // ─── Substitutions ────────────────────────────────────────────
+    substitutions: {
+        list: (params = {}) =>
+            api.get('/api/lesson-sessions/substitutions/', { params }),
+        create: (data) =>
+            api.post('/api/lesson-sessions/substitutions/', data),
+        update: (id, data) =>
+            api.put(`/api/lesson-sessions/substitutions/${id}/`, data),
+        delete: (id) =>
+            api.delete(`/api/lesson-sessions/substitutions/${id}/`),
+    },
+
+    // ─── Curriculum Coverage ─────────────────────────────────────
+    curriculumCoverage: {
+        list: (params = {}) =>
+            api.get('/api/lesson-sessions/coverage/', { params }),
+        getSubjectSummary: (params = {}) =>
+            api.get('/api/lesson-sessions/coverage/subject_summary/', { params }),
+    },
 };
