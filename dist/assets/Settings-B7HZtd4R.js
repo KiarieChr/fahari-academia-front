@@ -1,0 +1,1 @@
+import{j as e,D as t}from"./index-3UWuULgT.js";const n=()=>e.jsx(t,{title:"Settings",children:e.jsxs("div",{className:"module-content",children:[e.jsx("h2",{children:"Settings Module"}),e.jsx("p",{children:"System configuration and preferences."})]})});export{n as default};
