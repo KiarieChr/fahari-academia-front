@@ -160,31 +160,42 @@ const TermSetup = () => {
             )}
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                            <h3 className="text-lg font-semibold text-gray-800">{editingTerm ? 'Edit Term' : 'Add New Term'}</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <XCircle size={24} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <div className="flex items-center gap-3.5">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600">
+                                    <Calendar size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">{editingTerm ? 'Edit Term' : 'Add New Term'}</h3>
+                                    <p className="text-[0.8rem] text-gray-400 mt-0.5">Configure academic term details</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                                <XCircle size={18} className="text-gray-400" />
                             </button>
                         </div>
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
+
+                        {/* Form Body */}
+                        <form onSubmit={handleSave} className="px-7 py-6 space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Term Name</label>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Term Name</label>
                                 <input
                                     type="text"
                                     required
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none transition-all"
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
                                     placeholder="e.g. Term 1"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Academic Year</label>
                                 <select
                                     required
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none transition-all"
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
                                     value={formData.academic_year}
                                     onChange={e => setFormData({ ...formData, academic_year: e.target.value })}
                                 >
@@ -193,9 +204,9 @@ const TermSetup = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Start Date</label>
                                     <DateInput
                                         required
                                         value={formData.start_date}
@@ -204,7 +215,7 @@ const TermSetup = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">End Date</label>
                                     <DateInput
                                         required
                                         value={formData.end_date}
@@ -214,7 +225,7 @@ const TermSetup = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 pt-1">
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -226,22 +237,25 @@ const TermSetup = () => {
                                     <span className="ml-3 text-sm font-medium text-gray-700">Set as Current Term</span>
                                 </label>
                             </div>
-                            <div className="pt-4 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="btn btn-light border flex-grow-1"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary flex-grow-1 fw-bold"
-                                >
-                                    {editingTerm ? 'Update Term' : 'Create Term'}
-                                </button>
-                            </div>
                         </form>
+
+                        {/* Footer */}
+                        <div className="px-7 py-4 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSave}
+                                className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all"
+                            >
+                                {editingTerm ? 'Update Term' : 'Create Term'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

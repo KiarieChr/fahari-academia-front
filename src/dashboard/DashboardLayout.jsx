@@ -82,7 +82,7 @@ const DashboardLayout = ({ children, title }) => {
             path: '/dashboard/finance',
             subItems: [
                 { label: 'Accounts Payable', path: '/dashboard/finance/payable' },
-                { label: 'Customer Invoice', path: '/dashboard/finance/invoice' },
+                { label: 'Customer Invoice', path: '/dashboard/fees/invoice' },
                 { label: 'Chart of Accounts', path: '/dashboard/finance/chart' },
                 { label: 'Journals', path: '/dashboard/finance/journals' },
                 { label: 'Finance Report', path: '/dashboard/finance/reports' },

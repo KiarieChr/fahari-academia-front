@@ -40,8 +40,9 @@ const ChartOfAccounts = () => {
         assets: 0,
         income: 0,
         expenses: 0,
-        unposted: 0 // We might not get this easily yet
+        unposted: 0
     });
+    const [fiscalYear, setFiscalYear] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -51,10 +52,18 @@ const ChartOfAccounts = () => {
         setLoading(true);
         try {
             // Fetch Accounts (Full Structure) and Trial Balance (for balances)
-            const [accRes, tbRes] = await Promise.all([
+            const [accResult, tbResult, fyResult] = await Promise.allSettled([
                 financeService.getStructure(),
-                financeService.getTrialBalance()
+                financeService.getTrialBalance(),
+                financeService.getFiscalPeriods()
             ]);
+
+            if (accResult.status === 'rejected') {
+                throw accResult.reason || new Error('Failed to load accounts');
+            }
+
+            const accRes = accResult.value;
+            const tbRes = tbResult.status === 'fulfilled' ? tbResult.value : { lines: [] };
 
             // API Service returns payload directly, unlike axios
             const accountList = Array.isArray(accRes) ? accRes : (accRes.results || accRes.data || []);
@@ -79,6 +88,16 @@ const ChartOfAccounts = () => {
                 if (line.type === 'INCOME') totalIncome += (net * -1); // Flip
                 if (line.type === 'EXPENSE') totalExpenses += net;
             });
+
+            // Find current open fiscal period
+            if (fyResult.status === 'fulfilled') {
+                const periods = Array.isArray(fyResult.value) ? fyResult.value : (fyResult.value?.results || []);
+                const today = new Date().toISOString().split('T')[0];
+                const current = periods.find(p => !p.is_closed && p.start_date <= today && p.end_date >= today)
+                    || periods.find(p => !p.is_closed)
+                    || periods[0];
+                setFiscalYear(current || null);
+            }
 
             setAccounts(accountList);
             setBalances(balanceMap);
@@ -358,9 +377,9 @@ const ChartOfAccounts = () => {
                     <div>
                         <h2 className="fw-bold mb-1">Chart of Accounts</h2>
                         <div className="d-flex align-items-center gap-3 text-muted small">
-                            <span>Academic Year: **2026/2027**</span>
-                            <span className="text-success fw-semibold d-flex align-items-center gap-1">
-                                <CheckCircle2 size={12} /> Books Open
+                            <span>Fiscal Year: {fiscalYear ? fiscalYear.name : 'Not Set'}</span>
+                            <span className={`fw-semibold d-flex align-items-center gap-1 ${fiscalYear && !fiscalYear.is_closed ? 'text-success' : 'text-warning'}`}>
+                                <CheckCircle2 size={12} /> {fiscalYear && !fiscalYear.is_closed ? 'Books Open' : 'Books Closed'}
                             </span>
                         </div>
                     </div>

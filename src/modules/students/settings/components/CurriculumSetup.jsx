@@ -119,21 +119,37 @@ const CurriculumSetup = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Add Curriculum</h3>
-                        <form onSubmit={handleSave} className="space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <div className="flex items-center gap-3.5">
+                                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600">
+                                    <BookOpen size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">Add Curriculum</h3>
+                                    <p className="text-[0.8rem] text-gray-400 mt-0.5">Define a new curriculum track</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                                <span className="text-gray-400 text-lg">&times;</span>
+                            </button>
+                        </div>
+
+                        {/* Form Body */}
+                        <form onSubmit={handleSave} className="px-7 py-6 space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Curriculum Name</label>
-                                <input className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. CBC" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Curriculum Name</label>
+                                <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="e.g. CBC" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Code (Optional)</label>
-                                <input className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. K-CBC" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} />
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Code (Optional)</label>
+                                <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="e.g. K-CBC" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Education Level</label>
-                                <select className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value={formData.education_level} onChange={e => setFormData({ ...formData, education_level: e.target.value })}>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Education Level</label>
+                                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" value={formData.education_level} onChange={e => setFormData({ ...formData, education_level: e.target.value })}>
                                     <option value="primary">Primary</option>
                                     <option value="junior_secondary">Junior Secondary</option>
                                     <option value="senior_secondary">Senior Secondary</option>
@@ -141,21 +157,23 @@ const CurriculumSetup = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" rows="3" placeholder="Brief description..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+                                <textarea className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm resize-none transition-all" rows="3" placeholder="Brief description..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
                             </div>
-                            <div className="flex items-center gap-2 pt-2">
+                            <div className="flex items-center gap-2 pt-1">
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" className="sr-only peer" checked={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.checked })} />
-                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                                    <span className="ml-2 text-sm text-gray-600">Active</span>
+                                    <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                                    <span className="ml-2.5 text-sm font-medium text-gray-600">Active</span>
                                 </label>
                             </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-light border flex-grow-1">Cancel</button>
-                                <button type="submit" className="btn btn-primary flex-grow-1 fw-bold">Save Curriculum</button>
-                            </div>
                         </form>
+
+                        {/* Footer */}
+                        <div className="px-7 py-4 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3">
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">Cancel</button>
+                            <button type="button" onClick={handleSave} className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all">Save Curriculum</button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -175,32 +175,37 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                        {intake ? 'Edit Intake' : 'Add New Intake'}
-                    </h2>
+                <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 bg-gray-50/50">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">
+                            {intake ? 'Edit Intake' : 'Add New Intake'}
+                        </h2>
+                        <p className="text-[0.8rem] text-gray-400 mt-0.5">
+                            {intake ? 'Update intake details and manage sessions' : 'Create a new student intake cohort'}
+                        </p>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                     >
-                        <X className="w-6 h-6" />
+                        <X className="w-5 h-5 text-gray-400" />
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-gray-200 px-6">
+                <div className="flex border-b border-gray-100 px-7 bg-white">
                     <button
-                        className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'details' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        className={`py-3.5 px-5 text-sm font-semibold border-b-2 transition-all ${activeTab === 'details' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                         onClick={() => setActiveTab('details')}
                     >
                         Details
                     </button>
                     {intake && (
                         <button
-                            className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'sessions' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                            className={`py-3.5 px-5 text-sm font-semibold border-b-2 transition-all ${activeTab === 'sessions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                             onClick={() => setActiveTab('sessions')}
                         >
                             Class Sessions
@@ -210,17 +215,17 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
 
                 <div className="p-0">
                     {activeTab === 'details' && (
-                        <form onSubmit={handleSubmit} className="p-6">
+                        <form onSubmit={handleSubmit} className="px-7 py-6">
                             {error && (
-                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5">
+                                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                                     <p className="text-sm text-red-800">{error}</p>
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div className="col-span-1 md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Academic Year *
                                     </label>
                                     <select
@@ -228,7 +233,7 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                         value={formData.academic_year}
                                         onChange={handleChange}
                                         required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
                                     >
                                         <option value="">Select Academic Year</option>
                                         {academicYears.map(year => (
@@ -240,7 +245,7 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Intake Name *
                                     </label>
                                     <input
@@ -250,12 +255,12 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                         onChange={handleChange}
                                         required
                                         placeholder="e.g., 2024 Intake, Class of 2024"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Code *
                                     </label>
                                     <input
@@ -265,13 +270,13 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                         onChange={handleChange}
                                         required
                                         placeholder="e.g., INT2024"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm uppercase transition-all"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Short unique code for this intake</p>
+                                    <p className="text-xs text-gray-400 mt-1.5">Short unique code for this intake</p>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Start Date *
                                     </label>
                                     <input
@@ -280,19 +285,19 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                         value={formData.start_date}
                                         onChange={handleChange}
                                         required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
                                     />
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Entry Grade
                                     </label>
                                     <select
                                         name="entry_grade"
                                         value={formData.entry_grade}
                                         onChange={handleChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
                                     >
                                         <option value="">Select Entry Grade (Optional)</option>
                                         {grades.map(grade => (
@@ -301,11 +306,11 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                             </option>
                                         ))}
                                     </select>
-                                    <p className="text-xs text-gray-500 mt-1">The grade level where students in this intake join the school</p>
+                                    <p className="text-xs text-gray-400 mt-1.5">The grade level where students in this intake join the school</p>
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                         Description
                                     </label>
                                     <textarea
@@ -314,18 +319,18 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                         onChange={handleChange}
                                         rows="3"
                                         placeholder="Optional description for this intake cohort"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm resize-none transition-all"
                                     />
                                 </div>
 
-                                <div className="col-span-2">
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                <div className="col-span-2 pt-1">
+                                    <label className="flex items-center gap-2.5 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             name="is_active"
                                             checked={formData.is_active}
                                             onChange={handleChange}
-                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                                         />
                                         <span className="text-sm font-medium text-gray-700">
                                             Active (accepting new students)
@@ -335,18 +340,18 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                             </div>
 
                             {/* Footer */}
-                            <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                            <div className="flex items-center justify-end gap-3 mt-7 pt-5 border-t border-gray-100">
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="btn btn-primary d-flex align-items-center gap-2"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all disabled:opacity-50"
                                 >
                                     <Save className="w-4 h-4" />
                                     {loading ? 'Saving...' : intake ? 'Update Intake' : 'Create Intake'}
@@ -356,19 +361,19 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                     )}
 
                     {activeTab === 'sessions' && (
-                        <div className="p-6">
+                        <div className="px-7 py-6">
                             {loading ? (
-                                <div className="text-center py-8">
-                                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                                    <p className="mt-2 text-sm text-gray-500">Loading sessions...</p>
+                                <div className="text-center py-10">
+                                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                                    <p className="mt-3 text-sm text-gray-400">Loading sessions...</p>
                                 </div>
                             ) : intakeSessions.length > 0 ? (
                                 <div className="space-y-3">
                                     {intakeSessions.map(session => (
-                                        <div key={session.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 flex justify-between items-center bg-white shadow-sm">
+                                        <div key={session.id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50/50 flex justify-between items-center bg-white shadow-sm transition-all">
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h4 className="text-sm font-medium text-gray-900">{session.name}</h4>
+                                                    <h4 className="text-sm font-semibold text-gray-900">{session.name}</h4>
                                                     {session.status === 'active' && (
                                                         <span className="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-[10px] font-bold border border-green-200 animate-pulse">
                                                             Current
@@ -387,7 +392,7 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
                                                     <span>{session.start_date} - {session.end_date}</span>
                                                 </p>
                                             </div>
-                                            <button className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100">
+                                            <button className="px-3.5 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-transparent hover:border-indigo-100">
                                                 View Details
                                             </button>
                                         </div>
@@ -395,24 +400,24 @@ const IntakeModal = ({ isOpen, onClose, onSuccess, intake = null }) => {
 
                                     <button
                                         onClick={handleAutoGenerate}
-                                        className="w-full mt-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-500 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
+                                        className="w-full mt-5 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
                                     >
                                         Auto-Generate More Sessions
                                     </button>
                                 </div>
                             ) : (
-                                <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                    <div className="p-3 bg-white rounded-full inline-block mb-3 shadow-sm">
-                                        <AlertCircle className="w-6 h-6 text-gray-400" />
+                                <div className="text-center py-14 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                                    <div className="p-3.5 bg-white rounded-xl inline-block mb-3 shadow-sm">
+                                        <AlertCircle className="w-6 h-6 text-gray-300" />
                                     </div>
-                                    <h3 className="text-sm font-medium text-gray-900">No active sessions</h3>
-                                    <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
-                                        There are no class sessions (terms/grades) associated with this intake yet.
+                                    <h3 className="text-sm font-semibold text-gray-900">No active sessions</h3>
+                                    <p className="text-sm text-gray-400 mt-1.5 max-w-xs mx-auto leading-relaxed">
+                                        There are no class sessions associated with this intake yet.
                                         You can auto-generate all sessions for this academic year.
                                     </p>
                                     <button
                                         onClick={handleAutoGenerate}
-                                        className="mt-4 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                        className="mt-5 px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-all"
                                     >
                                         Auto-Generate Class Sessions
                                     </button>

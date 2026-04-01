@@ -79,7 +79,7 @@ const LoginForm = () => {
         }
 
         // Check if first time login (adjust property name based on backend)
-        const isFirstTimeUser = response.user?.is_first_login || response.is_first_login || formData.username === 'newuser';
+        const isFirstTimeUser = response.requires_setup || response.user?.is_first_login || response.is_first_login;
 
         if (isFirstTimeUser) {
           toast.success("First time login detected. Please set your new password.");
