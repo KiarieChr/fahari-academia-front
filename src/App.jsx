@@ -80,7 +80,7 @@ const HumanResource = lazy(() => import('./modules/hr/HumanResourceDashboard'));
 // Use new modern Staff Register  
 const StaffRegister = lazy(() => import('./modules/hr/StaffRegisterV2'));
 const LeaveDashboard = lazy(() => import('./modules/hr/leave/LeaveDashboard'));
-const HrSettingsDasboard = lazy(() => import('./modules/hr/settings/HrSettingsDashboard'));
+const HrSettingsDasboard = lazy(() => import('./modules/hr/settings/HRSettingsDashboard'));
 const StaffAttendanceDashboard = lazy(() => import('./modules/hr/attendance/StaffAttendanceDashboard'));
 const StaffPerformanceDashboard = lazy(() => import('./modules/hr/performance/StaffPerformanceDashboard'));
 const Payroll = lazy(() => import('./modules/payroll/Payroll'));
