@@ -90,5 +90,20 @@ export const studentManagementService = {
 
         const response = await api.post(`/api/student-management/import/upload/?dry_run=${dryRun}`, formData);
         return response;
-    }
+    },
+
+    processImportChunk: async (importId, offset, chunkSize = 50) => {
+        const response = await api.post('/api/student-management/import/process-chunk/', {
+            import_id: importId,
+            offset,
+            chunk_size: chunkSize,
+        });
+        return response;
+    },
+
+    // === Guardian Email Check ===
+    checkGuardianEmail: async (email) => {
+        const response = await api.get('/api/accounts/check-guardian-email/', { params: { email } });
+        return response;
+    },
 };

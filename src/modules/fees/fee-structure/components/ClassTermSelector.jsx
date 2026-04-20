@@ -1,5 +1,5 @@
 import React from 'react';
-import { feeStructureStatuses } from '../data/mockFeeStructureData';
+import { FEE_STRUCTURE_STATUSES as feeStructureStatuses } from '../constants/feeStructureConstants';
 import { Copy, Archive, CheckCircle } from 'lucide-react';
 
 const ClassTermSelector = ({

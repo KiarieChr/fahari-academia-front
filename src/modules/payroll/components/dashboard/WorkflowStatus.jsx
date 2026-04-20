@@ -40,7 +40,7 @@ const WorkflowStatus = () => {
     // Loading skeleton
     if (loading) {
         return (
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-6 animate-pulse">
+            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8 animate-pulse">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <div className="h-6 w-48 bg-gray-200 rounded mb-2" />
@@ -63,15 +63,15 @@ const WorkflowStatus = () => {
     // Error state
     if (error) {
         return (
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-6">
+            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8">
                 <div className="text-center py-6">
                     <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
                     <p className="text-red-700 mb-3">{error}</p>
                     <button
                         onClick={fetchCurrentPeriod}
-                        className="flex items-center gap-2 mx-auto px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm"
+                        className="btn btn-secondary mx-auto mt-2"
                     >
-                        <RefreshCw size={14} /> Retry
+                        <RefreshCw size={16} /> Retry
                     </button>
                 </div>
             </div>
@@ -81,12 +81,12 @@ const WorkflowStatus = () => {
     // No period found
     if (!data?.period) {
         return (
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-6">
+            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8">
                 <div className="text-center py-8">
                     <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-semibold text-gray-800 mb-1">No Active Payroll Period</h3>
                     <p className="text-gray-500 text-sm">Create a new payroll period to get started</p>
-                    <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                    <button className="mt-4 btn btn-primary">
                         Create Period
                     </button>
                 </div>
@@ -101,7 +101,7 @@ const WorkflowStatus = () => {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm mb-6"
+            className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8"
         >
             <div className="flex justify-between items-start mb-6">
                 <div>

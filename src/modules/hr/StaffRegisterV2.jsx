@@ -42,6 +42,7 @@ const EmployeeFormModal = ({
     employee,
     departments,
     jobTitles,
+    campuses,
     onSubmit
 }) => {
     const [formData, setFormData] = useState({
@@ -66,8 +67,10 @@ const EmployeeFormModal = ({
         termination_date: '',
         department_id: '',
         job_title_id: '',
+        campus_id: '',
         employment_type: 'full_time',
-        assignment_type: 'permanent'
+        assignment_type: 'permanent',
+        create_user_account: false
     });
     const [isShaking, setIsShaking] = useState(false);
 
@@ -95,6 +98,7 @@ const EmployeeFormModal = ({
                 termination_date: employee.termination_date || '',
                 department_id: employee.department?.id || employee.department_id || '',
                 job_title_id: employee.job_title?.id || employee.job_title_id || '',
+                campus_id: employee.campus?.id || employee.campus_id || employee.campus || '',
                 employment_type: employee.employment_type || 'full_time',
                 assignment_type: employee.assignment_type || 'permanent'
             });
@@ -121,8 +125,10 @@ const EmployeeFormModal = ({
                 termination_date: '',
                 department_id: '',
                 job_title_id: '',
+                campus_id: '',
                 employment_type: 'full_time',
-                assignment_type: 'permanent'
+                assignment_type: 'permanent',
+                create_user_account: false
             });
         }
     }, [employee, isOpen]);
@@ -370,6 +376,19 @@ const EmployeeFormModal = ({
                                         </select>
                                     </div>
                                     <div className="form-group">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Campus</label>
+                                        <select
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                            value={formData.campus_id}
+                                            onChange={(e) => setFormData({ ...formData, campus_id: e.target.value })}
+                                        >
+                                            <option value="">Select Campus</option>
+                                            {campuses.map(campus => (
+                                                <option key={campus.id} value={campus.id}>{campus.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Job Title *</label>
                                         <select
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
@@ -482,6 +501,26 @@ const EmployeeFormModal = ({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Section: User Account */}
+                            {!employee && (
+                                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.create_user_account}
+                                            onChange={(e) => setFormData({ ...formData, create_user_account: e.target.checked })}
+                                            className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                        />
+                                        <div>
+                                            <span className="text-sm font-semibold text-emerald-800">Create Login Account</span>
+                                            <p className="text-xs text-emerald-600 mt-0.5">
+                                                Automatically create a user account so this employee can log in. A temporary password will be generated.
+                                            </p>
+                                        </div>
+                                    </label>
+                                </div>
+                            )}
                         </div>
 
                         {/* Modal Footer */}
@@ -744,12 +783,14 @@ const ExcelUploadModal = ({ isOpen, onClose, onSuccess }) => {
             }
         } catch (error) {
             console.error('Upload error:', error);
+            const errData = error.response?.data;
+            const errMsg = errData?.message || errData?.error || error.message || 'Upload failed';
             setUploadResult({
                 success: false,
-                message: error.response?.data?.message || error.message || 'Upload failed',
-                errors: error.response?.data?.errors || []
+                message: errMsg,
+                errors: errData?.errors || (errData?.error ? [errData.error] : [])
             });
-            toast.error(error.response?.data?.message || 'Failed to import employees');
+            toast.error(errMsg);
         } finally {
             setUploading(false);
         }
@@ -987,6 +1028,7 @@ const StaffRegisterV2 = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [departments, setDepartments] = useState([]);
     const [jobTitles, setJobTitles] = useState([]);
+    const [campuses, setCampuses] = useState([]);
     const [showFormModal, setShowFormModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -1059,12 +1101,23 @@ const StaffRegisterV2 = () => {
         }
     }, []);
 
+    // Fetch campuses
+    const fetchCampuses = useCallback(async () => {
+        try {
+            const response = await api.get('/workforce/api/campuses/');
+            setCampuses(Array.isArray(response) ? response : response.results || []);
+        } catch (error) {
+            console.error('Error fetching campuses:', error);
+        }
+    }, []);
+
     // Initial data fetch
     useEffect(() => {
         fetchDepartments();
         fetchJobTitles();
+        fetchCampuses();
         fetchStats();
-    }, [fetchDepartments, fetchJobTitles, fetchStats]);
+    }, [fetchDepartments, fetchJobTitles, fetchCampuses, fetchStats]);
 
     useEffect(() => {
         fetchEmployees();
@@ -1090,20 +1143,36 @@ const StaffRegisterV2 = () => {
     // Handle form submit
     const handleFormSubmit = async (formData, employeeId) => {
         try {
+            const { create_user_account, ...employeeData } = formData;
             const payload = {
-                ...formData,
-                email: formData.official_email,
-                phone: formData.phone_primary,
-                employment_date: formData.hire_date,
-                status: formData.employment_status
+                ...employeeData,
+                email: employeeData.official_email,
+                phone: employeeData.phone_primary,
+                employment_date: employeeData.hire_date,
+                status: employeeData.employment_status
             };
 
+            let createdEmployee;
             if (employeeId) {
                 await api.put(`/workforce/api/employees/${employeeId}/`, payload);
                 toast.success('Employee updated successfully');
             } else {
-                await api.post('/workforce/api/employees/', payload);
+                createdEmployee = await api.post('/workforce/api/employees/', payload);
                 toast.success('Employee added successfully');
+            }
+
+            // Create user account if toggled on (new employees only)
+            if (create_user_account && !employeeId && createdEmployee?.id) {
+                try {
+                    const userResult = await api.post(`/workforce/api/employees/${createdEmployee.id}/create-user-account/`);
+                    toast.success(
+                        `Login account created — Username: ${userResult.username}, Password: ${userResult.password}`,
+                        { autoClose: 15000 }
+                    );
+                } catch (userError) {
+                    const msg = userError.data?.error || userError.message || 'Failed to create login account';
+                    toast.warning(`Employee saved but: ${msg}`);
+                }
             }
 
             setShowFormModal(false);
@@ -1500,6 +1569,7 @@ const StaffRegisterV2 = () => {
                     employee={selectedEmployee}
                     departments={departments}
                     jobTitles={jobTitles}
+                    campuses={campuses}
                     onSubmit={handleFormSubmit}
                 />
 

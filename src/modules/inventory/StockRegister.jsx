@@ -54,10 +54,10 @@ const StockRegister = () => {
     };
 
     // Derived Data
-    const uniqueCategories = ['All', ...new Set(items.map(i => i.category))];
+    const uniqueCategories = ['All', ...new Set(items.map(i => i.category).filter(Boolean))];
 
     const filteredItems = items.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (item.batch && item.batch.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesCategory = filterCategory === 'All' || item.category === filterCategory;
         return matchesSearch && matchesCategory;
@@ -147,8 +147,10 @@ const StockRegister = () => {
                                         {(item.stock * item.unitCost).toLocaleString()}
                                     </td>
                                     <td className="p-4">
-                                        {item.status === 'Active' ? (
+                                        {item.status === 'ACTIVE' ? (
                                             <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Active</span>
+                                        ) : item.status === 'EXPIRED' ? (
+                                            <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-600">Expired</span>
                                         ) : (
                                             <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">{item.status}</span>
                                         )}

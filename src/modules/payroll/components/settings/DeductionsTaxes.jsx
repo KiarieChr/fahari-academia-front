@@ -43,10 +43,10 @@ const DeductionsTaxes = () => {
                 payrollService.getDeductionTypes()
             ]);
 
-            setStatutoryRates(ratesRes.data?.statutory_rates || []);
-            setTaxBands(bandsRes.data?.tax_bands || []);
-            setTaxReliefs(reliefsRes.data?.tax_reliefs || []);
-            setDeductionTypes(deductionsRes.data?.deduction_types || []);
+            setStatutoryRates(ratesRes.statutory_rates || ratesRes.data?.statutory_rates || []);
+            setTaxBands(bandsRes.tax_bands || bandsRes.data?.tax_bands || []);
+            setTaxReliefs(reliefsRes.tax_reliefs || reliefsRes.data?.tax_reliefs || []);
+            setDeductionTypes(deductionsRes.deduction_types || deductionsRes.data?.deduction_types || []);
         } catch (error) {
             console.error('Failed to load data:', error);
         } finally {

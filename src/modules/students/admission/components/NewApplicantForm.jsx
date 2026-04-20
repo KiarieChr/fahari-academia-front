@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Save, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { studentManagementService } from '../../../../services/studentManagementService';
+import { institutionService } from '../../../../services/institutionService';
 import DateInput from '../../../../components/common/DateInput';
 import Modal from '../../../../components/common/Modal';
 
@@ -19,11 +20,12 @@ const NewApplicantForm = ({ onClose }) => {
     const [options, setOptions] = useState({
         intakes: [],
         curriculums: [],
-        classes: []
+        classes: [],
+        campuses: []
     });
     const [formData, setFormData] = useState({
         firstName: '', lastName: '', gender: 'Male', dob: '',
-        class: '', curriculum: '', intake: '',
+        class: '', curriculum: '', intake: '', campus: '',
         prevSchool: '', score: '', isTransfer: false,
         guardianName: '', phone: '', email: '',
         guardian2Name: '', guardian2Phone: '', guardian2Email: '',
@@ -37,15 +39,17 @@ const NewApplicantForm = ({ onClose }) => {
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const [intakes, curriculums, classes] = await Promise.all([
+                const [intakes, curriculums, classes, campusesRes] = await Promise.all([
                     studentManagementService.getIntakes(),
                     studentManagementService.getCurriculums(),
-                    studentManagementService.getClasses()
+                    studentManagementService.getClasses(),
+                    institutionService.getCampuses()
                 ]);
                 setOptions({
                     intakes: intakes.results || intakes,
                     curriculums: curriculums.results || curriculums,
-                    classes: classes.results || classes
+                    classes: classes.results || classes,
+                    campuses: campusesRes.results || campusesRes || []
                 });
             } catch (error) {
                 console.error("Error fetching options:", error);
@@ -72,6 +76,7 @@ const NewApplicantForm = ({ onClose }) => {
                 applying_for_curriculum: formData.curriculum,
                 applying_for_grade: formData.class,
                 applying_for_level: selectedGrade?.curriculum_level || null,
+                campus: formData.campus || null,
                 previous_school: formData.prevSchool,
                 score: formData.score,
                 is_transfer: formData.isTransfer,
@@ -224,6 +229,16 @@ const NewApplicantForm = ({ onClose }) => {
                                         <option value="">Select Intake...</option>
                                         {options.intakes.map(intake => (
                                             <option key={intake.id} value={intake.id}>{intake.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Campus</label>
+                                    <select name="campus" value={formData.campus} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm">
+                                        <option value="">Select Campus...</option>
+                                        {options.campuses.map(campus => (
+                                            <option key={campus.id} value={campus.id}>{campus.name}</option>
                                         ))}
                                     </select>
                                 </div>

@@ -111,6 +111,37 @@ const useTimetableData = (filters = {}) => {
         }
     }, []);
 
+    const loadTeachers = useCallback(async () => {
+        const cacheKey = 'teachers_list';
+        const cached = timetableCache.get(cacheKey);
+        if (cached) {
+            setTeachers(cached);
+            return;
+        }
+        try {
+            const { api } = await import('../../../../services/api');
+            // Try HR employee endpoint first, fall back to users list
+            let teacherList = [];
+            try {
+                const res = await api.hr?.getEmployees?.({ role: 'teacher', is_active: true })
+                    ?? await api.users?.list?.({ role: 'teacher' });
+                teacherList = res?.results ?? res ?? [];
+            } catch {
+                // Fallback: load all users and filter client-side
+                const res = await api.getUsers?.() ?? { results: [] };
+                teacherList = (res.results ?? res).filter(u =>
+                    u.role === 'teacher' || u.groups?.includes('teacher')
+                );
+            }
+            if (isMounted.current) {
+                setTeachers(teacherList);
+                timetableCache.set(cacheKey, teacherList, 10 * 60 * 1000); // 10-min TTL
+            }
+        } catch (err) {
+            console.error('useTimetableData: teachers load failed', err);
+        }
+    }, []);
+
     // ──────────────────────────────────────────────────────────────
     // TIMETABLE DATA LOADERS
     // ──────────────────────────────────────────────────────────────
@@ -231,6 +262,7 @@ const useTimetableData = (filters = {}) => {
             await Promise.all([
                 loadReferenceData(),
                 loadClassSessions(),
+                loadTeachers(),
                 loadSlots(),
                 loadAllocations(),
                 loadCoverage(),
@@ -246,7 +278,7 @@ const useTimetableData = (filters = {}) => {
                 setLoading(prev => ({ ...prev, initial: false }));
             }
         }
-    }, [loadReferenceData, loadClassSessions, loadSlots, loadAllocations, loadCoverage, loadLockStatus, loadExceptions]);
+    }, [loadReferenceData, loadClassSessions, loadTeachers, loadSlots, loadAllocations, loadCoverage, loadLockStatus, loadExceptions]);
 
     // Lightweight refresh (only slots, no reference data)
     const refreshSlots = useCallback(async () => {
@@ -544,11 +576,13 @@ const useTimetableData = (filters = {}) => {
         rooms,
         periods,
         classSessions,
+        teachers,
 
         // Timetable data
         weeklyView,
         slots,
         allocations,
+        workAllocations: allocations, // alias used by ClassTimesDashboard → SlotAssignmentModal
         exceptions,
         coverage,
 

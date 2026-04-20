@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { X, AlertTriangle, Check, Loader2, Clock, User, MapPin, BookOpen, ChevronDown } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, Clock, User, MapPin, BookOpen, ChevronDown } from 'lucide-react';
 import { timetableApi } from '../services/timetableApi';
+import Modal from '../../../../components/common/Modal';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -317,35 +318,42 @@ const SlotAssignmentModal = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div className="flex min-h-full items-center justify-center p-4">
-                <div
-                    className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all animate-in fade-in zoom-in-95 duration-200 overflow-hidden border border-slate-200 dark:border-slate-700"
-                    onClick={e => e.stopPropagation()}
-                >
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                            {isEditing ? 'Edit Timetable Slot' : 'Assign New Slot'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={isEditing ? 'Edit Timetable Slot' : 'Assign New Slot'}
+            size="md"
+            accentColor="bg-blue-500"
+            noPadding
+            footer={
+                <div className="flex items-center justify-between w-full">
+                    <div>
+                        {isEditing && (
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                disabled={loading}
+                                className="px-4 h-11 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-colors disabled:opacity-50"
+                            >
+                                Delete Slot
+                            </button>
+                        )}
                     </div>
-
-                    {/* Form Body */}
-                    <form onSubmit={handleSubmit}>
-                        <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
+                    <div className="flex gap-3">
+                        <Modal.CancelButton onClick={onClose} disabled={loading} />
+                        <Modal.SubmitButton
+                            form="slot-assignment-form"
+                            loading={loading}
+                            disabled={conflicts.some(c => c.type === 'hard' || c.severity === 'hard')}
+                        >
+                            {isEditing ? 'Update' : 'Assign'}
+                        </Modal.SubmitButton>
+                    </div>
+                </div>
+            }
+        >
+            <form id="slot-assignment-form" onSubmit={handleSubmit}>
+                <div className="px-7 py-6 space-y-5 max-h-[60vh] overflow-y-auto">
                             {/* Day and Time Row */}
                             <div className="grid grid-cols-3 gap-4">
                                 {/* Day Select */}
@@ -504,54 +512,9 @@ const SlotAssignmentModal = ({
                                     <span>{errors.submit}</span>
                                 </div>
                             )}
-                        </div>
-
-                        {/* Footer Actions */}
-                        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                            <div>
-                                {isEditing && (
-                                    <button
-                                        type="button"
-                                        onClick={handleDelete}
-                                        disabled={loading}
-                                        className="px-4 h-11 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-colors disabled:opacity-50"
-                                    >
-                                        Delete Slot
-                                    </button>
-                                )}
-                            </div>
-                            <div className="flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    disabled={loading}
-                                    className="px-5 h-11 text-sm font-medium text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors disabled:opacity-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading || conflicts.some(c => c.type === 'hard' || c.severity === 'hard')}
-                                    className="px-6 h-11 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-blue-600/20"
-                                >
-                                    {loading ? (
-                                        <>
-                                            <Loader2 size={16} className="animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Check size={16} />
-                                            {isEditing ? 'Update' : 'Assign'}
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
                 </div>
-            </div>
-        </div>
+            </form>
+        </Modal>
     );
 };
 

@@ -14,7 +14,8 @@ const AccountModal = ({ show, onClose, onSave, account = null, accounts = [] }) 
         parent: '',
         description: '',
         is_active: true,
-        is_student_related: false
+        is_student_related: false,
+        available_in_payroll: false
     });
 
     const [types, setTypes] = useState([]);
@@ -51,7 +52,8 @@ const AccountModal = ({ show, onClose, onSave, account = null, accounts = [] }) 
                 parent: account.parent || '',
                 description: account.description || '',
                 is_active: account.is_active,
-                is_student_related: account.is_student_related || false
+                is_student_related: account.is_student_related || false,
+                available_in_payroll: account.available_in_payroll || false
             });
         } else {
             // Default state for new account
@@ -63,7 +65,8 @@ const AccountModal = ({ show, onClose, onSave, account = null, accounts = [] }) 
                 parent: '',
                 description: '',
                 is_active: true,
-                is_student_related: false
+                is_student_related: false,
+                available_in_payroll: false
             });
         }
         setError(null);
@@ -104,7 +107,16 @@ const AccountModal = ({ show, onClose, onSave, account = null, accounts = [] }) 
             onClose();
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || err.response?.data?.detail || "Failed to save account.");
+            const errData = err.data || err.response?.data || {};
+            const msg = errData.detail
+                || errData.message
+                || errData.code?.[0]
+                || errData.name?.[0]
+                || (errData.non_field_errors && errData.non_field_errors[0])
+                || Object.values(errData).flat().find(v => typeof v === 'string')
+                || err.message
+                || "Failed to save account.";
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -231,6 +243,25 @@ const AccountModal = ({ show, onClose, onSave, account = null, accounts = [] }) 
                                         />
                                         <label className="form-check-label" htmlFor="isStudentRelated">
                                             Student Related Account
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+                            {/* Payroll availability for Expense & Liability accounts */}
+                            {['EXPENSE', 'LIABILITY'].includes(formData.type) && (
+                                <div className="col-md-6">
+                                    <label className="form-label small fw-bold">Payroll</label>
+                                    <div className="form-check pt-2">
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
+                                            id="availableInPayroll"
+                                            name="available_in_payroll"
+                                            checked={formData.available_in_payroll}
+                                            onChange={handleChange}
+                                        />
+                                        <label className="form-check-label" htmlFor="availableInPayroll">
+                                            Available in Payroll
                                         </label>
                                     </div>
                                 </div>

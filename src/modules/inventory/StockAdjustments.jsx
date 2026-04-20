@@ -22,7 +22,7 @@ const StockAdjustments = ({ itemId, itemName, currentStock, onClose, onSuccess }
 
         setLoading(true);
         try {
-            await inventoryService.adjustStock({
+            await inventoryService.adjustStockLegacy({
                 itemId,
                 ...formData
             });

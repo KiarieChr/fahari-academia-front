@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
     FileBarChart,
     PieChart,
@@ -17,12 +17,16 @@ import {
     ArrowDownRight,
     Printer,
     Mail,
-    Share2
+    Share2,
+    AlertTriangle,
+    BarChart3,
+    Package,
+    Receipt,
+    BookOpen,
 } from 'lucide-react';
 import DashboardLayout from '../../dashboard/DashboardLayout';
-import { reportStats, reportCategories } from './data/mockReportData';
+import { reportCategories } from './data/mockReportData';
 import './FinanceReports.css';
-
 
 import { financeService } from '../../services/financeService';
 import CashFlowReport from './reports/CashFlowReport';
@@ -30,10 +34,32 @@ import TrialBalanceReport from './reports/TrialBalanceReport';
 import BalanceSheetReport from './reports/BalanceSheetReport';
 import IncomeStatementReport from './reports/IncomeStatementReport';
 import FinancialNotesReport from './reports/FinancialNotesReport';
+import FeeCollectionsReport from './reports/FeeCollectionsReport';
+import ArrearsReport from './reports/ArrearsReport';
+import PaymentSummaryReport from './reports/PaymentSummaryReport';
+import ExpenseAnalysisReport from './reports/ExpenseAnalysisReport';
+import SupplierBalancesReport from './reports/SupplierBalancesReport';
+import CustomerBalancesReport from './reports/CustomerBalancesReport';
+import TopDefaultersReport from './reports/TopDefaultersReport';
+
+const TABS = [
+    { id: 'overview',         label: 'Overview',           icon: BarChart3 },
+    { id: 'trial-balance',    label: 'Trial Balance',      icon: BookOpen },
+    { id: 'income-statement', label: 'Income Statement',   icon: TrendingUp },
+    { id: 'balance-sheet',    label: 'Balance Sheet',      icon: ShieldCheck },
+    { id: 'cash-flow',        label: 'Cash Flow',          icon: Wallet },
+    { id: 'notes',            label: 'Notes',              icon: FileBarChart },
+    { id: 'fee-collections',  label: 'Fee Collections',    icon: Receipt },
+    { id: 'arrears',          label: 'Arrears',            icon: AlertTriangle },
+    { id: 'payment-summary',  label: 'Payment Summary',    icon: Download },
+    { id: 'expense-analysis', label: 'Expense Analysis',   icon: TrendingDown },
+    { id: 'top-defaulters',   label: 'Top Defaulters',     icon: Users },
+    { id: 'supplier-balances',label: 'Supplier Balances',  icon: Package },
+    { id: 'customer-balances',label: 'Customer Balances',  icon: Users },
+];
 
 const FinanceReports = () => {
     const [activeTab, setActiveTab] = useState('overview');
-    const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [loading, setLoading] = useState(true);
     const [reportStats, setReportStats] = useState({
@@ -47,7 +73,6 @@ const FinanceReports = () => {
         fiscalYear: ''
     });
 
-    // Fetch financial overview data on mount
     React.useEffect(() => {
         fetchOverview();
     }, []);
@@ -59,7 +84,6 @@ const FinanceReports = () => {
             setReportStats(data);
         } catch (error) {
             console.error('Failed to fetch financial overview:', error);
-            // Keep default/empty values on error
         } finally {
             setLoading(false);
         }
@@ -120,6 +144,24 @@ const FinanceReports = () => {
         }
     };
 
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'cash-flow':        return <CashFlowReport />;
+            case 'notes':            return <FinancialNotesReport />;
+            case 'trial-balance':    return <TrialBalanceReport />;
+            case 'income-statement': return <IncomeStatementReport />;
+            case 'balance-sheet':    return <BalanceSheetReport />;
+            case 'fee-collections':  return <FeeCollectionsReport />;
+            case 'arrears':          return <ArrearsReport />;
+            case 'payment-summary':  return <PaymentSummaryReport />;
+            case 'expense-analysis': return <ExpenseAnalysisReport />;
+            case 'top-defaulters':   return <TopDefaultersReport />;
+            case 'supplier-balances':return <SupplierBalancesReport />;
+            case 'customer-balances':return <CustomerBalancesReport />;
+            default: return null;
+        }
+    };
+
     return (
         <DashboardLayout title="Financial Intelligence & Reports">
             <div className="fr-dashboard">
@@ -129,50 +171,33 @@ const FinanceReports = () => {
                         <h2 className="fw-bold mb-1">Financial Reports</h2>
                         <div className="d-flex align-items-center gap-3 text-muted small">
                             <span className="d-flex align-items-center gap-1">
-                                <Calendar size={14} /> Fiscal Year: **{reportStats.fiscalYear}**
+                                <Calendar size={14} /> Fiscal Year: <strong>{reportStats.fiscalYear}</strong>
                             </span>
                         </div>
                     </div>
                 </div>
 
                 {/* Tabs Navigation */}
-                <div className="reports-tabs mb-4">
-                    <button
-                        className={`report-tab ${activeTab === 'overview' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('overview')}
-                    >
-                        Overview
-                    </button>
-                    <button
-                        className={`report-tab ${activeTab === 'trial-balance' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('trial-balance')}
-                    >
-                        Trial Balance
-                    </button>
-                    <button
-                        className={`report-tab ${activeTab === 'income-statement' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('income-statement')}
-                    >
-                        Income Statement
-                    </button>
-                    <button
-                        className={`report-tab ${activeTab === 'balance-sheet' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('balance-sheet')}
-                    >
-                        Balance Sheet
-                    </button>
-                    <button
-                        className={`report-tab ${activeTab === 'cash-flow' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('cash-flow')}
-                    >
-                        Cash Flow
-                    </button>
-                    <button
-                        className={`report-tab ${activeTab === 'notes' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('notes')}
-                    >
-                        Notes
-                    </button>
+                <div className="overflow-x-auto pb-1 mb-4">
+                    <div className="flex gap-1 min-w-max border-b border-slate-200 dark:border-slate-700">
+                        {TABS.map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${isActive
+                                        ? 'border-blue-600 text-blue-600 bg-blue-50/50 dark:bg-blue-900/10'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                    }`}
+                                >
+                                    <Icon size={15} />
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Content */}
@@ -198,39 +223,39 @@ const FinanceReports = () => {
                                 ))}
                             </div>
 
-                            {/* Reports Grid */}
-                            {filteredCategories.map(section => (
-                                <div key={section.id} className="fr-category-section">
-                                    <h5 className="fr-section-title">{section.name}</h5>
-                                    <div className="fr-report-grid">
-                                        {section.reports.map(report => (
-                                            <div key={report.id} className="fr-report-card shadow-sm hover-shadow transition">
-                                                <div className="fr-report-content">
-                                                    <div className="fr-report-icon-box">
-                                                        {renderIcon(section.icon)}
-                                                    </div>
-                                                    <h6 className="fr-report-name">{report.name}</h6>
-                                                    <p className="fr-report-desc mb-0">{report.description}</p>
-                                                </div>
-                                                <div className="fr-report-actions">
-                                                    <button className="btn btn-sm btn-light text-primary fw-bold d-flex align-items-center gap-1 border-0 bg-transparent p-0" onClick={() => setActiveTab('cash-flow')}>
-                                                        <ExternalLink size={14} /> Open
-                                                    </button>
-                                                </div>
+                            {/* Quick-access report cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {[
+                                    { id: 'fee-collections',  label: 'Fee Collections',     desc: 'Invoiced vs collected by term, class or month', icon: Receipt,        color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20' },
+                                    { id: 'arrears',          label: 'Arrears Report',       desc: 'Students with outstanding balances, aged analysis', icon: AlertTriangle, color: 'bg-red-50 text-red-600 dark:bg-red-900/20' },
+                                    { id: 'payment-summary',  label: 'Payment Summary',      desc: 'Daily/weekly/monthly collections breakdown', icon: Download,        color: 'bg-green-50 text-green-600 dark:bg-green-900/20' },
+                                    { id: 'expense-analysis', label: 'Expense Analysis',     desc: 'Spending by account with trend and distribution', icon: TrendingDown,  color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' },
+                                    { id: 'top-defaulters',   label: 'Top Defaulters',       desc: 'Students with the highest fee arrears', icon: Users,          color: 'bg-red-50 text-red-700 dark:bg-red-900/20' },
+                                    { id: 'supplier-balances',label: 'Supplier Balances',    desc: 'AP outstanding by supplier with invoice drill-down', icon: Package,      color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20' },
+                                    { id: 'customer-balances',label: 'Customer Balances',    desc: 'Non-student AR balances from invoicing module', icon: Users,          color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20' },
+                                    { id: 'trial-balance',    label: 'Trial Balance',        desc: 'Debit/credit totals per account for any period', icon: BookOpen,      color: 'bg-slate-50 text-slate-600 dark:bg-slate-700' },
+                                    { id: 'income-statement', label: 'Income Statement',     desc: 'Revenue vs expenses P&L for any date range', icon: TrendingUp,     color: 'bg-teal-50 text-teal-600 dark:bg-teal-900/20' },
+                                ].map((item) => {
+                                    const Icon = item.icon;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setActiveTab(item.id)}
+                                            className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 text-left shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                                        >
+                                            <div className={`inline-flex p-2.5 rounded-xl mb-3 ${item.color}`}>
+                                                <Icon size={20} />
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                                            <h4 className="font-bold text-slate-800 dark:text-white text-sm">{item.label}</h4>
+                                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.desc}</p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </>
                     )}
 
-                    {activeTab === 'cash-flow' && <CashFlowReport />}
-                    {activeTab === 'notes' && <FinancialNotesReport />}
-
-                    {activeTab === 'trial-balance' && <TrialBalanceReport />}
-                    {activeTab === 'income-statement' && <IncomeStatementReport />}
-                    {activeTab === 'balance-sheet' && <BalanceSheetReport />}
+                    {activeTab !== 'overview' && renderContent()}
                 </div>
             </div>
         </DashboardLayout>

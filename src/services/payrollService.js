@@ -174,6 +174,18 @@ export const payrollService = {
     },
 
     /**
+     * Unlock payroll period for re-run
+     */
+    unlockPayrollPeriod: async (periodId) => {
+        try {
+            return await api.post(`${BASE_URL}/payroll-periods/${periodId}/unlock/`);
+        } catch (error) {
+            console.error('Error unlocking payroll period:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Get payroll calculations
      */
     getPayrollCalculations: async (params = {}) => {
@@ -205,6 +217,42 @@ export const payrollService = {
             return await api.get(`${BASE_URL}/payslips/`, { params });
         } catch (error) {
             console.error('Error fetching payslips:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get Payslip Templates
+     */
+    getPayslipTemplates: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/payslip-templates/`, { params });
+        } catch (error) {
+            console.error('Error fetching payslip templates:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Update Payslip Template 
+     */
+    updatePayslipTemplate: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/payslip-templates/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating payslip template:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Create Payslip Template 
+     */
+    createPayslipTemplate: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/payslip-templates/`, data);
+        } catch (error) {
+            console.error('Error creating payslip template:', error);
             throw error;
         }
     },
@@ -404,6 +452,575 @@ export const payrollService = {
             return await api.delete(`${BASE_URL}/payroll-settings/deduction-types/${id}/`);
         } catch (error) {
             console.error('Error deleting deduction type:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // EMPLOYEE PAY PROFILES
+    // ========================================================================
+
+    getEmployeePayProfiles: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/employee-pay-profiles/`, { params });
+        } catch (error) {
+            console.error('Error fetching employee pay profiles:', error);
+            throw error;
+        }
+    },
+
+    getEmployeePayProfile: async (id) => {
+        try {
+            return await api.get(`${BASE_URL}/employee-pay-profiles/${id}/`);
+        } catch (error) {
+            console.error('Error fetching employee pay profile:', error);
+            throw error;
+        }
+    },
+
+    createEmployeePayProfile: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/employee-pay-profiles/`, data);
+        } catch (error) {
+            console.error('Error creating employee pay profile:', error);
+            throw error;
+        }
+    },
+
+    updateEmployeePayProfile: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/employee-pay-profiles/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating employee pay profile:', error);
+            throw error;
+        }
+    },
+
+    deleteEmployeePayProfile: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/employee-pay-profiles/${id}/`);
+        } catch (error) {
+            console.error('Error deleting employee pay profile:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PAYROLL ACCOUNTS
+    // ========================================================================
+
+    getPayrollAccounts: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/payroll-accounts/`, { params });
+        } catch (error) {
+            console.error('Error fetching payroll accounts:', error);
+            throw error;
+        }
+    },
+
+    createPayrollAccount: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/payroll-accounts/`, data);
+        } catch (error) {
+            console.error('Error creating payroll account:', error);
+            throw error;
+        }
+    },
+
+    updatePayrollAccount: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/payroll-accounts/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating payroll account:', error);
+            throw error;
+        }
+    },
+
+    deletePayrollAccount: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/payroll-accounts/${id}/`);
+        } catch (error) {
+            console.error('Error deleting payroll account:', error);
+            throw error;
+        }
+    },
+
+    getGLAccounts: async () => {
+        try {
+            return await api.get(`${BASE_URL}/payroll-accounts/gl_accounts/`);
+        } catch (error) {
+            console.error('Error fetching GL accounts:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PAY GRADE STEPS
+    // ========================================================================
+
+    getPayGradeSteps: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/pay-grade-steps/`, { params });
+        } catch (error) {
+            console.error('Error fetching pay grade steps:', error);
+            throw error;
+        }
+    },
+
+    createPayGradeStep: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/pay-grade-steps/`, data);
+        } catch (error) {
+            console.error('Error creating pay grade step:', error);
+            throw error;
+        }
+    },
+
+    updatePayGradeStep: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/pay-grade-steps/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating pay grade step:', error);
+            throw error;
+        }
+    },
+
+    deletePayGradeStep: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/pay-grade-steps/${id}/`);
+        } catch (error) {
+            console.error('Error deleting pay grade step:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // JOB GRADES
+    // ========================================================================
+
+    getJobGrades: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/job-grades/`, { params });
+        } catch (error) {
+            console.error('Error fetching job grades:', error);
+            throw error;
+        }
+    },
+
+    getJobGrade: async (id) => {
+        try {
+            return await api.get(`${BASE_URL}/job-grades/${id}/`);
+        } catch (error) {
+            console.error('Error fetching job grade:', error);
+            throw error;
+        }
+    },
+
+    createJobGrade: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/job-grades/`, data);
+        } catch (error) {
+            console.error('Error creating job grade:', error);
+            throw error;
+        }
+    },
+
+    updateJobGrade: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/job-grades/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating job grade:', error);
+            throw error;
+        }
+    },
+
+    deleteJobGrade: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/job-grades/${id}/`);
+        } catch (error) {
+            console.error('Error deleting job grade:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PAYROLL PERIODS CRUD
+    // ========================================================================
+
+    createPayrollPeriod: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/payroll-periods/`, data);
+        } catch (error) {
+            console.error('Error creating payroll period:', error);
+            throw error;
+        }
+    },
+
+    updatePayrollPeriod: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/payroll-periods/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating payroll period:', error);
+            throw error;
+        }
+    },
+
+    deletePayrollPeriod: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/payroll-periods/${id}/`);
+        } catch (error) {
+            console.error('Error deleting payroll period:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PAY PROFILES (templates)
+    // ========================================================================
+
+    getPayProfiles: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/pay-profiles/`, { params });
+        } catch (error) {
+            console.error('Error fetching pay profiles:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // EMPLOYEE EARNINGS & DEDUCTIONS
+    // ========================================================================
+
+    getEmployeeEarnings: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/employee-earnings/`, { params });
+        } catch (error) {
+            console.error('Error fetching employee earnings:', error);
+            throw error;
+        }
+    },
+
+    createEmployeeEarning: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/employee-earnings/`, data);
+        } catch (error) {
+            console.error('Error creating employee earning:', error);
+            throw error;
+        }
+    },
+
+    updateEmployeeEarning: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/employee-earnings/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating employee earning:', error);
+            throw error;
+        }
+    },
+
+    deleteEmployeeEarning: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/employee-earnings/${id}/`);
+        } catch (error) {
+            console.error('Error deleting employee earning:', error);
+            throw error;
+        }
+    },
+
+    getEmployeeDeductions: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/employee-deductions/`, { params });
+        } catch (error) {
+            console.error('Error fetching employee deductions:', error);
+            throw error;
+        }
+    },
+
+    createEmployeeDeduction: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/employee-deductions/`, data);
+        } catch (error) {
+            console.error('Error creating employee deduction:', error);
+            throw error;
+        }
+    },
+
+    updateEmployeeDeduction: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/employee-deductions/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating employee deduction:', error);
+            throw error;
+        }
+    },
+
+    deleteEmployeeDeduction: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/employee-deductions/${id}/`);
+        } catch (error) {
+            console.error('Error deleting employee deduction:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // GROUP EARNINGS (by Job Grade)
+    // ========================================================================
+
+    getGroupEarnings: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/group-earnings/`, { params });
+        } catch (error) {
+            console.error('Error fetching group earnings:', error);
+            throw error;
+        }
+    },
+
+    createGroupEarning: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/group-earnings/`, data);
+        } catch (error) {
+            console.error('Error creating group earning:', error);
+            throw error;
+        }
+    },
+
+    updateGroupEarning: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/group-earnings/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating group earning:', error);
+            throw error;
+        }
+    },
+
+    deleteGroupEarning: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/group-earnings/${id}/`);
+        } catch (error) {
+            console.error('Error deleting group earning:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // GROUP DEDUCTIONS (by Job Grade)
+    // ========================================================================
+
+    getGroupDeductions: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/group-deductions/`, { params });
+        } catch (error) {
+            console.error('Error fetching group deductions:', error);
+            throw error;
+        }
+    },
+
+    createGroupDeduction: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/group-deductions/`, data);
+        } catch (error) {
+            console.error('Error creating group deduction:', error);
+            throw error;
+        }
+    },
+
+    updateGroupDeduction: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/group-deductions/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating group deduction:', error);
+            throw error;
+        }
+    },
+
+    deleteGroupDeduction: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/group-deductions/${id}/`);
+        } catch (error) {
+            console.error('Error deleting group deduction:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // EMPLOYEES (for dropdowns)
+    // ========================================================================
+
+    getEmployees: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/employees/`, { params });
+        } catch (error) {
+            console.error('Error fetching employees:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PENSION SCHEMES
+    // ========================================================================
+
+    getPensionSchemes: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/pension-schemes/`, { params });
+        } catch (error) {
+            console.error('Error fetching pension schemes:', error);
+            throw error;
+        }
+    },
+
+    getPensionScheme: async (id) => {
+        try {
+            return await api.get(`${BASE_URL}/pension-schemes/${id}/`);
+        } catch (error) {
+            console.error('Error fetching pension scheme:', error);
+            throw error;
+        }
+    },
+
+    createPensionScheme: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/pension-schemes/`, data);
+        } catch (error) {
+            console.error('Error creating pension scheme:', error);
+            throw error;
+        }
+    },
+
+    updatePensionScheme: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/pension-schemes/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating pension scheme:', error);
+            throw error;
+        }
+    },
+
+    deletePensionScheme: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/pension-schemes/${id}/`);
+        } catch (error) {
+            console.error('Error deleting pension scheme:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PENSION GRADE RATES
+    // ========================================================================
+
+    getPensionGradeRates: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/pension-grade-rates/`, { params });
+        } catch (error) {
+            console.error('Error fetching pension grade rates:', error);
+            throw error;
+        }
+    },
+
+    createPensionGradeRate: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/pension-grade-rates/`, data);
+        } catch (error) {
+            console.error('Error creating pension grade rate:', error);
+            throw error;
+        }
+    },
+
+    updatePensionGradeRate: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/pension-grade-rates/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating pension grade rate:', error);
+            throw error;
+        }
+    },
+
+    deletePensionGradeRate: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/pension-grade-rates/${id}/`);
+        } catch (error) {
+            console.error('Error deleting pension grade rate:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PENSION ENROLLMENTS
+    // ========================================================================
+
+    getPensionEnrollments: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/pension-enrollments/`, { params });
+        } catch (error) {
+            console.error('Error fetching pension enrollments:', error);
+            throw error;
+        }
+    },
+
+    createPensionEnrollment: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/pension-enrollments/`, data);
+        } catch (error) {
+            console.error('Error creating pension enrollment:', error);
+            throw error;
+        }
+    },
+
+    updatePensionEnrollment: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/pension-enrollments/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating pension enrollment:', error);
+            throw error;
+        }
+    },
+
+    deletePensionEnrollment: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/pension-enrollments/${id}/`);
+        } catch (error) {
+            console.error('Error deleting pension enrollment:', error);
+            throw error;
+        }
+    },
+
+    // ========================================================================
+    // PENSION CONTRIBUTIONS
+    // ========================================================================
+
+    getPensionContributions: async (params = {}) => {
+        try {
+            return await api.get(`${BASE_URL}/pension-contributions/`, { params });
+        } catch (error) {
+            console.error('Error fetching pension contributions:', error);
+            throw error;
+        }
+    },
+
+    createPensionContribution: async (data) => {
+        try {
+            return await api.post(`${BASE_URL}/pension-contributions/`, data);
+        } catch (error) {
+            console.error('Error creating pension contribution:', error);
+            throw error;
+        }
+    },
+
+    updatePensionContribution: async (id, data) => {
+        try {
+            return await api.put(`${BASE_URL}/pension-contributions/${id}/`, data);
+        } catch (error) {
+            console.error('Error updating pension contribution:', error);
+            throw error;
+        }
+    },
+
+    deletePensionContribution: async (id) => {
+        try {
+            return await api.delete(`${BASE_URL}/pension-contributions/${id}/`);
+        } catch (error) {
+            console.error('Error deleting pension contribution:', error);
             throw error;
         }
     }

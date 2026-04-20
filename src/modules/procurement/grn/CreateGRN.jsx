@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, X, Search, CheckCircle, AlertCircle } from 'lucide-react';
-import { procurementService } from "../../../services/procurementService";
+import { inventoryService } from "../../../services/inventoryService";
+import procurementApi from "../../../services/procurementApiService";
 import { toast } from 'react-toastify';
 
 const CreateGRN = ({ onCancel, onSuccess }) => {
@@ -14,7 +15,7 @@ const CreateGRN = ({ onCancel, onSuccess }) => {
         supplier: '',
         deliveryNote: '',
         dateReceived: new Date().toISOString().split('T')[0],
-        receivedBy: 'Current User', // TODO: Get from auth
+        receivedBy: 'Current User',
         remarks: ''
     });
 
@@ -26,11 +27,18 @@ const CreateGRN = ({ onCancel, onSuccess }) => {
 
     const loadPOs = async () => {
         try {
-            const res = await procurementService.getPurchaseOrders();
-            // Only show Issued or Partially Delivered POs
-            const eligiblePOs = res.data.filter(po =>
-                ['Issued', 'Partially Delivered'].includes(po.status)
-            );
+            const res = await procurementApi.purchaseOrders.list({ status: 'SENT' });
+            const all = res.results || res || [];
+            // Also include PARTIALLY_RECEIVED
+            const res2 = await procurementApi.purchaseOrders.list({ status: 'PARTIALLY_RECEIVED' });
+            const partial = res2.results || res2 || [];
+            const eligiblePOs = [...all, ...partial].map(po => ({
+                id: po.id,
+                poNumber: po.po_number,
+                supplier: po.supplier_name || `Supplier #${po.supplier}`,
+                supplierId: po.supplier,
+                status: po.status,
+            }));
             setPurchaseOrders(eligiblePOs);
         } catch (error) {
             toast.error("Failed to load Purchase Orders");
@@ -48,19 +56,19 @@ const CreateGRN = ({ onCancel, onSuccess }) => {
 
         setLoading(true);
         try {
-            const res = await procurementService.getPurchaseOrderById(poId);
-            setPoDetails(res.data);
-            setFormData(prev => ({ ...prev, supplier: res.data.supplier }));
+            const detail = await procurementApi.purchaseOrders.get(poId);
+            setPoDetails(detail);
+            setFormData(prev => ({ ...prev, supplier: detail.supplier_name || `Supplier #${detail.supplier}` }));
 
-            // Initialize items with remaining quantities
-            const pItems = res.data.items.map(item => ({
-                id: item.id,
-                name: item.name,
-                unit: item.unit,
-                unitPrice: item.unitPrice,
-                ordered: item.quantity,
-                delivered: item.delivered || 0,
-                remaining: item.quantity - (item.delivered || 0),
+            const pItems = (detail.lines || []).map(line => ({
+                id: line.id,
+                itemId: line.item,
+                name: line.description || line.item_name || `Item #${line.item}`,
+                unit: line.unit_of_measure || 'Pcs',
+                unitPrice: Number(line.unit_price) || 0,
+                ordered: Number(line.quantity),
+                delivered: Number(line.quantity_received) || 0,
+                remaining: Number(line.quantity) - (Number(line.quantity_received) || 0),
                 quantityReceived: 0,
                 quantityRejected: 0,
                 status: 'Passed',
@@ -84,14 +92,12 @@ const CreateGRN = ({ onCancel, onSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validation
         if (!selectedPO) return toast.error("Please select a Purchase Order");
         if (!formData.deliveryNote) return toast.error("Delivery Note number is required");
 
         const hasItems = items.some(i => parseInt(i.quantityReceived) > 0);
         if (!hasItems) return toast.error("Please receive at least one item");
 
-        // Validate quantities
         const validQuantities = items.every(item => {
             const received = parseInt(item.quantityReceived) || 0;
             return received <= item.remaining;
@@ -103,16 +109,23 @@ const CreateGRN = ({ onCancel, onSuccess }) => {
 
         setLoading(true);
         try {
+            const receivedItems = items.filter(i => parseInt(i.quantityReceived) > 0);
             const payload = {
-                ...formData,
-                poId: selectedPO,
-                items: items.filter(i => parseInt(i.quantityReceived) > 0)
+                supplier: poDetails?.supplier,
+                purchase_order: parseInt(selectedPO),
+                received_date: formData.dateReceived,
+                notes: `${formData.deliveryNote} | ${formData.remarks}`.trim(),
+                lines: receivedItems.map(item => ({
+                    item: item.itemId,
+                    quantity_received: parseInt(item.quantityReceived),
+                    unit_cost: item.unitPrice,
+                })),
             };
 
-            await procurementService.createGRN(payload);
+            await inventoryService.createGRN(payload);
             onSuccess();
         } catch (error) {
-            toast.error("Failed to create GRN");
+            toast.error(error?.data?.detail || "Failed to create GRN");
             setLoading(false);
         }
     };
@@ -143,7 +156,7 @@ const CreateGRN = ({ onCancel, onSuccess }) => {
                             <option value="">-- Choose PO --</option>
                             {purchaseOrders.map(po => (
                                 <option key={po.id} value={po.id}>
-                                    {po.id} - {po.supplier}
+                                    {po.poNumber} - {po.supplier}
                                 </option>
                             ))}
                         </select>

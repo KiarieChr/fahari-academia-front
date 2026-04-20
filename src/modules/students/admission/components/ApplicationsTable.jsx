@@ -3,6 +3,7 @@ import { Eye, Check, X, MoreVertical, Edit, Search, Filter } from 'lucide-react'
 import { toast } from 'react-toastify';
 
 import ApplicationDetailsModal from './ApplicationDetailsModal';
+import ExistingParentDialog from './ExistingParentDialog';
 
 import { studentManagementService } from '../../../../services/studentManagementService';
 
@@ -11,6 +12,12 @@ const ApplicationsTable = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
     const [selectedApp, setSelectedApp] = useState(null);
+
+    // Existing-parent dialog state
+    const [parentDialogOpen, setParentDialogOpen] = useState(false);
+    const [parentInfo, setParentInfo] = useState(null);
+    const [pendingAdmitApp, setPendingAdmitApp] = useState(null);
+    const [admitting, setAdmitting] = useState(false);
 
     const fetchApplications = async () => {
         try {
@@ -29,15 +36,50 @@ const ApplicationsTable = () => {
         fetchApplications();
     }, []);
 
-    const handleAction = async (id, action) => {
+    const proceedWithAdmission = async (applicationId, extraData = {}) => {
+        const toastId = toast.loading('Admitting student...');
+        try {
+            setAdmitting(true);
+            await studentManagementService.admitApplicant(applicationId, extraData);
+            toast.success('Student Admitted Successfully', { id: toastId });
+            setParentDialogOpen(false);
+            setPendingAdmitApp(null);
+            setParentInfo(null);
+            fetchApplications();
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.error || 'Admission failed', { id: toastId });
+        } finally {
+            setAdmitting(false);
+        }
+    };
+
+    const handleAction = async (app, action) => {
         try {
             if (action === 'Admit') {
-                const toastId = toast.loading('Admitting student...');
-                await studentManagementService.admitApplicant(id, {});
-                toast.success('Student Admitted Successfully', { id: toastId });
-                fetchApplications(); // Refresh list
+                const guardianEmail = app.email || app.guardian_email;
+
+                if (guardianEmail) {
+                    // Check if guardian already has a parent account
+                    try {
+                        const result = await studentManagementService.checkGuardianEmail(guardianEmail);
+                        if (result.exists) {
+                            // Show dialog — let user decide
+                            setParentInfo(result);
+                            setPendingAdmitApp(app);
+                            setParentDialogOpen(true);
+                            return;
+                        }
+                    } catch (checkError) {
+                        // If the check fails, proceed with normal admission
+                        console.warn('Guardian email check failed, proceeding normally:', checkError);
+                    }
+                }
+
+                // No existing parent found or no email — admit directly
+                await proceedWithAdmission(app.id);
             } else if (action === 'Reject') {
-                await studentManagementService.updateApplication(id, { application_status: 'rejected' });
+                await studentManagementService.updateApplication(app.id, { application_status: 'rejected' });
                 toast.success('Application Rejected');
                 fetchApplications();
             }
@@ -45,6 +87,22 @@ const ApplicationsTable = () => {
             console.error(error);
             toast.error(error.response?.data?.error || 'Action failed');
         }
+    };
+
+    const handleUseExistingParent = (parentUserId) => {
+        if (!pendingAdmitApp) return;
+        proceedWithAdmission(pendingAdmitApp.id, { existing_parent_user_id: parentUserId });
+    };
+
+    const handleCreateNewParent = () => {
+        if (!pendingAdmitApp) return;
+        proceedWithAdmission(pendingAdmitApp.id);
+    };
+
+    const closeParentDialog = () => {
+        setParentDialogOpen(false);
+        setPendingAdmitApp(null);
+        setParentInfo(null);
     };
 
     return (
@@ -83,6 +141,7 @@ const ApplicationsTable = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Application No</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campus</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Applied</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -90,14 +149,15 @@ const ApplicationsTable = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {loading ? (
-                            <tr><td colSpan="6" className="text-center py-8">Loading applications...</td></tr>
+                            <tr><td colSpan="7" className="text-center py-8">Loading applications...</td></tr>
                         ) : apps.length === 0 ? (
-                            <tr><td colSpan="6" className="text-center py-8">No applications found</td></tr>
+                            <tr><td colSpan="7" className="text-center py-8">No applications found</td></tr>
                         ) : apps.filter(a => filter === 'All' || a.application_status === filter.toLowerCase()).map((app) => (
                             <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">#{app.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{app.first_name} {app.last_name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.grade_name || '-'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.campus_name || '-'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(app.created_at).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${app.application_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -114,10 +174,10 @@ const ApplicationsTable = () => {
                                         </button>
                                         {app.application_status === 'pending' && (
                                             <>
-                                                <button onClick={() => handleAction(app.id, 'Admit')} className="group relative p-1.5 text-gray-400 hover:text-green-600 rounded hover:bg-green-50 transition-colors">
+                                                <button onClick={() => handleAction(app, 'Admit')} className="group relative p-1.5 text-gray-400 hover:text-green-600 rounded hover:bg-green-50 transition-colors">
                                                     <Check size={18} />
                                                 </button>
-                                                <button onClick={() => handleAction(app.id, 'Reject')} className="group relative p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors">
+                                                <button onClick={() => handleAction(app, 'Reject')} className="group relative p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors">
                                                     <X size={18} />
                                                 </button>
                                             </>
@@ -132,6 +192,16 @@ const ApplicationsTable = () => {
 
             {/* Details Modal */}
             <ApplicationDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} />
+
+            {/* Existing Parent Dialog */}
+            <ExistingParentDialog
+                isOpen={parentDialogOpen}
+                onClose={closeParentDialog}
+                parentInfo={parentInfo}
+                onUseExisting={handleUseExistingParent}
+                onCreateNew={handleCreateNewParent}
+                loading={admitting}
+            />
         </div>
     );
 };

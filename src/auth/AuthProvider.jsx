@@ -13,12 +13,12 @@ export const AuthProvider = ({ children }) => {
         try {
             // Ensure CSRF token is set
             await api.get("/api/csrf/");
-            const res = await api.get("/api/auth/me/");
+            const data = await api.get("/api/auth/me/");
             setIsAuthenticated(true);
-            setUser(res.data);
+            setUser(data); // api.get returns parsed JSON directly
             return true;
         } catch (error) {
-            if (error.response?.status === 401 || error.response?.status === 403) {
+            if (error.status === 401 || error.status === 403) {
                 // Determine if this is a session expiry or just not logged in
                 console.log("User not currently authenticated via session.");
             } else if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Initialize auth on mount
+    // Initialize auth on mount + listen for auth-change events (fired by LoginForm)
     useEffect(() => {
         const initAuth = async () => {
             try {
@@ -42,14 +42,24 @@ export const AuthProvider = ({ children }) => {
             }
         };
 
+        const handleAuthChange = () => {
+            checkAuth();
+        };
+
         initAuth();
+
+        window.addEventListener('auth-change', handleAuthChange);
+        window.addEventListener('storage', handleAuthChange);
+        return () => {
+            window.removeEventListener('auth-change', handleAuthChange);
+            window.removeEventListener('storage', handleAuthChange);
+        };
     }, []);
 
     // Login function
     const login = async (credentials) => {
         try {
-            const response = await api.post('/api/auth/login/', credentials);
-            const data = response.data;
+            const data = await api.post('/api/auth/login/', credentials);
 
             if (data.success) {
                 if (data.requires_setup) {
@@ -78,7 +88,7 @@ export const AuthProvider = ({ children }) => {
             console.error("Login error:", error);
             return {
                 success: false,
-                error: error.response?.data || error.message
+                error: error.data || error.message
             };
         }
     };

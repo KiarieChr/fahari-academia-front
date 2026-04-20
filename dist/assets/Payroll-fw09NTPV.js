@@ -1,0 +1,1 @@
+import{j as a,D as s}from"./index-DlbbDw6d.js";const r=()=>a.jsx(s,{title:"Payroll",children:a.jsxs("div",{className:"module-content",children:[a.jsx("h2",{children:"Payroll Module"}),a.jsx("p",{children:"Manage salaries, payslips, and tax information."})]})});export{r as default};

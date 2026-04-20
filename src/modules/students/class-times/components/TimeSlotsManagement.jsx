@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Edit2, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+import Modal from '../../../../components/common/Modal';
+import { Input, Select, FormField, inputClass } from '../../../../components/ui/FormField';
 
 const DAY_CHOICES = [
     { value: 0, label: 'Monday' },
@@ -203,210 +204,126 @@ const TimeSlotsManagement = ({
             )}
 
             {/* ── Add/Edit Slot Modal ─────────────────────────────────── */}
-            <AnimatePresence>
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-700"
-                        >
-                            {/* Modal Header */}
-                            <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                                <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-                                    {editingSlot ? 'Edit Timetable Slot' : 'New Timetable Slot'}
-                                </h3>
-                                <button
-                                    onClick={closeModal}
-                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                title={editingSlot ? 'Edit Timetable Slot' : 'New Timetable Slot'}
+                size="md"
+                accentColor="bg-blue-500"
+                footer={
+                    <>
+                        <Modal.CancelButton onClick={closeModal} />
+                        <Modal.SubmitButton onClick={handleSave} loading={saving}>
+                            {editingSlot ? 'Update Slot' : 'Save Slot'}
+                        </Modal.SubmitButton>
+                    </>
+                }
+            >
+                <div className="space-y-5">
+                    {error && (
+                        <div className="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-xl px-4 py-3">
+                            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                    )}
 
-                            {/* Modal Body */}
-                            <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-                                {error && (
-                                    <div className="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm rounded-xl px-4 py-3">
-                                        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
-                                        <span>{error}</span>
-                                    </div>
-                                )}
+                    {/* Class session */}
+                    <FormField label="Class" required>
+                        <Select name="class_session" value={form.class_session} onChange={handleChange}>
+                            <option value="">Select class…</option>
+                            {classSessions.map((cs) => (
+                                <option key={cs.id} value={cs.id}>{cs.name ?? `${cs.grade_name} – ${cs.term_name}`}</option>
+                            ))}
+                        </Select>
+                    </FormField>
 
-                                {/* Class session */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Class *</label>
-                                    <select
-                                        name="class_session"
-                                        value={form.class_session}
-                                        onChange={handleChange}
-                                        className="w-full h-11 px-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                    >
-                                        <option value="">Select class…</option>
-                                        {classSessions.map((cs) => (
-                                            <option key={cs.id} value={cs.id}>{cs.name ?? `${cs.grade_name} – ${cs.term_name}`}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                    {/* Subject */}
+                    <FormField label="Subject" required>
+                        <Select name="subject" value={form.subject} onChange={handleChange}>
+                            <option value="">Select subject…</option>
+                            {subjects.map((s) => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </Select>
+                    </FormField>
 
-                                {/* Subject */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Subject *</label>
-                                    <select
-                                        name="subject"
-                                        value={form.subject}
-                                        onChange={handleChange}
-                                        className="w-full h-11 px-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                    >
-                                        <option value="">Select subject…</option>
-                                        {subjects.map((s) => (
-                                            <option key={s.id} value={s.id}>{s.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                    {/* Teacher */}
+                    <FormField label="Teacher ID" required>
+                        <Input
+                            type="number"
+                            name="teacher"
+                            value={form.teacher}
+                            onChange={handleChange}
+                            placeholder="User ID of teacher"
+                        />
+                    </FormField>
 
-                                {/* Teacher (text for now — could be user picker) */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Teacher ID *</label>
-                                    <input
-                                        type="number"
-                                        name="teacher"
-                                        value={form.teacher}
-                                        onChange={handleChange}
-                                        placeholder="User ID of teacher"
-                                        className="w-full h-11 px-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                    />
-                                </div>
-
-                                {/* Day + Times */}
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Day</label>
-                                        <select
-                                            name="day_of_week"
-                                            value={form.day_of_week}
-                                            onChange={handleChange}
-                                            className="w-full h-11 px-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                        >
-                                            {DAY_CHOICES.map((d) => (
-                                                <option key={d.value} value={d.value}>{d.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Start *</label>
-                                        <input
-                                            type="time"
-                                            name="start_time"
-                                            value={form.start_time}
-                                            onChange={handleChange}
-                                            className="w-full h-11 px-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">End *</label>
-                                        <input
-                                            type="time"
-                                            name="end_time"
-                                            value={form.end_time}
-                                            onChange={handleChange}
-                                            className="w-full h-11 px-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Room */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Room (optional)</label>
-                                    <select
-                                        name="room"
-                                        value={form.room}
-                                        onChange={handleChange}
-                                        className="w-full h-11 px-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                    >
-                                        <option value="">No room assigned</option>
-                                        {rooms.map((r) => (
-                                            <option key={r.id} value={r.id}>{r.name} (cap {r.capacity})</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Effective from */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Effective From</label>
-                                    <input
-                                        type="date"
-                                        name="effective_from"
-                                        value={form.effective_from}
-                                        onChange={handleChange}
-                                        className="w-full h-11 px-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Modal Footer */}
-                            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                                <button
-                                    onClick={handleSave}
-                                    disabled={saving}
-                                    className="w-full h-11 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-blue-600/20"
-                                >
-                                    {saving && <Loader2 size={16} className="animate-spin" />}
-                                    {editingSlot ? 'Update Slot' : 'Save Slot'}
-                                </button>
-                            </div>
-                        </motion.div>
+                    {/* Day + Times */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <FormField label="Day">
+                            <Select name="day_of_week" value={form.day_of_week} onChange={handleChange}>
+                                {DAY_CHOICES.map((d) => (
+                                    <option key={d.value} value={d.value}>{d.label}</option>
+                                ))}
+                            </Select>
+                        </FormField>
+                        <FormField label="Start" required>
+                            <Input type="time" name="start_time" value={form.start_time} onChange={handleChange} />
+                        </FormField>
+                        <FormField label="End" required>
+                            <Input type="time" name="end_time" value={form.end_time} onChange={handleChange} />
+                        </FormField>
                     </div>
-                )}
-            </AnimatePresence>
+
+                    {/* Room */}
+                    <FormField label="Room (optional)">
+                        <Select name="room" value={form.room} onChange={handleChange}>
+                            <option value="">No room assigned</option>
+                            {rooms.map((r) => (
+                                <option key={r.id} value={r.id}>{r.name} (cap {r.capacity})</option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    {/* Effective from */}
+                    <FormField label="Effective From">
+                        <Input type="date" name="effective_from" value={form.effective_from} onChange={handleChange} />
+                    </FormField>
+                </div>
+            </Modal>
 
             {/* ── Confirm Delete Dialog ──────────────────────────────── */}
-            <AnimatePresence>
-                {confirmDelete && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
-                        >
-                            <div className="px-6 py-5">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
-                                        <AlertTriangle size={24} className="text-red-600 dark:text-red-400" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-lg text-slate-900 dark:text-white">Delete Slot?</h3>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">This action cannot be undone</p>
-                                    </div>
-                                </div>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-3">
-                                    This will permanently remove the <strong className="text-slate-900 dark:text-white">{confirmDelete.subject_name}</strong> slot
-                                    on <strong className="text-slate-900 dark:text-white">{confirmDelete.day_display}</strong> at {confirmDelete.start_time}.
-                                    Related planned lessons will also be removed.
-                                </p>
-                            </div>
-                            <div className="flex gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                                <button
-                                    onClick={() => setConfirmDelete(null)}
-                                    className="flex-1 h-11 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(confirmDelete.id)}
-                                    disabled={deleting}
-                                    className="flex-1 h-11 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg shadow-red-600/20"
-                                >
-                                    {deleting && <Loader2 size={14} className="animate-spin" />}
-                                    Delete
-                                </button>
-                            </div>
-                        </motion.div>
+            <Modal
+                isOpen={!!confirmDelete}
+                onClose={() => setConfirmDelete(null)}
+                title="Delete Slot?"
+                subtitle="This action cannot be undone"
+                icon={
+                    <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
+                        <AlertTriangle size={24} className="text-red-600 dark:text-red-400" />
                     </div>
-                )}
-            </AnimatePresence>
+                }
+                size="sm"
+                accentColor="bg-red-500"
+                footer={
+                    <>
+                        <Modal.CancelButton onClick={() => setConfirmDelete(null)} />
+                        <Modal.SubmitButton
+                            onClick={() => handleDelete(confirmDelete.id)}
+                            loading={deleting}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete
+                        </Modal.SubmitButton>
+                    </>
+                }
+            >
+                <p className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-3">
+                    This will permanently remove the <strong className="text-slate-900 dark:text-white">{confirmDelete?.subject_name}</strong> slot
+                    on <strong className="text-slate-900 dark:text-white">{confirmDelete?.day_display}</strong> at {confirmDelete?.start_time}.
+                    Related planned lessons will also be removed.
+                </p>
+            </Modal>
         </div>
     );
 };

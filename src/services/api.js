@@ -43,6 +43,7 @@ export const api = {
                     ...getAuthHeaders(),
                     ...(options.headers || {})
                 },
+                cache: 'no-store',
             });
             return handleResponse(response, options);
         } catch (error) {
@@ -192,7 +193,7 @@ export const api = {
 
     getCurrentUser: async () => {
         try {
-            const response = await fetch(`${API_URL}/api/users/profile/`, {
+            const response = await fetch(`${API_URL}/api/auth/me/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -205,10 +206,32 @@ export const api = {
         }
     },
 
-    // Placeholder - Not implemented yet
+    // ─── Password Reset Flow ─────────────────────────────────────
     forgotPassword: async (email) => {
-        console.warn("Forgot password not implemented on backend");
-        throw new Error("Feature not available yet.");
+        const response = await fetch(`${API_URL}/api/auth/forgot-password/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        return handleResponse(response);
+    },
+
+    verifyOtp: async (email, code) => {
+        const response = await fetch(`${API_URL}/api/auth/verify-otp/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code }),
+        });
+        return handleResponse(response);
+    },
+
+    resetPassword: async (email, code, password, confirm_password) => {
+        const response = await fetch(`${API_URL}/api/auth/reset-password/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code, password, confirm_password }),
+        });
+        return handleResponse(response);
     },
 
     // ─── Academics (class sessions, grades, terms) ────────────────
@@ -326,7 +349,7 @@ export const api = {
         getAttendance: (id) =>
             api.get(`/api/lesson-sessions/sessions/${id}/attendance/`),
         markAttendance: (id, records) =>
-            api.post(`/api/lesson-sessions/sessions/${id}/attendance/`, { records }),
+            api.post(`/api/lesson-sessions/sessions/${id}/attendance/`, records),
         // Today's sessions
         getToday: (params = {}) =>
             api.get('/api/lesson-sessions/sessions/today/', { params }),

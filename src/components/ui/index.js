@@ -15,3 +15,4 @@ export { default as Card } from './Card';
 export { default as Tabs } from './Tabs';
 export { default as ProgressBar } from './ProgressBar';
 export { default as Tooltip } from './Tooltip';
+export { default as FormField, Input, Select, TextArea, inputClass, labelClass } from './FormField';

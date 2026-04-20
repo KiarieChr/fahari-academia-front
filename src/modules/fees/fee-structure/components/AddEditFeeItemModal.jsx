@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, TrendingUp } from 'lucide-react';
-import { billingFrequencies, appliesTo } from '../data/mockFeeStructureData';
+import { BILLING_FREQUENCIES as billingFrequencies, APPLIES_TO_OPTIONS as appliesTo } from '../constants/feeStructureConstants';
 import { checkAccountMapping } from '../utils/feeStructureUtils';
 
 const AddEditFeeItemModal = ({
     show, onClose, onSave,
-    feeItem, classId, term, academicYear,
+    feeItem, classId, className: className_prop, term, academicYear,
     incomeAccounts = [], feeCategories = []
 }) => {
+    // Display label for the context banner
+    const contextClassName = className_prop || classId || 'Unknown Class';
     const [formData, setFormData] = useState({
         name: '',
         category: '',
@@ -101,6 +103,12 @@ const AddEditFeeItemModal = ({
 
         if (!validateForm()) return;
 
+        // Block saving if term is not selected — prevents silent API failures
+        if (!term) {
+            alert('Please select a Term from the selector before adding a fee item.');
+            return;
+        }
+
         const feeItemData = {
             ...formData,
             amount: parseFloat(formData.amount),
@@ -144,9 +152,16 @@ const AddEditFeeItemModal = ({
                             <div className="alert alert-primary mb-3 d-flex align-items-center">
                                 <AlertCircle size={16} className="me-2" />
                                 <div>
-                                    <strong>Target:</strong> {classId} &bull; {term} &bull; {academicYear}
+                                    <strong>Target:</strong> {contextClassName} &bull; {term || <span className="text-danger">No Term Selected</span>} &bull; {academicYear}
                                 </div>
                             </div>
+
+                            {!term && (
+                                <div className="alert alert-warning d-flex align-items-center py-2 mb-3">
+                                    <AlertCircle size={14} className="me-2 flex-shrink-0" />
+                                    <small>Please select a <strong>Term</strong> in the selector above before saving this item.</small>
+                                </div>
+                            )}
 
                             <div className="row g-3">
                                 {/* Fee Item Name */}
@@ -192,11 +207,18 @@ const AddEditFeeItemModal = ({
                                         required
                                     >
                                         <option value="">Select Account...</option>
-                                        {incomeAccounts.filter(acc => acc.is_active && acc.is_student_related).map(acc => (
-                                            <option key={acc.id} value={acc.id}>
-                                                {acc.code} - {acc.name}
-                                            </option>
-                                        ))}
+                                        {/* Show all active accounts; fallback if is_student_related not set on API */}
+                                        {incomeAccounts
+                                            .filter(acc => acc.is_active !== false)
+                                            .map(acc => (
+                                                <option key={acc.id} value={acc.id}>
+                                                    {acc.code ? `${acc.code} - ` : ''}{acc.name}
+                                                </option>
+                                            ))
+                                        }
+                                        {incomeAccounts.filter(acc => acc.is_active !== false).length === 0 && (
+                                            <option disabled value="">No income accounts found — check Finance &gt; Chart of Accounts</option>
+                                        )}
                                     </select>
                                     {accountValidation && accountValidation.warning && (
                                         <div className="form-text text-warning">

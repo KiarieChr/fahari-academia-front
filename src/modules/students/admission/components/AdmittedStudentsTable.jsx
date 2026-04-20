@@ -8,18 +8,60 @@ const AdmittedStudentsTable = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
+    // Debounce search term
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setCurrentPage(1); // Reset to page 1 on new search
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
     useEffect(() => {
         fetchAdmissions();
-    }, []);
+    }, [currentPage, debouncedSearch]);
 
     const fetchAdmissions = async () => {
         setLoading(true);
         try {
-            const data = await studentManagementService.getAdmissions();
-            setStudents(data.results || data);
+            const params = {
+                page: currentPage,
+                page_size: pageSize,
+                search: debouncedSearch
+            };
+            const response = await studentManagementService.getAdmissions(params);
+            
+            let rawResults = [];
+            let total = 0;
+
+            if (response.results) {
+                // Paginated response from server
+                rawResults = response.results;
+                total = response.count;
+            } else {
+                // Non-paginated array from server
+                rawResults = response;
+                total = response.length;
+            }
+
+            // Ensure we only show 'pageSize' items if server returned more (fallback)
+            // If it was non-paginated, we slice based on currentPage.
+            // If it was paginated but returned more than requested (e.g. server default 50), we slice to 10.
+            if (rawResults.length > pageSize) {
+                const startIndex = response.results ? 0 : (currentPage - 1) * pageSize;
+                setStudents(rawResults.slice(startIndex, startIndex + pageSize));
+            } else {
+                setStudents(rawResults);
+            }
+            
+            setTotalCount(total);
         } catch (error) {
             console.error("Error fetching admissions:", error);
             toast.error("Failed to load admission register");
@@ -28,13 +70,10 @@ const AdmittedStudentsTable = () => {
         }
     };
 
-    const filteredStudents = students.filter(s =>
-        s.admission_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.student_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
             <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex gap-3 items-center w-full md:w-auto">
                     <h3 className="text-lg font-bold text-gray-900 hidden md:block">Admission Register</h3>
@@ -44,7 +83,7 @@ const AdmittedStudentsTable = () => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="Search admission number..."
+                            placeholder="Name or admission number..."
                         />
                     </div>
                 </div>
@@ -58,7 +97,7 @@ const AdmittedStudentsTable = () => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="flex-1 overflow-x-auto min-h-[400px]">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -80,30 +119,30 @@ const AdmittedStudentsTable = () => {
                                     </div>
                                 </td>
                             </tr>
-                        ) : filteredStudents.length === 0 ? (
+                        ) : students.length === 0 ? (
                             <tr>
                                 <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                                     No admitted students found.
                                 </td>
                             </tr>
                         ) : (
-                            filteredStudents.map((s) => (
+                            students.map((s) => (
                                 <tr
                                     key={s.id}
-                                    className="hover:bg-gray-50 cursor-pointer"
+                                    className="hover:bg-gray-50 cursor-pointer transition-colors"
                                     onDoubleClick={() => {
                                         setSelectedStudent(s.id);
                                         setShowEditModal(true);
                                     }}
                                 >
-                                    <td className="px-6 py-4 text-sm font-mono text-gray-600">{s.admission_number || 'Pending'}</td>
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{s.student_name}</td>
+                                    <td className="px-6 py-4 text-sm font-mono text-gray-600 font-medium">{s.admission_number || 'Pending'}</td>
+                                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">{s.student_name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{s.class_name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{s.admission_date}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{s.entry_type}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${s.status === 'active' ? 'bg-green-100 text-green-800' :
-                                            s.status === 'withdrawn' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[0.7rem] font-bold uppercase tracking-wider ${s.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                            s.status === 'withdrawn' ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-slate-50 text-slate-700 border border-slate-100'
                                             }`}>
                                             {s.status}
                                         </span>
@@ -114,6 +153,56 @@ const AdmittedStudentsTable = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalCount > 0 && (
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="text-sm text-gray-500">
+                        Showing <span className="font-semibold text-gray-900">{Math.min((currentPage - 1) * pageSize + 1, totalCount)}</span> to <span className="font-semibold text-gray-900">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-semibold text-gray-900">{totalCount}</span> results
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1 || loading}
+                            className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Previous
+                        </button>
+                        
+                        <div className="hidden md:flex items-center gap-1">
+                            {[...Array(totalPages)].map((_, i) => {
+                                const pageNum = i + 1;
+                                // Basic logic to show limited numbers
+                                if (totalPages > 7) {
+                                    if (pageNum > 2 && pageNum < totalPages - 1 && Math.abs(pageNum - currentPage) > 1) {
+                                        if (pageNum === 3 || pageNum === totalPages - 2) return <span key={pageNum} className="px-1 text-gray-400">...</span>;
+                                        return null;
+                                    }
+                                }
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-9 h-9 rounded-lg text-sm font-semibold transition-all duration-200 ${currentPage === pageNum 
+                                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
+                                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages || loading}
+                            className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Edit Modal */}
             {showEditModal && (

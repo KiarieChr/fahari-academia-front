@@ -1,1 +1,0 @@
-import{j as e,D as s}from"./index-3UWuULgT.js";const a=()=>e.jsx(s,{title:"Student Academics",children:e.jsxs("div",{className:"module-content",children:[e.jsx("h2",{children:"Student Academics Module"}),e.jsx("p",{children:"Manage timetables, exams, and grading systems."})]})});export{a as default};

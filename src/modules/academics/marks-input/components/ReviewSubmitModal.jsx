@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertTriangle, FileText, Send } from 'lucide-react';
 
-const ReviewSubmitModal = ({ isOpen, onClose, stats, context, onSubmit }) => {
+const ReviewSubmitModal = ({ isOpen, onClose, stats, examMeta, onSubmit, submitting }) => {
     if (!isOpen) return null;
 
     return (
@@ -30,7 +30,7 @@ const ReviewSubmitModal = ({ isOpen, onClose, stats, context, onSubmit }) => {
                             <div>
                                 <h4 className="font-bold text-slate-900 dark:text-white text-sm">Submission Details</h4>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                                    You are submitting marks for <strong>{context.subject}</strong> - {context.class} {context.stream}.
+                                    {examMeta?.exam_name || 'Exam'} &middot; Max: {examMeta?.max_mark ?? 100}
                                 </p>
                             </div>
                         </div>
@@ -39,11 +39,15 @@ const ReviewSubmitModal = ({ isOpen, onClose, stats, context, onSubmit }) => {
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-700">
                                 <span className="text-slate-600 dark:text-slate-400">Total Students</span>
-                                <span className="font-bold text-slate-900 dark:text-white">45</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{stats.total}</span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-700">
                                 <span className="text-slate-600 dark:text-slate-400">Marks Entered</span>
-                                <span className="font-bold text-slate-900 dark:text-white">45/45</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{stats.entered}/{stats.total}</span>
+                            </div>
+                            <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-700">
+                                <span className="text-slate-600 dark:text-slate-400">Absent</span>
+                                <span className="font-bold text-red-500">{stats.absent}</span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-700">
                                 <span className="text-slate-600 dark:text-slate-400">Class Average</span>
@@ -62,14 +66,20 @@ const ReviewSubmitModal = ({ isOpen, onClose, stats, context, onSubmit }) => {
                         <button
                             onClick={onClose}
                             className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                            disabled={submitting}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={onSubmit}
-                            className="px-6 py-2 bg-green-600 text-black font-bold rounded-lg hover:bg-green-700 shadow-lg shadow-green-200 dark:shadow-green-900/30 flex items-center gap-2 transition-transform active:scale-95"
+                            disabled={submitting}
+                            className="px-6 py-2 bg-green-600 text-black font-bold rounded-lg hover:bg-green-700 shadow-lg shadow-green-200 dark:shadow-green-900/30 flex items-center gap-2 transition-transform active:scale-95 disabled:opacity-50"
                         >
-                            <CheckCircle size={18} /> Confirm Submit
+                            {submitting ? (
+                                <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Submitting...</>
+                            ) : (
+                                <><CheckCircle size={18} /> Confirm Submit</>
+                            )}
                         </button>
                     </div>
                 </motion.div>

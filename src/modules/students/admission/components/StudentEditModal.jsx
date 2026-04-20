@@ -13,11 +13,17 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
     const [intakes, setIntakes] = useState([]);
     const [classes, setClasses] = useState([]);
     const [streams, setStreams] = useState([]);
+    const [academicYears, setAcademicYears] = useState([]);
+    const [curricula, setCurricula] = useState([]);
+    const [curriculumLevels, setCurriculumLevels] = useState([]);
 
     const [formData, setFormData] = useState({
         intake: '',
         grade_id: '',
         stream_id: '',
+        academic_year_id: '',
+        curriculum_id: '',
+        curriculum_level_id: '',
         status: ''
     });
 
@@ -30,20 +36,27 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [studentData, intakesData, classesData, streamsData] = await Promise.all([
+            const [studentData, intakesData, classesData, streamsData, yearsData, curricData, levelsData] = await Promise.all([
                 studentManagementService.getAdmission(studentId),
                 studentManagementService.getIntakes(),
                 studentManagementService.getClasses(),
-                studentManagementService.getStreams()
+                studentManagementService.getStreams(),
+                studentSettingsService.getAcademicYears(),
+                studentManagementService.getCurriculums(),
+                studentManagementService.getCurriculumLevels()
             ]);
 
             setStudent(studentData);
             setIntakes(intakesData.results || intakesData || []);
             setClasses(classesData.results || classesData || []);
             setStreams(streamsData.results || streamsData || []);
+            const allYears = yearsData.results || yearsData || [];
+            setAcademicYears(allYears);
+            setCurricula(curricData.results || curricData || []);
+            setCurriculumLevels(levelsData.results || levelsData || []);
 
             const getId = (val) => {
-                if (!val) return null;
+                if (!val) return '';
                 if (typeof val === 'object' && val.id) return val.id;
                 return val;
             };
@@ -52,6 +65,9 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                 intake: getId(studentData.intake),
                 grade_id: getId(studentData.class_id || studentData.grade),
                 stream_id: getId(studentData.stream_id || studentData.stream),
+                academic_year_id: getId(studentData.academic_year) || (allYears.find(y => y.is_current)?.id || ''),
+                curriculum_id: getId(studentData.curriculum),
+                curriculum_level_id: getId(studentData.curriculum_level),
                 status: studentData.status || 'active'
             });
         } catch (error) {
@@ -70,7 +86,14 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await studentManagementService.updateAdmission(studentId, formData);
+            // Convert empty strings to null for integer fields to avoid 400 errors
+            const cleanedData = { ...formData };
+            ['grade_id', 'stream_id', 'academic_year_id', 'curriculum_id', 'curriculum_level_id', 'intake'].forEach(key => {
+                if (cleanedData[key] === '' || cleanedData[key] === undefined) {
+                    cleanedData[key] = null;
+                }
+            });
+            await studentManagementService.updateAdmission(studentId, cleanedData);
             toast.success('Student updated successfully');
             onSuccess();
             onClose();
@@ -201,7 +224,23 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                         {activeTab === 'enrollment' && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                                        <select
+                                            name="academic_year_id"
+                                            value={formData.academic_year_id}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="">Select Academic Year</option>
+                                            {academicYears.map(year => (
+                                                <option key={year.id} value={year.id}>
+                                                    {year.name}{year.is_current ? ' (Current)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Intake/Cohort</label>
                                         <select
                                             name="intake"
@@ -218,6 +257,40 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                                         </select>
                                     </div>
                                     <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Curriculum</label>
+                                        <select
+                                            name="curriculum_id"
+                                            value={formData.curriculum_id}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="">Select Curriculum</option>
+                                            {curricula.map(c => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name || c.code}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Curriculum Level</label>
+                                        <select
+                                            name="curriculum_level_id"
+                                            value={formData.curriculum_level_id}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="">Select Level</option>
+                                            {curriculumLevels
+                                                .filter(l => !formData.curriculum_id || l.curriculum === parseInt(formData.curriculum_id))
+                                                .map(level => (
+                                                    <option key={level.id} value={level.id}>
+                                                        {level.name}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Class/Grade</label>
                                         <select
                                             name="grade_id"
@@ -226,11 +299,13 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                         >
                                             <option value="">Select Class</option>
-                                            {classes.map(cls => (
-                                                <option key={cls.id} value={cls.id}>
-                                                    {cls.name}
-                                                </option>
-                                            ))}
+                                            {classes
+                                                .filter(cls => !formData.curriculum_id || cls.curriculum === parseInt(formData.curriculum_id))
+                                                .map(cls => (
+                                                    <option key={cls.id} value={cls.id}>
+                                                        {cls.name}
+                                                    </option>
+                                                ))}
                                         </select>
                                     </div>
                                     <div>
@@ -242,7 +317,7 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                         >
                                             <option value="">Select Stream</option>
-                                            {streams.filter(s => s.grade_id === parseInt(formData.grade_id)).map(stream => (
+                                            {streams.filter(s => s.grade === parseInt(formData.grade_id) || s.grade_id === parseInt(formData.grade_id)).map(stream => (
                                                 <option key={stream.id} value={stream.id}>
                                                     {stream.name}
                                                 </option>

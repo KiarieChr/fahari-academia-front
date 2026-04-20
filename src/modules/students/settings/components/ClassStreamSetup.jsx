@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, List, ChevronDown, ChevronUp, Trash2, Tag, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../services/studentSettingsService';
+import Modal from '../../../../components/common/Modal';
+import { inputClass, labelClass } from '../../../../components/ui/FormField';
 
 const ClassStreamSetup = () => {
     const [classes, setClasses] = useState([]);
@@ -181,52 +183,44 @@ const ClassStreamSetup = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Add Grade Level</h3>
-                                <p className="text-[0.8rem] text-gray-400 mt-0.5">Define a new grade within a curriculum</p>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                                <span className="text-gray-400 text-lg">&times;</span>
-                            </button>
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Add Grade Level"
+                    subtitle="Define a new grade within a curriculum"
+                    size="sm"
+                    footer={
+                        <>
+                            <Modal.CancelButton onClick={() => setIsModalOpen(false)} />
+                            <Modal.SubmitButton onClick={handleAddClass}>Save Grade</Modal.SubmitButton>
+                        </>
+                    }
+                >
+                    <form onSubmit={handleAddClass} className="space-y-5">
+                        <div>
+                            <label className={labelClass}>Grade Name</label>
+                            <input className={inputClass} placeholder="e.g. Grade 1" value={newClass.name} onChange={e => setNewClass({ ...newClass, name: e.target.value })} required />
                         </div>
-
-                        {/* Form Body */}
-                        <form onSubmit={handleAddClass} className="px-7 py-6 space-y-5">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Grade Name</label>
-                                <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="e.g. Grade 1" value={newClass.name} onChange={e => setNewClass({ ...newClass, name: e.target.value })} required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Curriculum</label>
-                                <select
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
-                                    value={newClass.curriculum}
-                                    onChange={e => setNewClass({ ...newClass, curriculum: e.target.value })}
-                                    required
-                                >
-                                    <option value="">Select Curriculum</option>
-                                    {curricula.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Level Order (Sorting)</label>
-                                <input type="number" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" value={newClass.level_order} onChange={e => setNewClass({ ...newClass, level_order: e.target.value })} required />
-                            </div>
-                        </form>
-
-                        {/* Footer */}
-                        <div className="px-7 py-4 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3">
-                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">Cancel</button>
-                            <button type="button" onClick={handleAddClass} className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all">Save Grade</button>
+                        <div>
+                            <label className={labelClass}>Curriculum</label>
+                            <select
+                                className={inputClass}
+                                value={newClass.curriculum}
+                                onChange={e => setNewClass({ ...newClass, curriculum: e.target.value })}
+                                required
+                            >
+                                <option value="">Select Curriculum</option>
+                                {curricula.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
                         </div>
-                    </div>
-                </div>
+                        <div>
+                            <label className={labelClass}>Level Order (Sorting)</label>
+                            <input type="number" className={inputClass} value={newClass.level_order} onChange={e => setNewClass({ ...newClass, level_order: e.target.value })} required />
+                        </div>
+                    </form>
+                </Modal>
             )}
         </div>
     );

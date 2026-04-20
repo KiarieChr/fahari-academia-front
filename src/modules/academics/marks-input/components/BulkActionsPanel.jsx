@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare, Trash2, Edit3, UserCheck, Download, MoreHorizontal } from 'lucide-react';
+import { Trash2, Edit3, UserCheck, UserX, MoreHorizontal } from 'lucide-react';
 
 const BulkActionsPanel = ({ selectedCount, onAction }) => {
     if (selectedCount === 0) return null;
@@ -18,6 +18,14 @@ const BulkActionsPanel = ({ selectedCount, onAction }) => {
                         title="Mark Selected as Present"
                     >
                         <UserCheck size={16} /> <span className="hidden sm:inline">Present</span>
+                    </button>
+
+                    <button
+                        onClick={() => onAction('markAbsent')}
+                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-red-900/50 hover:text-red-200 dark:hover:bg-red-50 dark:hover:text-red-700 rounded-lg transition-colors text-sm font-medium"
+                        title="Mark Selected as Absent"
+                    >
+                        <UserX size={16} /> <span className="hidden sm:inline">Absent</span>
                     </button>
 
                     <button

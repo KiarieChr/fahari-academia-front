@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { toast } from 'react-toastify';
 import AuthLayout from './AuthLayout';
@@ -20,10 +20,19 @@ const ResetPassword = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+    const email = location.state?.email || '';
+    const code = location.state?.code || '';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!email || !code) {
+            toast.error('Session expired. Please start the reset process again.');
+            navigate('/forgot-password');
+            return;
+        }
 
         if (passwords.new.length < 8) {
             setError('Password must be at least 8 characters');
@@ -45,15 +54,12 @@ const ResetPassword = () => {
 
         setIsLoading(true);
         try {
-            await api.firstTimeSetup({
-                password: passwords.new,
-                // confirm_password: passwords.confirm // Add if backend requires it
-            });
-            toast.success("Password Set Successfully! Please login again.");
-            navigate('/login'); // Redirect to login after password set
+            await api.resetPassword(email, code, passwords.new, passwords.confirm);
+            toast.success("Password reset successfully! Please login.");
+            navigate('/');
         } catch (err) {
-            setError(err.message || "Failed to set password");
-            toast.error(err.message || "Failed to set password");
+            setError(err.message || "Failed to reset password");
+            toast.error(err.message || "Failed to reset password");
         } finally {
             setIsLoading(false);
         }

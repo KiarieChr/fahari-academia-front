@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, UserCheck, ArrowUpCircle, ClipboardList } from 'lucide-react';
+import { Settings, UserCheck, ArrowUpCircle, ClipboardList, GraduationCap } from 'lucide-react';
 import AdmissionNumberSetup from '../AdmissionNumberSetup';
 import studentSettingsService from '../../../../../services/studentSettingsService';
+import SystemConfig from '../../../../settings/components/SystemConfig';
 import { toast } from 'react-toastify';
 
 const StudentRulesTab = () => {
@@ -12,6 +13,7 @@ const StudentRulesTab = () => {
         { id: 'status', label: 'Student Statuses', icon: UserCheck },
         { id: 'promotion', label: 'Promotion Rules', icon: ArrowUpCircle },
         { id: 'demographics', label: 'Demographics', icon: ClipboardList },
+        { id: 'grading-admissions', label: 'Grading & Admissions', icon: GraduationCap },
     ];
 
     return (
@@ -41,6 +43,7 @@ const StudentRulesTab = () => {
                 {activeSection === 'status' && <StatusSetup />}
                 {activeSection === 'promotion' && <PromotionSetup />}
                 {activeSection === 'demographics' && <DemographicsSetup />}
+                {activeSection === 'grading-admissions' && <SystemConfig filterGroups={['grading', 'admissions']} />}
             </div>
         </div>
     );

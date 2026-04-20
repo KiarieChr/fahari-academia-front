@@ -476,6 +476,7 @@ export const api = {
 
     // ─── Timetable ─── Planning layer ────────────────────────────
     timetable: {
+        // Subjects
         getSubjects: (params = {}) =>
             api.get('/api/timetable/subjects/', { params }),
         createSubject: (data) =>
@@ -484,6 +485,7 @@ export const api = {
             api.put(`/api/timetable/subjects/${id}/`, data),
         deleteSubject: (id) =>
             api.delete(`/api/timetable/subjects/${id}/`),
+        // Rooms
         getRooms: (params = {}) =>
             api.get('/api/timetable/rooms/', { params }),
         createRoom: (data) =>
@@ -492,6 +494,7 @@ export const api = {
             api.put(`/api/timetable/rooms/${id}/`, data),
         deleteRoom: (id) =>
             api.delete(`/api/timetable/rooms/${id}/`),
+        // Slots
         getSlots: (params = {}) =>
             api.get('/api/timetable/slots/', { params }),
         getSlot: (id) =>
@@ -505,9 +508,10 @@ export const api = {
         deleteSlot: (id) =>
             api.delete(`/api/timetable/slots/${id}/`),
         getWeeklyView: (classSessionId) =>
-            api.get('/api/timetable/slots/weekly_view/', { params: { class_session: classSessionId } }),
+            api.get('/api/timetable/slots/weekly-view/', { params: { class_session: classSessionId } }),
         replaceSlot: (id, data) =>
-            api.post(`/api/timetable/slots/${id}/replace_slot/`, data),
+            api.post(`/api/timetable/slots/${id}/replace-slot/`, data),
+        // Exceptions
         getExceptions: (params = {}) =>
             api.get('/api/timetable/exceptions/', { params }),
         createException: (data) =>
@@ -516,6 +520,7 @@ export const api = {
             api.put(`/api/timetable/exceptions/${id}/`, data),
         deleteException: (id) =>
             api.delete(`/api/timetable/exceptions/${id}/`),
+        // Curriculum Units
         getCurriculumUnits: (params = {}) =>
             api.get('/api/timetable/curriculum-units/', { params }),
         createCurriculumUnit: (data) =>
@@ -524,6 +529,80 @@ export const api = {
             api.put(`/api/timetable/curriculum-units/${id}/`, data),
         deleteCurriculumUnit: (id) =>
             api.delete(`/api/timetable/curriculum-units/${id}/`),
+        // Time Periods
+        getPeriods: (params = {}) =>
+            api.get('/api/timetable/periods/', { params }),
+        getSchedulablePeriods: () =>
+            api.get('/api/timetable/periods/schedulable/'),
+        createPeriod: (data) =>
+            api.post('/api/timetable/periods/', data),
+        updatePeriod: (id, data) =>
+            api.put(`/api/timetable/periods/${id}/`, data),
+        deletePeriod: (id) =>
+            api.delete(`/api/timetable/periods/${id}/`),
+        // Work Allocations
+        getAllocations: (params = {}) =>
+            api.get('/api/timetable/allocations/', { params }),
+        getAllocationsByClass: (classId) =>
+            api.get(`/api/timetable/allocations/by-class/${classId}/`),
+        getAllocationsByTeacher: (teacherId) =>
+            api.get(`/api/timetable/allocations/by-teacher/${teacherId}/`),
+        getAvailableSlots: (allocationId) =>
+            api.get(`/api/timetable/allocations/${allocationId}/available_slots/`),
+        createAllocation: (data) =>
+            api.post('/api/timetable/allocations/', data),
+        updateAllocation: (id, data) =>
+            api.put(`/api/timetable/allocations/${id}/`, data),
+        deleteAllocation: (id) =>
+            api.delete(`/api/timetable/allocations/${id}/`),
+        // Teacher Availability
+        getAvailability: (params = {}) =>
+            api.get('/api/timetable/availability/', { params }),
+        getAvailabilityByTeacher: (teacherId) =>
+            api.get(`/api/timetable/availability/by-teacher/${teacherId}/`),
+        createAvailability: (data) =>
+            api.post('/api/timetable/availability/', data),
+        updateAvailability: (id, data) =>
+            api.put(`/api/timetable/availability/${id}/`, data),
+        deleteAvailability: (id) =>
+            api.delete(`/api/timetable/availability/${id}/`),
+        // Locks
+        getLocks: (params = {}) =>
+            api.get('/api/timetable/locks/', { params }),
+        createLock: (data) =>
+            api.post('/api/timetable/locks/', data),
+        lockTimetable: (lockId) =>
+            api.post(`/api/timetable/locks/${lockId}/lock/`),
+        unlockTimetable: (lockId, reason = '') =>
+            api.post(`/api/timetable/locks/${lockId}/unlock/`, { reason }),
+        // Versions
+        getVersions: (params = {}) =>
+            api.get('/api/timetable/versions/', { params }),
+        createSnapshot: (data) =>
+            api.post('/api/timetable/versions/create-snapshot/', data),
+        restoreVersion: (versionId) =>
+            api.post(`/api/timetable/versions/${versionId}/restore/`),
+        // Conflict Check
+        checkConflict: (data) =>
+            api.post('/api/timetable/check-conflict/', data),
+        // Auto-generate
+        generate: (data) =>
+            api.post('/api/timetable/generate/', data),
+        // Analytics
+        getAnalytics: (reportType) =>
+            api.get(`/api/timetable/analytics/${reportType}/`),
+        getAnalyticsDetail: (reportType, entityId) =>
+            api.get(`/api/timetable/analytics/${reportType}/${entityId}/`),
+        // Full timetable views
+        getClassTimetable: (classId) =>
+            api.get(`/api/timetable/class/${classId}/full/`),
+        getTeacherTimetable: (teacherId) =>
+            api.get(`/api/timetable/teacher/${teacherId}/full/`),
+        getRoomTimetable: (roomId) =>
+            api.get(`/api/timetable/room/${roomId}/full/`),
+        // Teachers (from users API)
+        getTeachers: (params = {}) =>
+            api.get('/api/users/', { params: { is_lecturer: true, ...params } }),
     },
 
     // ─── Planned Lessons ─── Generation layer ────────────────────
@@ -590,6 +669,54 @@ export const api = {
             api.get('/api/lesson-sessions/coverage/', { params }),
         getSubjectSummary: (params = {}) =>
             api.get('/api/lesson-sessions/coverage/subject_summary/', { params }),
+    },
+
+    // ─── Daily Attendance ────────────────────────────────────────
+    dailyAttendance: {
+        list: (params = {}) =>
+            api.get('/api/attendance/daily/', { params }),
+        getRegister: (classSession, date) =>
+            api.get('/api/attendance/daily/register/', { params: { class_session: classSession, date } }),
+        bulkMark: (data) =>
+            api.post('/api/attendance/daily/bulk_mark/', data),
+        getSummary: (params = {}) =>
+            api.get('/api/attendance/daily/summary/', { params }),
+    },
+
+    // ─── Assignments ─────────────────────────────────────────────
+    assignments: {
+        list: (params = {}) =>
+            api.get('/api/assignments/assignments/', { params }),
+        get: (id) =>
+            api.get(`/api/assignments/assignments/${id}/`),
+        create: (data) =>
+            api.post('/api/assignments/assignments/', data),
+        update: (id, data) =>
+            api.put(`/api/assignments/assignments/${id}/`, data),
+        delete: (id) =>
+            api.delete(`/api/assignments/assignments/${id}/`),
+        publish: (id) =>
+            api.post(`/api/assignments/assignments/${id}/publish/`),
+        close: (id) =>
+            api.post(`/api/assignments/assignments/${id}/close/`),
+        getSubmissions: (id) =>
+            api.get(`/api/assignments/assignments/${id}/submissions/`),
+        getStats: (id) =>
+            api.get(`/api/assignments/assignments/${id}/stats/`),
+
+        // Submissions
+        listSubmissions: (params = {}) =>
+            api.get('/api/assignments/submissions/', { params }),
+        gradeSubmission: (id, data) =>
+            api.patch(`/api/assignments/submissions/${id}/grade/`, data),
+
+        // Portal endpoints
+        myAssignments: () =>
+            api.get('/api/portal/assignments/'),
+        submitAssignment: (assignmentId, data) =>
+            api.post(`/api/portal/assignments/${assignmentId}/submit/`, data),
+        parentChildAssignments: (studentId) =>
+            api.get(`/api/portal/parent/child/${studentId}/assignments/`),
     },
 };
 

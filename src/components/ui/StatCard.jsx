@@ -53,7 +53,7 @@ const StatCard = ({
             whileHover={onClick ? { y: -4, boxShadow: 'var(--shadow-lg)' } : {}}
             onClick={onClick}
             className={`
-                rounded-xl p-6 shadow-sm transition-all duration-200
+                rounded-xl p-4 sm:p-6 shadow-sm transition-all duration-200
                 ${variantClasses[variant]}
                 ${onClick ? 'cursor-pointer' : ''}
                 ${className}
@@ -70,38 +70,38 @@ const StatCard = ({
                 </div>
             ) : (
                 <>
-                    <div className="flex justify-between items-start mb-4">
-                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    <div className="flex justify-between items-start mb-4 gap-3">
+                        <p className="text-[0.7rem] sm:text-xs font-bold text-gray-500 uppercase tracking-wider truncate flex-1">
                             {title}
                         </p>
                         {Icon && (
                             <div
-                                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0"
                                 style={{ backgroundColor: iconBg }}
                             >
-                                <Icon size={22} style={{ color: iconColor }} />
+                                <Icon size={18} className="sm:w-[22px] sm:h-[22px]" style={{ color: iconColor }} />
                             </div>
                         )}
                     </div>
 
-                    <div className="mb-3">
-                        <h3 className="text-3xl font-bold text-gray-900 tracking-tight">
+                    <div className="mb-3 overflow-hidden">
+                        <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight truncate">
                             {prefix}{typeof value === 'number' ? value.toLocaleString() : value}{suffix}
                         </h3>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center flex-wrap gap-2">
                         {displayChange !== 0 && (
                             <span className={`
-                                inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold
+                                inline-flex items-center gap-1 px-2 py-1 rounded-full text-[0.65rem] sm:text-xs font-bold
                                 ${trendColors[calculatedTrend]}
                             `}>
-                                <TrendIcon size={14} />
+                                <TrendIcon size={12} />
                                 {Math.abs(displayChange)}%
                             </span>
                         )}
                         {changeLabel && (
-                            <span className="text-sm text-gray-500">
+                            <span className="text-[0.7rem] sm:text-sm text-gray-400 font-medium truncate flex-1">
                                 {changeLabel}
                             </span>
                         )}

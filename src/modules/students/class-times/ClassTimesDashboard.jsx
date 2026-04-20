@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 
 import { motion } from 'framer-motion';
@@ -30,7 +30,11 @@ const TABS = [
 
 const ClassTimesDashboard = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('overview');
+    const [searchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(() => {
+        const tabParam = searchParams.get('tab');
+        return TABS.find(t => t.id === tabParam) ? tabParam : 'overview';
+    });
 
     // ── Filters state lifted up so FilterBar can update it ───────
     const [filters, setFilters] = useState({ classSessionId: null });
@@ -103,9 +107,13 @@ const ClassTimesDashboard = () => {
         }
         setGenerating(true);
         try {
-            await timetableApi.generateTimetable({
-                class_session_id: filters.classSessionId,
-                strategy: 'greedy',
+            await timetableApi.scheduling.generate({
+                class_session: filters.classSessionId,
+                mode: 'semi_auto',
+                preferences: {
+                    prefer_morning: true,
+                    spread_subjects: true,
+                },
             });
             refresh();
         } catch (err) {

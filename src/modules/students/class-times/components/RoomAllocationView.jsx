@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { LayoutTemplate, Users, Plus, Edit2, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutTemplate, Users, Plus, Edit2, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import Modal from '../../../../components/common/Modal';
+import { Input, Select, FormField, inputClass } from '../../../../components/ui/FormField';
 
 const ROOM_TYPES = ['classroom', 'lab', 'hall', 'library', 'gym', 'other'];
 
@@ -141,70 +142,60 @@ const RoomAllocationView = ({ rooms = [], slots = [], onCreateRoom, onUpdateRoom
             )}
 
             {/* ── Add/Edit Room Modal ─────────────────────────────────── */}
-            <AnimatePresence>
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-700"
-                        >
-                            <div className="flex justify-between items-center mb-5">
-                                <h3 className="font-bold text-lg text-slate-900 dark:text-white">{editingRoom ? 'Edit Room' : 'Add Room'}</h3>
-                                <button onClick={closeModal}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
-                            </div>
-                            {error && <div className="flex gap-2 items-start bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 mb-4"><AlertTriangle size={14} className="mt-0.5" />{error}</div>}
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Room Name *</label>
-                                    <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Room 1A" className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
-                                        <select name="room_type" value={form.room_type} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                            {ROOM_TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Capacity</label>
-                                        <input type="number" name="capacity" value={form.capacity} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                                    <textarea name="notes" value={form.notes} onChange={handleChange} rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
-                                </div>
-                                <button onClick={handleSave} disabled={saving} className="w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
-                                    {saving && <Loader2 size={16} className="animate-spin" />}
-                                    {editingRoom ? 'Update Room' : 'Save Room'}
-                                </button>
-                            </div>
-                        </motion.div>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                title={editingRoom ? 'Edit Room' : 'Add Room'}
+                size="sm"
+                accentColor="bg-blue-500"
+                footer={
+                    <>
+                        <Modal.CancelButton onClick={closeModal} />
+                        <Modal.SubmitButton onClick={handleSave} loading={saving}>
+                            {editingRoom ? 'Update Room' : 'Save Room'}
+                        </Modal.SubmitButton>
+                    </>
+                }
+            >
+                {error && <div className="flex gap-2 items-start bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 mb-4"><AlertTriangle size={14} className="mt-0.5" />{error}</div>}
+                <div className="space-y-4">
+                    <FormField label="Room Name" required>
+                        <Input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Room 1A" />
+                    </FormField>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField label="Type">
+                            <Select name="room_type" value={form.room_type} onChange={handleChange}>
+                                {ROOM_TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                            </Select>
+                        </FormField>
+                        <FormField label="Capacity">
+                            <Input type="number" name="capacity" value={form.capacity} onChange={handleChange} />
+                        </FormField>
                     </div>
-                )}
-            </AnimatePresence>
+                    <FormField label="Notes">
+                        <textarea name="notes" value={form.notes} onChange={handleChange} rows={2} className={inputClass + ' resize-none'} />
+                    </FormField>
+                </div>
+            </Modal>
 
             {/* ── Confirm Delete ─────────────────────────────────────── */}
-            <AnimatePresence>
-                {confirmDelete && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-sm p-6"
-                        >
-                            <p className="text-sm text-slate-600 mb-4">Delete <strong>{confirmDelete.name}</strong>? Slots assigned to this room will become unroomed.</p>
-                            <div className="flex gap-3">
-                                <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
-                                <button onClick={() => handleDelete(confirmDelete.id)} className="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">Delete</button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <Modal
+                isOpen={!!confirmDelete}
+                onClose={() => setConfirmDelete(null)}
+                title="Delete Room?"
+                size="sm"
+                accentColor="bg-red-500"
+                footer={
+                    <>
+                        <Modal.CancelButton onClick={() => setConfirmDelete(null)} />
+                        <Modal.SubmitButton onClick={() => handleDelete(confirmDelete.id)} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </Modal.SubmitButton>
+                    </>
+                }
+            >
+                <p className="text-sm text-slate-600">Delete <strong>{confirmDelete?.name}</strong>? Slots assigned to this room will become unroomed.</p>
+            </Modal>
         </div>
     );
 };

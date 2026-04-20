@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Upload, AlertCircle, CheckCircle, Loader2, Download } from 'lucide-react';
 import { studentManagementService } from '../../../../services/studentManagementService';
 import { toast } from 'react-toastify';
 import Modal from '../../../../components/common/Modal';
+
+const CHUNK_SIZE = 50;
 
 const BulkImportModal = ({ onClose, onSuccess }) => {
     const [file, setFile] = useState(null);
@@ -10,6 +12,8 @@ const BulkImportModal = ({ onClose, onSuccess }) => {
     const [step, setStep] = useState('upload'); // upload, validating, preview, importing, success
     const [validationResult, setValidationResult] = useState(null);
     const [importResult, setImportResult] = useState(null);
+    const [importId, setImportId] = useState(null);
+    const [progress, setProgress] = useState({ processed: 0, total: 0 });
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -43,33 +47,57 @@ const BulkImportModal = ({ onClose, onSuccess }) => {
         try {
             const result = await studentManagementService.importStudents(file, true);
             setValidationResult(result);
+            if (result.import_id) setImportId(result.import_id);
             setStep('preview');
         } catch (error) {
             console.error("Validation failed", error);
-            toast.error(error.response?.data?.error || "Validation failed");
+            toast.error(error?.data?.error || error?.message || "Validation failed");
             setStep('upload');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleImport = async () => {
-        if (!file) return;
+    const handleImport = useCallback(async () => {
+        if (!importId) {
+            toast.error("No import session found. Please re-validate the file.");
+            return;
+        }
+
         setLoading(true);
         setStep('importing');
+        const total = validationResult.valid_rows.length;
+        setProgress({ processed: 0, total });
+
+        let offset = 0;
+        let totalCreated = 0;
+
         try {
-            const result = await studentManagementService.importStudents(file, false);
-            setImportResult(result);
+            while (offset < total) {
+                const result = await studentManagementService.processImportChunk(
+                    importId, offset, CHUNK_SIZE
+                );
+                totalCreated += result.chunk_created;
+                offset = result.processed;
+                setProgress({ processed: result.processed, total: result.total });
+
+                if (result.complete) break;
+            }
+
+            setImportResult({ created_count: totalCreated });
             setStep('success');
             if (onSuccess) onSuccess();
         } catch (error) {
             console.error("Import failed", error);
-            toast.error(error.response?.data?.error || "Import failed");
-            setStep('preview');
+            const msg = error?.data?.error || error?.message || "Import failed. Please try again.";
+            toast.error(msg);
+            // Show how far we got
+            setImportResult({ created_count: totalCreated, failed: true });
+            setStep(totalCreated > 0 ? 'partial' : 'preview');
         } finally {
             setLoading(false);
         }
-    };
+    }, [importId, validationResult, onSuccess]);
 
     return (
         <Modal
@@ -171,7 +199,7 @@ const BulkImportModal = ({ onClose, onSuccess }) => {
                 )}
 
                 {/* Step 2: Validation/Preview */}
-                {(step === 'preview' || step === 'validating' || step === 'importing') && validationResult && (
+                {(step === 'preview' || step === 'validating') && validationResult && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -262,7 +290,58 @@ const BulkImportModal = ({ onClose, onSuccess }) => {
                     </div>
                 )}
 
-                {/* Step 3: Success */}
+                {/* Step 3: Importing — Progress Bar */}
+                {step === 'importing' && (
+                    <div className="space-y-6 animate-in fade-in duration-300 py-8">
+                        <div className="text-center mb-6">
+                            <Loader2 className="animate-spin text-indigo-600 mx-auto mb-3" size={36} />
+                            <h3 className="text-lg font-semibold text-gray-900">Importing Students...</h3>
+                            <p className="text-sm text-gray-500 mt-1">Please don't close this window</p>
+                        </div>
+
+                        <div className="max-w-md mx-auto space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">Progress</span>
+                                <span className="font-medium text-gray-900">
+                                    {progress.processed} / {progress.total} students
+                                </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div
+                                    className="bg-indigo-600 h-3 rounded-full transition-all duration-500 ease-out"
+                                    style={{ width: `${progress.total ? (progress.processed / progress.total) * 100 : 0}%` }}
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 text-center">
+                                Batch {Math.ceil(progress.processed / CHUNK_SIZE) || 1} of {Math.ceil(progress.total / CHUNK_SIZE)}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Step 4: Partial Success (some chunks committed, then failure) */}
+                {step === 'partial' && importResult && (
+                    <div className="flex flex-col items-center justify-center py-10 animate-in fade-in duration-300">
+                        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+                            <AlertCircle className="text-amber-600" size={32} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Partially Imported</h2>
+                        <p className="text-gray-500 mb-2 text-center max-w-md">
+                            {importResult.created_count} students were imported before an error occurred.
+                        </p>
+                        <p className="text-sm text-amber-600 mb-6 text-center max-w-md">
+                            The remaining students were not imported. You can adjust your file and re-upload to import the rest.
+                        </p>
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
+                        >
+                            Close
+                        </button>
+                    </div>
+                )}
+
+                {/* Step 5: Full Success */}
                 {step === 'success' && importResult && (
                     <div className="flex flex-col items-center justify-center py-10 animate-in fade-in zoom-in duration-300">
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -270,7 +349,7 @@ const BulkImportModal = ({ onClose, onSuccess }) => {
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Import Complete!</h2>
                         <p className="text-gray-500 mb-6 text-center max-w-md">
-                            {importResult.message}
+                            Successfully imported {importResult.created_count} students.
                         </p>
                         <div className="flex gap-3">
                             <button
@@ -283,13 +362,11 @@ const BulkImportModal = ({ onClose, onSuccess }) => {
                     </div>
                 )}
 
-                {/* Loading Overlay */}
-                {loading && (
+                {/* Loading Overlay — only for validation step */}
+                {loading && step === 'validating' && (
                     <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
                         <Loader2 className="animate-spin text-indigo-600 mb-2" size={32} />
-                        <p className="text-gray-600 font-medium">
-                            {step === 'validating' ? 'Validating file...' : 'Importing records...'}
-                        </p>
+                        <p className="text-gray-600 font-medium">Validating file...</p>
                     </div>
                 )}
             </div>

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 
 import { ShoppingCart, FileText, Truck, Package, BarChart, ShieldCheck, Settings } from 'lucide-react';
 import GRNDashboard from './grn/GRNDashboard';
-import InventoryDashboard from '../inventory/InventoryDashboard';
 import ProcurementReports from './reports/ProcurementReports';
 import EGPDashboard from './egp/EGPDashboard';
 import ProcurementSettings from './settings/ProcurementSettings';
 
 const Procurement = () => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('dashboard');
 
     const renderContent = () => {
@@ -27,7 +28,7 @@ const Procurement = () => {
             case 'grn':
                 return <GRNDashboard />;
             case 'inventory':
-                return <InventoryDashboard />;
+                return null; // Handled via navigation
             case 'reports':
                 return <ProcurementReports />;
             case 'egp':
@@ -91,11 +92,8 @@ const Procurement = () => {
                                 Goods Received (GRN)
                             </button>
                             <button
-                                onClick={() => setActiveTab('inventory')}
-                                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'inventory'
-                                    ? 'bg-blue-50 text-blue-700'
-                                    : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
+                                onClick={() => navigate('/dashboard/procurement/inventory')}
+                                className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50"
                             >
                                 <Package size={18} className="mr-3" />
                                 Stores & Inventory

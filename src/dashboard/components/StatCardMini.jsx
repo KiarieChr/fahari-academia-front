@@ -13,7 +13,10 @@ import {
   DollarSign,
   BarChart2,
   Clock,
-  CheckCircle
+  CheckCircle,
+  ClipboardList,
+  Repeat,
+  ArrowRightLeft
 } from 'lucide-react';
 
 // Map icon names to lucide-react components
@@ -30,6 +33,9 @@ const iconComponents = {
   'chart': BarChart2,
   'clock': Clock,
   'check': CheckCircle,
+  'clipboard-list': ClipboardList,
+  'repeat': Repeat,
+  'arrow-right-left': ArrowRightLeft,
 };
 
 const StatCardMini = ({

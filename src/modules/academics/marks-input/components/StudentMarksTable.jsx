@@ -1,35 +1,54 @@
-import React, { useRef } from 'react';
-import { Lock, AlertCircle, MessageSquare } from 'lucide-react';
+import React from 'react';
+import { AlertCircle, MessageSquare } from 'lucide-react';
 
-const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSelectStudent, onSelectAll }) => {
+const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSelectStudent, onSelectAll, maxMark = 100, loading }) => {
 
-    // Auto-focus next input on Enter
     const handleKeyDown = (e, currentIndex) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            if (e.key === 'Enter') e.preventDefault();
             const nextInput = document.getElementById(`mark-input-${currentIndex + 1}`);
             if (nextInput) {
                 nextInput.focus();
                 nextInput.select();
             }
         }
-    };
-
-    const handleMarkChange = (id, value) => {
-        // Validate range 0-100
-        let newValue = value;
-        if (value > 100) newValue = 100;
-        if (value < 0) newValue = 0;
-
-        onUpdateStudent(id, 'marks', newValue);
-    };
-
-    const handleStatusChange = (id, status) => {
-        onUpdateStudent(id, 'status', status);
-        if (status === 'Absent' || status === 'Excused') {
-            onUpdateStudent(id, 'marks', ''); // Clear marks if absent
+        // Arrow keys for grid navigation
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextInput = document.getElementById(`mark-input-${currentIndex + 1}`);
+            if (nextInput) { nextInput.focus(); nextInput.select(); }
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevInput = document.getElementById(`mark-input-${currentIndex - 1}`);
+            if (prevInput) { prevInput.focus(); prevInput.select(); }
         }
     };
+
+    const handleMarkChange = (studentId, value) => {
+        if (value === '') {
+            onUpdateStudent(studentId, 'raw_mark', null);
+            return;
+        }
+        let num = parseFloat(value);
+        if (isNaN(num)) return;
+        if (num > maxMark) num = maxMark;
+        if (num < 0) num = 0;
+        onUpdateStudent(studentId, 'raw_mark', num);
+    };
+
+    const handleAbsentToggle = (studentId, checked) => {
+        onUpdateStudent(studentId, 'is_absent', checked);
+    };
+
+    if (loading) {
+        return (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-12 text-center">
+                <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-3" />
+                <p className="text-slate-500">Loading students...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -37,7 +56,7 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                 <table className="w-full text-sm text-left">
                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10">
                         <tr>
-                            <th className="px-6 py-4 font-semibold w-10">
+                            <th className="px-4 py-4 font-semibold w-10">
                                 <input
                                     type="checkbox"
                                     className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
@@ -45,77 +64,74 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                                     onChange={onSelectAll}
                                 />
                             </th>
-                            <th className="px-6 py-4 font-semibold">Adm No</th>
-                            <th className="px-6 py-4 font-semibold">Student Name</th>
-                            <th className="px-6 py-4 font-semibold w-32">Status</th>
-                            <th className="px-6 py-4 font-semibold w-24 text-center">Marks</th>
-                            <th className="px-6 py-4 font-semibold w-16 text-center">Grade</th>
-                            <th className="px-6 py-4 font-semibold">Remarks</th>
+                            <th className="px-4 py-4 font-semibold">#</th>
+                            <th className="px-4 py-4 font-semibold">Adm No</th>
+                            <th className="px-4 py-4 font-semibold">Student Name</th>
+                            <th className="px-4 py-4 font-semibold">Stream</th>
+                            <th className="px-4 py-4 font-semibold w-20 text-center">Absent</th>
+                            <th className="px-4 py-4 font-semibold w-28 text-center">Marks (/{maxMark})</th>
+                            <th className="px-4 py-4 font-semibold w-16 text-center">Grade</th>
+                            <th className="px-4 py-4 font-semibold w-16 text-center">Pts</th>
+                            <th className="px-4 py-4 font-semibold">Remarks</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                         {students.map((student, index) => {
-                            const isSelected = selectedStudents.includes(student.id);
-                            const isLocked = student.locked;
-                            const isAbsent = student.status === 'Absent' || student.status === 'Excused';
-                            const isValid = student.marks === '' || (Number(student.marks) >= 0 && Number(student.marks) <= 100);
+                            const isSelected = selectedStudents.includes(student.student_id);
+                            const isAbsent = student.is_absent;
+                            const hasMarks = student.raw_mark !== null && student.raw_mark !== undefined;
+                            const isValid = !hasMarks || (Number(student.raw_mark) >= 0 && Number(student.raw_mark) <= maxMark);
 
                             return (
                                 <tr
-                                    key={student.id}
-                                    className={`group transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' :
+                                    key={student.student_id}
+                                    className={`group transition-colors ${
+                                        isSelected ? 'bg-blue-50 dark:bg-blue-900/10' :
                                         !isValid ? 'bg-red-50 dark:bg-red-900/10' :
-                                            'hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                                        }`}
+                                        isAbsent ? 'bg-slate-50 dark:bg-slate-800/50 opacity-60' :
+                                        'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                    }`}
                                 >
-                                    <td className="px-6 py-3">
+                                    <td className="px-4 py-3">
                                         <input
                                             type="checkbox"
                                             className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
                                             checked={isSelected}
-                                            onChange={() => onSelectStudent(student.id)}
-                                            disabled={isLocked}
+                                            onChange={() => onSelectStudent(student.student_id)}
                                         />
                                     </td>
-                                    <td className="px-6 py-3 font-mono text-slate-500">{student.admNo}</td>
-                                    <td className="px-6 py-3 font-medium text-slate-900 dark:text-white">
-                                        {student.name}
-                                        {isLocked && <Lock size={12} className="inline ml-2 text-slate-400" />}
+                                    <td className="px-4 py-3 text-slate-400 text-xs">{index + 1}</td>
+                                    <td className="px-4 py-3 font-mono text-slate-500 text-xs">{student.admission_number || '—'}</td>
+                                    <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{student.student_name}</td>
+                                    <td className="px-4 py-3 text-slate-500 text-xs">{student.stream_name || '—'}</td>
+                                    <td className="px-4 py-3 text-center">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded text-red-500 focus:ring-red-400 w-4 h-4 cursor-pointer"
+                                            checked={isAbsent}
+                                            onChange={e => handleAbsentToggle(student.student_id, e.target.checked)}
+                                        />
                                     </td>
-                                    <td className="px-6 py-3">
-                                        <select
-                                            className={`px-2 py-1 rounded-lg text-xs font-bold border-none outline-none cursor-pointer ${student.status === 'Present' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
-                                                student.status === 'Absent' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
-                                                    'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                                }`}
-                                            value={student.status}
-                                            onChange={(e) => handleStatusChange(student.id, e.target.value)}
-                                            disabled={isLocked}
-                                        >
-                                            <option value="Present">Present</option>
-                                            <option value="Absent">Absent</option>
-                                            <option value="Excused">Excused</option>
-                                        </select>
-                                    </td>
-                                    <td className="px-6 py-3 text-center relative">
+                                    <td className="px-4 py-3 text-center relative">
                                         {isAbsent ? (
-                                            <span className="text-slate-400 text-xs italic">--</span>
+                                            <span className="text-slate-400 text-xs italic">Absent</span>
                                         ) : (
                                             <>
                                                 <input
                                                     id={`mark-input-${index}`}
                                                     type="number"
-                                                    className={`w-16 text-center py-1.5 rounded-lg border text-sm font-bold outline-none focus:ring-2 transition-all ${!isValid ? 'border-red-500 bg-red-50 text-red-700 focus:ring-red-500' :
-                                                        student.marks !== '' ? 'border-blue-200 bg-blue-50 text-blue-700 focus:ring-blue-500' :
-                                                            'border-slate-300 bg-white dark:bg-slate-800 focus:ring-blue-500'
-                                                        }`}
-                                                    placeholder="-"
-                                                    value={student.marks}
-                                                    onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                                                    onKeyDown={(e) => handleKeyDown(e, index)}
-                                                    disabled={isLocked}
+                                                    className={`w-20 text-center py-1.5 rounded-lg border text-sm font-bold outline-none focus:ring-2 transition-all ${
+                                                        !isValid ? 'border-red-500 bg-red-50 text-red-700 focus:ring-red-500' :
+                                                        hasMarks ? 'border-blue-200 bg-blue-50 text-blue-700 focus:ring-blue-500' :
+                                                        'border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-600 focus:ring-blue-500'
+                                                    }`}
+                                                    placeholder="—"
+                                                    value={student.raw_mark ?? ''}
+                                                    onChange={e => handleMarkChange(student.student_id, e.target.value)}
+                                                    onKeyDown={e => handleKeyDown(e, index)}
                                                     min="0"
-                                                    max="100"
+                                                    max={maxMark}
+                                                    step="0.5"
                                                 />
                                                 {!isValid && (
                                                     <div className="absolute top-1 right-2 text-red-500" title="Invalid Mark">
@@ -125,20 +141,28 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                                             </>
                                         )}
                                     </td>
-                                    <td className="px-6 py-3 text-center font-bold text-slate-700 dark:text-slate-300">
-                                        {student.grade}
+                                    <td className="px-4 py-3 text-center">
+                                        {student.grade ? (
+                                            <span className="inline-flex items-center justify-center w-10 h-7 rounded font-bold text-xs bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                                                {student.grade}
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-300">—</span>
+                                        )}
                                     </td>
-                                    <td className="px-6 py-3">
+                                    <td className="px-4 py-3 text-center text-sm font-medium text-slate-600 dark:text-slate-400">
+                                        {student.points ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3">
                                         <div className="relative">
                                             <input
                                                 type="text"
-                                                className="w-full pl-8 pr-3 py-1.5 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none text-sm transition-colors"
+                                                className="w-full pl-7 pr-3 py-1.5 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none text-sm transition-colors"
                                                 placeholder="Add remarks..."
-                                                value={student.remarks}
-                                                onChange={(e) => onUpdateStudent(student.id, 'remarks', e.target.value)}
-                                                disabled={isLocked}
+                                                value={student.teacher_remark || ''}
+                                                onChange={e => onUpdateStudent(student.student_id, 'teacher_remark', e.target.value)}
                                             />
-                                            <MessageSquare size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <MessageSquare size={14} className="absolute left-1 top-1/2 -translate-y-1/2 text-slate-400" />
                                         </div>
                                     </td>
                                 </tr>
@@ -148,9 +172,19 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                 </table>
             </div>
 
-            {students.length === 0 && (
+            {students.length === 0 && !loading && (
                 <div className="p-12 text-center text-slate-500">
-                    <p>Select a class and subject to load student list.</p>
+                    <p>Select Year, Term, Class, Subject and Assessment to load students.</p>
+                </div>
+            )}
+
+            {students.length > 0 && (
+                <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between text-xs text-slate-500">
+                    <span>{students.length} students</span>
+                    <span>
+                        {students.filter(s => s.raw_mark !== null && s.raw_mark !== undefined && !s.is_absent).length} marks entered
+                        &middot; {students.filter(s => s.is_absent).length} absent
+                    </span>
                 </div>
             )}
         </div>

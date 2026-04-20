@@ -14,67 +14,7 @@ import {
     CreditCard, Wallet, RefreshCcw, User, Save
 } from 'lucide-react';
 import { financeService } from '../../../../services/financeService';
-import { formatKES } from '../utils/formatters';
-
-// Expense account keyword mappings for auto-suggestion
-const EXPENSE_ACCOUNT_KEYWORDS = {
-    // Internet/Hosting expenses
-    'hosting': ['hosting', 'internet', 'web hosting', 'server', 'cloud'],
-    'internet': ['hosting', 'internet', 'web hosting', 'bandwidth', 'connectivity'],
-    'web': ['hosting', 'internet', 'web hosting'],
-    'server': ['hosting', 'internet', 'server', 'cloud'],
-    'cloud': ['hosting', 'cloud', 'server', 'aws', 'azure'],
-    // Utilities
-    'electricity': ['electricity', 'power', 'utility', 'utilities'],
-    'power': ['electricity', 'power', 'utility'],
-    'water': ['water', 'utility', 'utilities'],
-    'utility': ['utility', 'utilities', 'electricity', 'water'],
-    // Telecommunications
-    'phone': ['telephone', 'phone', 'communication', 'airtime'],
-    'telephone': ['telephone', 'phone', 'communication'],
-    'airtime': ['telephone', 'phone', 'airtime', 'communication'],
-    'mobile': ['telephone', 'mobile', 'phone'],
-    // Transport & Travel
-    'transport': ['transport', 'travel', 'fuel', 'vehicle'],
-    'travel': ['travel', 'transport', 'accommodation'],
-    'fuel': ['fuel', 'transport', 'vehicle', 'petrol', 'diesel'],
-    'vehicle': ['vehicle', 'transport', 'fuel', 'motor'],
-    // Office & Stationery
-    'stationery': ['stationery', 'office', 'supplies', 'printing'],
-    'office': ['office', 'stationery', 'supplies'],
-    'printing': ['printing', 'stationery', 'office'],
-    'supplies': ['supplies', 'stationery', 'office'],
-    // Repairs & Maintenance
-    'repair': ['repair', 'maintenance', 'service'],
-    'maintenance': ['maintenance', 'repair', 'service'],
-    'service': ['service', 'maintenance', 'repair'],
-    // Food & Catering
-    'food': ['food', 'catering', 'meals', 'kitchen'],
-    'catering': ['catering', 'food', 'meals'],
-    'meals': ['meals', 'food', 'catering'],
-    'kitchen': ['kitchen', 'food', 'catering'],
-    // Cleaning
-    'cleaning': ['cleaning', 'sanitation', 'janitorial'],
-    'sanitation': ['sanitation', 'cleaning'],
-    // Security
-    'security': ['security', 'guard', 'surveillance'],
-    'guard': ['security', 'guard'],
-    // Training & Professional
-    'training': ['training', 'professional development', 'workshop'],
-    'workshop': ['workshop', 'training', 'seminar'],
-    'seminar': ['seminar', 'training', 'workshop'],
-    // Insurance
-    'insurance': ['insurance', 'premium'],
-    // Rent
-    'rent': ['rent', 'lease', 'rental'],
-    'lease': ['lease', 'rent', 'rental'],
-    // Bank charges
-    'bank': ['bank charge', 'bank fee', 'transaction fee'],
-    // General
-    'subscription': ['subscription', 'license', 'software'],
-    'license': ['license', 'subscription', 'software'],
-    'software': ['software', 'subscription', 'license'],
-};
+import { formatKES, EXPENSE_ACCOUNT_KEYWORDS } from '../utils/formatters';
 
 const VOUCHER_TYPES = [
     { value: 'AP', label: 'AP Payment', icon: Building2, description: 'Pay supplier invoice' },

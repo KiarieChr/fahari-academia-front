@@ -1,6 +1,5 @@
 import React from 'react';
 import { Search, Filter, RefreshCw } from 'lucide-react';
-import { classes } from '../../fee-structure/data/mockFeeStructureData';
 import { invoiceStatuses } from '../data/mockInvoiceData';
 
 const InvoiceFilters = ({
@@ -9,7 +8,8 @@ const InvoiceFilters = ({
     onSearch,
     onReset,
     years = [],
-    terms = []
+    terms = [],
+    classes = []
 }) => {
 
     // Filter terms based on selected year

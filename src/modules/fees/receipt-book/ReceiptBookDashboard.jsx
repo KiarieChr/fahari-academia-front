@@ -8,8 +8,10 @@ import ReceiptTable from './components/ReceiptTable';
 import CreateReceiptModal from './components/CreateReceiptModal';
 import ReceiptDetailsModal from './components/ReceiptDetailsModal';
 import ReverseReceiptModal from './components/ReverseReceiptModal';
+import ReceiptPrintManager from './components/ReceiptPrintManager';
 import { receiptService } from '../../../services/receiptService';
-import thermalPrinterService from '../../../services/thermalPrinterService';
+import { financeService } from '../../../services/financeService';
+import { institutionService } from '../../../services/institutionService';
 
 import {
     filterReceiptsByDateRange,
@@ -39,20 +41,14 @@ const ReceiptBookDashboard = () => {
     // Filter state
     const [currentFilters, setCurrentFilters] = useState({});
 
-    // Printer settings
-    const [schoolInfo] = useState({
-        name: 'SCHOOL NAME', // TODO: Fetch from settings
-        address: 'P.O. Box 123, Nairobi',
-        phone: '0712345678',
-        email: 'info@school.ac.ke',
-        motto: 'Excellence in Education'
-    });
+    // Finance settings (receipt format, branding, etc.)
+    const [financeSettings, setFinanceSettings] = useState(null);
 
-    const [printerSettings] = useState({
-        type: 'thermal', // 'thermal', 'usb', 'network', or 'browser'
-        printerIp: null, // For network printers
-        printerPort: 9100
-    });
+    // Institution profile (logo, name, address, etc.)
+    const [institutionProfile, setInstitutionProfile] = useState(null);
+
+    // Print manager state
+    const [printReceipt, setPrintReceipt] = useState(null);
 
     // Fetch summary and receipts on mount
     useEffect(() => {
@@ -61,14 +57,18 @@ const ReceiptBookDashboard = () => {
                 setLoading(true);
                 setError(null);
 
-                // Fetch summary
-                const summaryData = await receiptService.getSummary();
+                // Fetch summary, receipts, finance settings, and institution profile in parallel
+                const [summaryData, receiptsData, settingsData, profileData] = await Promise.all([
+                    receiptService.getSummary(),
+                    receiptService.getReceipts(),
+                    financeService.getSettings().catch(() => null),
+                    institutionService.getProfile().catch(() => null),
+                ]);
                 setSummary(summaryData);
-
-                // Fetch receipts
-                const receiptsData = await receiptService.getReceipts();
                 setReceipts(receiptsData.results);
                 setFilteredReceipts(receiptsData.results);
+                if (settingsData) setFinanceSettings(Array.isArray(settingsData) ? settingsData[0] : settingsData);
+                if (profileData) setInstitutionProfile(profileData);
 
             } catch (err) {
                 console.error('Error fetching receipt data:', err);
@@ -176,14 +176,23 @@ const ReceiptBookDashboard = () => {
         applyLocalFilters(filters);
     };
 
-    const handleSaveReceipt = (receipt) => {
-        // Optimistic update (or handled by re-fetch in real scenario)
-        const newReceipts = [...receipts, receipt];
-        setReceipts(newReceipts);
-        // Note: applyLocalFilters uses current state 'receipts' so this might not show immediately
-        // unless we passed the new list to it. But fixing the crash is priority.
-        // Ideally we should just trigger a data refresh here.
-        toast.success(`Receipt ${receipt.receiptNumber} ${receipt.status === 'Draft' ? 'saved as draft' : 'issued'} successfully!`);
+    const handleSaveReceipt = async (receipt) => {
+        // FIX: trigger a real re-fetch instead of optimistic mutation
+        // The optimistic approach caused newly saved receipts not to show in filters
+        try {
+            const receiptsData = await receiptService.getReceipts(currentFilters);
+            const updated = receiptsData.results || [];
+            setReceipts(updated);
+            setFilteredReceipts(updated);
+        } catch (err) {
+            // fallback: at minimum append to state so the user sees something
+            const fallback = [...receipts, receipt];
+            setReceipts(fallback);
+            setFilteredReceipts(fallback);
+        }
+        toast.success(`Receipt ${receipt.receiptNumber} ${
+            receipt.status === 'Draft' ? 'saved as draft' : 'issued'
+        } successfully!`);
     };
 
     const handleViewReceipt = (receipt) => {
@@ -207,20 +216,10 @@ const ReceiptBookDashboard = () => {
             setReceipts(updatedReceipts);
             applyLocalFilters(currentFilters);
 
-            // Show success message
             toast.success(response.message || `Receipt ${receipt.receiptNumber} printed successfully`);
 
-            // Use thermal printer service
-            try {
-                await thermalPrinterService.print(receipt, schoolInfo, {
-                    printerType: printerSettings.type,
-                    printerIp: printerSettings.printerIp,
-                    printerPort: printerSettings.printerPort
-                });
-            } catch (printError) {
-                console.error('Thermal print error:', printError);
-                toast.error('Failed to send to thermal printer. Check printer connection.');
-            }
+            // Open ReceiptPrintManager with template-aware preview
+            setPrintReceipt(receipt);
         } catch (err) {
             console.error('Error printing receipt:', err);
             toast.error('Failed to print receipt. Please try again.');
@@ -350,6 +349,17 @@ const ReceiptBookDashboard = () => {
                     onClose={() => setShowReverseModal(false)}
                     onConfirm={handleConfirmReversal}
                 />
+
+                {/* Receipt Print Manager — template-aware print preview */}
+                {printReceipt && (
+                    <ReceiptPrintManager
+                        receipt={printReceipt}
+                        settings={financeSettings || {}}
+                        institutionProfile={institutionProfile}
+                        onClose={() => setPrintReceipt(null)}
+                        onPrinted={() => setPrintReceipt(null)}
+                    />
+                )}
             </div>
         </DashboardLayout>
     );

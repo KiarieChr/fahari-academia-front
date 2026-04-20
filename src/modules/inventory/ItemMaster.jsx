@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 const ItemMaster = ({ item, onClose, onSave }) => {
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         category: '',
@@ -22,6 +23,7 @@ const ItemMaster = ({ item, onClose, onSave }) => {
     });
 
     useEffect(() => {
+        inventoryService.getCategories().then(setCategories).catch(() => {});
         if (item) {
             setFormData({ ...item });
         }
@@ -107,12 +109,9 @@ const ItemMaster = ({ item, onClose, onSave }) => {
                                         className="w-full p-2 border rounded-lg bg-white"
                                     >
                                         <option value="">Select...</option>
-                                        <option value="Stationery">Stationery</option>
-                                        <option value="Cleaning">Cleaning</option>
-                                        <option value="Electronics">Electronics</option>
-                                        <option value="Science Lab">Science Lab</option>
-                                        <option value="Sports">Sports</option>
-                                        <option value="Maintenance">Maintenance</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>

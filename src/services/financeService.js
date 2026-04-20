@@ -26,6 +26,17 @@ export const financeService = {
     getGeneralLedger: (params) => api.get('/api/finance-reports/reports/general-ledger/', { params }),
     getFinancialNotes: (startDate, endDate) => api.get('/api/finance-reports/reports/financial-notes/', { params: { start_date: startDate, end_date: endDate } }),
 
+    // =========================================================================
+    // EXTENDED FINANCE REPORTS
+    // =========================================================================
+    getFeeCollectionsReport: (params = {}) => api.get('/api/finance-reports/reports/fee-collections/', { params }),
+    getArrearsReport: (params = {}) => api.get('/api/finance-reports/reports/arrears/', { params }),
+    getPaymentSummaryReport: (params = {}) => api.get('/api/finance-reports/reports/payment-summary/', { params }),
+    getExpenseAnalysis: (params = {}) => api.get('/api/finance-reports/reports/expense-analysis/', { params }),
+    getSupplierBalances: (params = {}) => api.get('/api/finance-reports/reports/supplier-balances/', { params }),
+    getCustomerBalances: (params = {}) => api.get('/api/finance-reports/reports/customer-balances/', { params }),
+    getTopDefaulters: (params = {}) => api.get('/api/finance-reports/reports/top-defaulters/', { params }),
+
 
     // Invoicing (Customers)
     getCustomers: () => api.get('/api/invoicing/customers/'),
@@ -66,6 +77,7 @@ export const financeService = {
     voidSupplierInvoice: (id, reason) => api.post(`/api/payables/supplier-invoices/${id}/void/`, { reason }),
     getOverdueInvoices: () => api.get('/api/payables/supplier-invoices/overdue/'),
     getAPAging: () => api.get('/api/payables/supplier-invoices/aging/'),
+    getAPSummary: () => api.get('/api/payables/supplier-invoices/summary/'),
 
     // Payment Vouchers
     getPaymentVouchers: (params) => api.get('/api/payables/payment-vouchers/', { params }),

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Check, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Check, X, Zap, Layers } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useReactToPrint } from 'react-to-print';
@@ -12,13 +12,14 @@ import AddEditFeeItemModal from './components/AddEditFeeItemModal';
 import CopyFeeStructureModal from './components/CopyFeeStructureModal';
 import FeeImpactPreview from './components/FeeImpactPreview';
 import ActivationConfirmModal from './components/ActivationConfirmModal';
+import ApplyTemplateWizard from '../fee-templates/components/ApplyTemplateWizard';
 import { api } from '../../../services/api';
 import { toast } from 'react-toastify';
 
 import {
-    feeStructureSummary as initialSummary,
-    feeCategories
-} from './data/mockFeeStructureData';
+    FEE_CATEGORIES as feeCategories,
+    computeFeeStructureSummary
+} from './constants/feeStructureConstants';
 import {
     calculateTotalTermFee,
     calculateMandatoryOptionalBreakdown,
@@ -31,6 +32,7 @@ import {
 
 const FeeStructureDashboard = () => {
     const printRef = useRef();
+    const [activeView, setActiveView] = useState('per-class'); // 'per-class' | 'grade-band'
     // Reference Data State
     const [refClasses, setRefClasses] = useState([]);
     const [refYears, setRefYears] = useState([]); // Names for UI
@@ -59,6 +61,7 @@ const FeeStructureDashboard = () => {
     const [showCopyModal, setShowCopyModal] = useState(false);
     const [showActivationModal, setShowActivationModal] = useState(false);
     const [editingFeeItem, setEditingFeeItem] = useState(null);
+    const [showApplyTemplateWizard, setShowApplyTemplateWizard] = useState(false);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -264,9 +267,49 @@ const FeeStructureDashboard = () => {
         setShowAddEditModal(true);
     };
 
-    const handleDuplicateItem = (item) => {
-        // ... (Client side only for now, logic complex to reimplement fully backend without endpoint)
-        toast.error("Duplicate item not supported via API yet");
+    const handleDuplicateItem = async (item) => {
+        // Client-side duplicate — create a new item with same data but prefixed name
+        const duplicated = {
+            ...item,
+            name: `${item.name} (Copy)`,
+            id: undefined,       // new item, no ID yet
+            structureId: item.structureId
+        };
+        // Re-use save handler — pass as if it's a new item save
+        await handleSaveFeeItemDirect(duplicated);
+    };
+
+    const handleSaveFeeItemDirect = async (feeItemData) => {
+        try {
+            let structureId = currentStructure?.id;
+            if (!structureId) {
+                toast.error('Please select a class and term before duplicating.');
+                return;
+            }
+            const payload = {
+                structure: structureId,
+                name: feeItemData.name,
+                amount: feeItemData.amount,
+                account: feeItemData.accountId || 1,
+                is_optional: !feeItemData.mandatory,
+                frequency: feeItemData.frequency === 'Termly' ? 'RECURRING' : 'ONE_TIME',
+                priority: feeItemData.order || 1
+            };
+            const res = await api.post('/api/fees/fee-items/', payload);
+            const newItem = {
+                id: res.id, structureId, name: res.name,
+                category: feeItemData.category, accountId: res.account,
+                amount: parseFloat(res.amount), is_optional: res.is_optional,
+                mandatory: !res.is_optional,
+                frequency: res.frequency === 'RECURRING' ? 'Termly' : 'One Time',
+                status: 'Active', order: res.priority, appliesTo: feeItemData.appliesTo
+            };
+            setFeeItems(prev => [...prev, newItem]);
+            toast.success(`"${feeItemData.name}" duplicated successfully`);
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to duplicate item');
+        }
     };
 
     const handleDeleteItem = async (item) => {
@@ -590,10 +633,30 @@ const FeeStructureDashboard = () => {
                     </div>
                 </div>
 
+                {/* View Tabs */}
+                <div className="d-flex gap-2 mb-4">
+                    <button
+                        onClick={() => setActiveView('per-class')}
+                        className={`btn btn-sm d-flex align-items-center gap-1 ${activeView === 'per-class' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    >
+                        <Check size={14} />
+                        Per-Class Structure
+                    </button>
+                    <button
+                        onClick={() => setActiveView('grade-band')}
+                        className={`btn btn-sm d-flex align-items-center gap-1 ${activeView === 'grade-band' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    >
+                        <Layers size={14} />
+                        Grade Band Structures
+                    </button>
+                </div>
+
+                {activeView === 'per-class' ? (
+                <>
                 {/* Summary Cards */}
                 <FeeStructureSummaryCards
                     summary={{
-                        ...initialSummary,
+                        ...computeFeeStructureSummary(feeStructures, feeItems),
                         projectedRevenue // Inject dynamic value
                     }}
                     selectedClass={refClasses.find(c => c.id == selectedClass)?.name}
@@ -710,22 +773,19 @@ const FeeStructureDashboard = () => {
                                             </button>
                                         </div>
 
-                                        {/* Option C: Copy Parallel */}
+                                        {/* Option C: Apply Fee Template — NEW */}
                                         <div className="col-md-3">
                                             <button
-                                                onClick={() => setShowCopyModal(true)}
+                                                onClick={() => setShowApplyTemplateWizard(true)}
                                                 className="card h-100 w-100 text-start btn btn-outline-light border-secondary-subtle p-3 hover-shadow transition-all"
                                                 style={{ color: 'inherit' }}
                                             >
                                                 <div className="d-flex align-items-center mb-3 text-success">
-                                                    <div className="d-flex" style={{ opacity: 0.7 }}>
-                                                        <div className="border border-current rounded-circle p-1 me-1"></div>
-                                                        <div className="border border-current rounded-circle p-1"></div>
-                                                    </div>
+                                                    <Zap size={24} />
                                                 </div>
-                                                <h6 className="fw-bold mb-2">Copy Parallel Class</h6>
+                                                <h6 className="fw-bold mb-2">Apply Fee Template</h6>
                                                 <p className="small text-muted mb-0">
-                                                    Copy from another class in the same level (e.g. 4 East to 4 West).
+                                                    Instantly populate fee items from a saved reusable template across multiple classes.
                                                 </p>
                                             </button>
                                         </div>
@@ -766,6 +826,7 @@ const FeeStructureDashboard = () => {
                     onSave={handleSaveFeeItem}
                     feeItem={editingFeeItem}
                     classId={selectedClass}
+                    className={refClasses.find(c => c.id == selectedClass)?.name || ''}
                     term={selectedTerm}
                     academicYear={selectedYear}
                     incomeAccounts={incomeAccounts}
@@ -858,8 +919,182 @@ const FeeStructureDashboard = () => {
                     structure={currentStructure}
                     feeItems={currentFeeItems}
                 />
+
+                {/* Apply Template Wizard */}
+                <ApplyTemplateWizard
+                    isOpen={showApplyTemplateWizard}
+                    onClose={() => setShowApplyTemplateWizard(false)}
+                    onSuccess={() => {
+                        setShowApplyTemplateWizard(false);
+                        fetchStructures();
+                    }}
+                    initialTemplate={null}
+                />
+                </>
+                ) : (
+                    <GradeBandFeeView rawYears={rawYears} rawTerms={rawTerms} />
+                )}
             </div>
         </DashboardLayout>
+    );
+};
+
+// --- Grade Band Fee View ---
+const GradeBandFeeView = ({ rawYears, rawTerms }) => {
+    const [gradeBands, setGradeBands] = useState([]);
+    const [templates, setTemplates] = useState([]);
+    const [selectedYear, setSelectedYear] = useState('');
+    const [selectedTerm, setSelectedTerm] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [filteredTerms, setFilteredTerms] = useState([]);
+
+    useEffect(() => {
+        const fetchBands = async () => {
+            try {
+                const res = await api.get('/api/fees/grade-bands/');
+                setGradeBands(Array.isArray(res) ? res : (res.results || []));
+            } catch (e) {
+                console.error('Failed to fetch grade bands', e);
+            }
+        };
+        fetchBands();
+    }, []);
+
+    useEffect(() => {
+        if (!selectedYear) { setFilteredTerms([]); return; }
+        const yearObj = rawYears.find(y => String(y.id) === String(selectedYear));
+        if (yearObj) {
+            setFilteredTerms(rawTerms.filter(t => t.academic_year === yearObj.id));
+        }
+    }, [selectedYear, rawYears, rawTerms]);
+
+    useEffect(() => {
+        if (!selectedYear || !selectedTerm) { setTemplates([]); return; }
+        const fetchTemplates = async () => {
+            setLoading(true);
+            try {
+                const res = await api.get(`/api/fees/fee-templates/?academic_year=${selectedYear}&term=${selectedTerm}`);
+                setTemplates(Array.isArray(res) ? res : (res.results || []));
+            } catch (e) {
+                console.error('Failed to fetch templates', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTemplates();
+    }, [selectedYear, selectedTerm]);
+
+    const getTemplatesForBand = (band) => {
+        return templates.filter(t => t.grade_band === band.id);
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                    <div className="d-flex align-items-center gap-3 mb-4">
+                        <Layers className="text-primary" size={24} />
+                        <div>
+                            <h5 className="mb-0 fw-bold">Grade Band Fee Structures</h5>
+                            <p className="text-muted mb-0 small">View fee templates organized by grade bands</p>
+                        </div>
+                    </div>
+
+                    <div className="row g-3 mb-4">
+                        <div className="col-md-4">
+                            <label className="form-label small fw-medium">Academic Year</label>
+                            <select className="form-select form-select-sm" value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setSelectedTerm(''); }}>
+                                <option value="">Select Year</option>
+                                {rawYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
+                            </select>
+                        </div>
+                        <div className="col-md-4">
+                            <label className="form-label small fw-medium">Term</label>
+                            <select className="form-select form-select-sm" value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)} disabled={!selectedYear}>
+                                <option value="">Select Term</option>
+                                {filteredTerms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    {!selectedYear || !selectedTerm ? (
+                        <div className="text-center py-5 text-muted">
+                            <Layers className="mx-auto mb-2 opacity-25" size={48} />
+                            <p>Select an academic year and term to view grade band fee structures.</p>
+                        </div>
+                    ) : loading ? (
+                        <div className="text-center py-5 text-muted">
+                            <div className="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                            Loading templates...
+                        </div>
+                    ) : gradeBands.length === 0 ? (
+                        <div className="text-center py-5">
+                            <p className="text-muted">No grade bands configured. Go to Fee Settings → Grade Bands to create them.</p>
+                        </div>
+                    ) : (
+                        <div className="row g-4">
+                            {gradeBands.map(band => {
+                                const bandTemplates = getTemplatesForBand(band);
+                                return (
+                                    <div key={band.id} className="col-md-6 col-lg-4">
+                                        <div className="card h-100 border">
+                                            <div className="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                                                <h6 className="mb-0 fw-bold">{band.name}</h6>
+                                                <span className={`badge ${band.is_active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}`}>
+                                                    {band.is_active ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </div>
+                                            <div className="card-body p-3">
+                                                <div className="mb-3">
+                                                    <span className="text-muted small">Grades: </span>
+                                                    <span className="small fw-medium">{(band.grade_names || []).join(', ') || 'None'}</span>
+                                                </div>
+                                                {bandTemplates.length === 0 ? (
+                                                    <div className="text-center py-3 text-muted small border-top">
+                                                        <p className="mb-0">No fee template for this term</p>
+                                                    </div>
+                                                ) : (
+                                                    bandTemplates.map(tmpl => (
+                                                        <div key={tmpl.id} className="border rounded p-2 mb-2 bg-light">
+                                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                                <span className="fw-medium small">{tmpl.name}</span>
+                                                                <span className={`badge ${tmpl.status === 'ACTIVE' ? 'bg-success' : tmpl.status === 'DRAFT' ? 'bg-warning' : 'bg-secondary'}`}>
+                                                                    {tmpl.status}
+                                                                </span>
+                                                            </div>
+                                                            {tmpl.line_items && tmpl.line_items.length > 0 ? (
+                                                                <div className="small">
+                                                                    <table className="table table-sm table-borderless mb-1">
+                                                                        <tbody>
+                                                                            {tmpl.line_items.map((li, i) => (
+                                                                                <tr key={i}>
+                                                                                    <td className="py-0 text-muted">{li.vote_head_name || li.name}</td>
+                                                                                    <td className="py-0 text-end fw-medium">{Number(li.amount).toLocaleString()}</td>
+                                                                                </tr>
+                                                                            ))}
+                                                                        </tbody>
+                                                                    </table>
+                                                                    <div className="d-flex justify-content-between border-top pt-1 fw-bold small">
+                                                                        <span>Total</span>
+                                                                        <span>{Number(tmpl.total_amount || 0).toLocaleString()}</span>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-muted small mb-0">No line items</p>
+                                                            )}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 

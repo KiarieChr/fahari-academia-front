@@ -75,9 +75,9 @@ const KPIGrid = () => {
     // Loading skeleton
     if (loading) {
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-white rounded-2xl p-6 shadow-sm animate-pulse">
+                    <div key={i} className="bg-white rounded-2xl p-8 shadow-sm animate-pulse">
                         <div className="flex justify-between items-start mb-4">
                             <div className="h-4 w-24 bg-gray-200 rounded" />
                             <div className="h-10 w-10 bg-gray-200 rounded-xl" />
@@ -107,7 +107,7 @@ const KPIGrid = () => {
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
                 <motion.div
                     key={index}
@@ -115,7 +115,7 @@ const KPIGrid = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
-                    className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-6 text-white shadow-lg cursor-pointer transition-all`}
+                    className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-8 text-white shadow-lg cursor-pointer transition-all`}
                 >
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">

@@ -1,23 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+    LayoutDashboard, CreditCard, FileText, GraduationCap, Users
+} from 'lucide-react';
 
 import { dashboardService } from '../services/dashboardService';
-import StatCard from './components/StatCard';
-import StatCardMini from './components/StatCardMini'; // New component for mini cards
+import StatCardMini from './components/StatCardMini';
 import WeeklyAttendanceChart from './components/WeeklyAttendanceChart';
 import FeeCollectionChart from './components/FeeCollectionChart';
-import PerformanceChart from './components/PerformanceChart'; // New chart component
-import EnrollmentChart from './components/EnrollmentChart'; // New chart component
-import SmartInsightsWidget from './components/SmartInsightsWidget'; // Smart insights widget
+import PerformanceChart from './components/PerformanceChart';
+import EnrollmentChart from './components/EnrollmentChart';
+import SmartInsightsWidget from './components/SmartInsightsWidget';
 import { RecentActivity, QuickActions, UpcomingEvents, ResourceUsage } from './components/DashboardWidgets';
 import DashboardLayout from './DashboardLayout';
 import './dashboard.css';
+
+const FeesCollectionTab = lazy(() => import('./tabs/FeesCollectionTab'));
+const PayablesFinanceTab = lazy(() => import('./tabs/PayablesFinanceTab'));
+const ExaminationsTab = lazy(() => import('./tabs/ExaminationsTab'));
+const HRPayrollTab = lazy(() => import('./tabs/HRPayrollTab'));
 
 const DashboardHome = () => {
     const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('overview');
+
+    const tabs = [
+        { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { key: 'fees', label: 'Fees & Collection', icon: CreditCard },
+        { key: 'payables', label: 'Payables & Finance', icon: FileText },
+        { key: 'examinations', label: 'Examinations', icon: GraduationCap },
+        { key: 'hr', label: 'HR & Payroll', icon: Users },
+    ];
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -62,7 +78,25 @@ const DashboardHome = () => {
                     <p>Here's what's happening at your school today.</p>
                 </div>
 
-                {data && (
+                {/* Tab Navigation */}
+                <div className="dashboard-tabs">
+                    {tabs.map(tab => {
+                        const Icon = tab.icon;
+                        return (
+                            <button
+                                key={tab.key}
+                                className={`dashboard-tab ${activeTab === tab.key ? 'active' : ''}`}
+                                onClick={() => setActiveTab(tab.key)}
+                            >
+                                <Icon size={16} />
+                                <span>{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Tab Content */}
+                {activeTab === 'overview' && data && (
                     <motion.div
                         initial="hidden"
                         animate="show"
@@ -70,7 +104,7 @@ const DashboardHome = () => {
                         className="dashboard-content"
                     >
                         {/* Compact Stats Grid - More stats in less space */}
-                        <div className="stats-grid-dense">
+                        <div className="stats-grid-dense p-5">
                             {/* Primary Stats - First 4 important ones */}
                             {data.stats.slice(0, 4).map((stat, index) => (
                                 <StatCardMini key={index} {...stat} />
@@ -238,6 +272,20 @@ const DashboardHome = () => {
                     </motion.div>
                 )}
 
+                {activeTab !== 'overview' && (
+                    <Suspense fallback={
+                        <div className="dashboard-tab-loading">
+                            <div className="spinner" />
+                            <p>Loading...</p>
+                        </div>
+                    }>
+                        {activeTab === 'fees' && <FeesCollectionTab />}
+                        {activeTab === 'payables' && <PayablesFinanceTab />}
+                        {activeTab === 'examinations' && <ExaminationsTab />}
+                        {activeTab === 'hr' && <HRPayrollTab />}
+                    </Suspense>
+                )}
+
                 {/* Additional inline styles */}
                 <style>{`
                     .dashboard-header {
@@ -256,6 +304,66 @@ const DashboardHome = () => {
                         color: var(--text-secondary);
                         font-size: 0.9rem;
                     }
+
+                    .dashboard-tabs {
+                        display: flex;
+                        gap: 0.25rem;
+                        padding: 0 1rem;
+                        margin-bottom: 1.25rem;
+                        border-bottom: 2px solid var(--border-color, #e2e8f0);
+                        overflow-x: auto;
+                        -webkit-overflow-scrolling: touch;
+                    }
+
+                    .dashboard-tab {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.4rem;
+                        padding: 0.6rem 1rem;
+                        border: none;
+                        background: none;
+                        color: var(--text-secondary, #64748b);
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        border-bottom: 2px solid transparent;
+                        margin-bottom: -2px;
+                        white-space: nowrap;
+                        transition: all 0.2s;
+                        border-radius: 6px 6px 0 0;
+                    }
+
+                    .dashboard-tab:hover {
+                        color: var(--text-main, #1e293b);
+                        background: var(--bg-hover, #f1f5f9);
+                    }
+
+                    .dashboard-tab.active {
+                        color: #2563eb;
+                        border-bottom-color: #2563eb;
+                        background: rgba(37, 99, 235, 0.05);
+                    }
+
+                    .dashboard-tab-loading {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 4rem 1rem;
+                        color: var(--text-secondary, #64748b);
+                    }
+
+                    .dashboard-tab-loading .spinner {
+                        width: 32px;
+                        height: 32px;
+                        border: 3px solid #e2e8f0;
+                        border-top-color: #2563eb;
+                        border-radius: 50%;
+                        animation: spin 0.8s linear infinite;
+                        margin-bottom: 0.75rem;
+                    }
+
+                    @keyframes spin { to { transform: rotate(360deg); } }
                     
                     .dashboard-content {
                         display: flex;

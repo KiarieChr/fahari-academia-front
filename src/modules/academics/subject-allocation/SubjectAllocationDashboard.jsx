@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
-import { Plus, Download, Grid, Table as TableIcon, CheckSquare } from 'lucide-react';
+import { Plus, Download, Grid, CheckSquare, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 // Components
@@ -9,14 +9,64 @@ import AllocationTable from './components/AllocationTable';
 import TeacherLoadPanel from './components/TeacherLoadPanel';
 import AllocationFormModal from './components/AllocationFormModal';
 
-// Data
-import { initialAllocations, teachersData, classesData, availableSubjects } from './data/subjectAllocationData';
+// API
+import { api } from '../../../services/apiClient';
 
 const SubjectAllocationDashboard = () => {
-    const [allocations, setAllocations] = useState(initialAllocations);
-    const [teachers, setTeachers] = useState(teachersData);
+    const [allocations, setAllocations] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [subjects, setSubjects] = useState([]);
+    const [classSessions, setClassSessions] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAlloc, setEditingAlloc] = useState(null);
+
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [allocData, subData, csData, teacherData] = await Promise.all([
+                api.timetable.getAllocations(),
+                api.timetable.getSubjects(),
+                api.academics.getActiveSessions(),
+                api.timetable.getTeachers(),
+            ]);
+            const allocs = (allocData.results || allocData) || [];
+            const subs = (subData.results || subData) || [];
+            const sessions = (csData.results || csData) || [];
+            const teacherList = (teacherData.results || teacherData) || [];
+
+            setAllocations(allocs);
+            setSubjects(subs);
+            setClassSessions(sessions);
+
+            // Build teacher load data from allocations
+            const teacherMap = {};
+            teacherList.forEach(t => {
+                teacherMap[t.id] = {
+                    id: t.id,
+                    name: `${t.first_name || ''} ${t.last_name || ''}`.trim() || t.username,
+                    subjects: [],
+                    maxLoad: 30,
+                    currentLoad: 0,
+                };
+            });
+            allocs.forEach(a => {
+                if (a.teacher && teacherMap[a.teacher]) {
+                    teacherMap[a.teacher].currentLoad += a.lessons_per_week || 0;
+                    if (a.subject_name && !teacherMap[a.teacher].subjects.includes(a.subject_name)) {
+                        teacherMap[a.teacher].subjects.push(a.subject_name);
+                    }
+                }
+            });
+            setTeachers(Object.values(teacherMap));
+        } catch {
+            toast.error('Failed to load allocations');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { loadData(); }, [loadData]);
 
     const handleAddAllocation = () => {
         setEditingAlloc(null);
@@ -28,36 +78,44 @@ const SubjectAllocationDashboard = () => {
         setIsModalOpen(true);
     };
 
-    const handleDeleteAllocation = (id) => {
-        if (confirm('Are you sure you want to remove this allocation?')) {
-            setAllocations(allocations.filter(a => a.id !== id));
+    const handleDeleteAllocation = async (id) => {
+        if (!confirm('Are you sure you want to remove this allocation?')) return;
+        try {
+            await api.timetable.deleteAllocation(id);
             toast.success('Allocation removed');
-            // In a real app, update teacher load here
+            loadData();
+        } catch {
+            toast.error('Failed to delete allocation');
         }
     };
 
-    const handleSaveAllocation = (data) => {
-        if (editingAlloc) {
-            setAllocations(allocations.map(a => a.id === editingAlloc.id ? { ...data, id: a.id } : a));
-            toast.success('Allocation updated successfully');
-        } else {
-            setAllocations([...allocations, { ...data, id: Date.now().toString() }]);
-            toast.success('Subject allocated successfully');
+    const handleSaveAllocation = async (data) => {
+        try {
+            if (editingAlloc) {
+                await api.timetable.updateAllocation(editingAlloc.id, data);
+                toast.success('Allocation updated successfully');
+            } else {
+                await api.timetable.createAllocation(data);
+                toast.success('Subject allocated successfully');
+            }
+            setIsModalOpen(false);
+            loadData();
+        } catch (err) {
+            const detail = err?.data?.detail || err?.data?.non_field_errors?.[0] || 'Failed to save allocation';
+            toast.error(detail);
         }
-
-        // Mock update teacher load
-        if (data.teacherId) {
-            setTeachers(teachers.map(t => {
-                if (t.id === data.teacherId) {
-                    // Simple mock increment - in real app, recalculate total from allocations
-                    return { ...t, currentLoad: editingAlloc ? t.currentLoad : t.currentLoad + Number(data.lessons) };
-                }
-                return t;
-            }));
-        }
-
-        setIsModalOpen(false);
     };
+
+    // Map allocations for table component
+    const mappedAllocations = allocations.map(a => ({
+        ...a,
+        class: a.class_session_name || '',
+        subject: a.subject_name || '',
+        teacherId: a.teacher ? String(a.teacher) : null,
+        lessons: a.lessons_per_week || 0,
+        category: a.subject_code || '',
+        status: a.is_active ? 'Active' : 'Inactive',
+    }));
 
     return (
         <DashboardLayout title="Subject Allocation">
@@ -71,23 +129,17 @@ const SubjectAllocationDashboard = () => {
                                 <Grid className="text-blue-600" />
                                 Subject & Teacher Allocation
                             </h1>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-slate-500">
-                                <span>Academic Year: <strong>2026</strong></span>
-                                <span>•</span>
-                                <span>Term: <strong>Term 1</strong></span>
-                            </div>
+                            <p className="text-sm text-slate-500 mt-1">Assign subjects to teachers and class sessions</p>
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                <Download size={16} /> Export
-                            </button>
-                            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                <CheckSquare size={16} /> Auto Allocate
+                            <button onClick={loadData}
+                                className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
+                                <RefreshCw size={16} /> Refresh
                             </button>
                             <button
                                 onClick={handleAddAllocation}
-                                className="px-4 py-2 bg-blue-600 text-black rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30 flex items-center gap-2 transition-transform active:scale-95"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30 flex items-center gap-2 transition-transform active:scale-95"
                             >
                                 <Plus size={18} /> Allocate Subject
                             </button>
@@ -96,26 +148,29 @@ const SubjectAllocationDashboard = () => {
                 </div>
 
                 <div className="max-w-[1600px] mx-auto p-6">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                        {/* Main Content */}
-                        <div className="flex-1 space-y-6">
-                            {/* Stats */}
-                            <AllocationStats allocations={allocations} teachers={teachers} />
-
-                            {/* Table */}
-                            <AllocationTable
-                                allocations={allocations}
-                                teachers={teachers}
-                                onEdit={handleEditAllocation}
-                                onDelete={handleDeleteAllocation}
-                            />
+                    {loading ? (
+                        <div className="flex justify-center py-16">
+                            <Loader2 className="animate-spin text-blue-600" size={28} />
                         </div>
+                    ) : (
+                        <div className="flex flex-col lg:flex-row gap-6">
+                            {/* Main Content */}
+                            <div className="flex-1 space-y-6">
+                                <AllocationStats allocations={mappedAllocations} teachers={teachers} />
+                                <AllocationTable
+                                    allocations={mappedAllocations}
+                                    teachers={teachers}
+                                    onEdit={handleEditAllocation}
+                                    onDelete={handleDeleteAllocation}
+                                />
+                            </div>
 
-                        {/* Sidebar: Teacher Load */}
-                        <div className="w-full lg:w-80 shrink-0">
-                            <TeacherLoadPanel teachers={teachers} />
+                            {/* Sidebar: Teacher Load */}
+                            <div className="w-full lg:w-80 shrink-0">
+                                <TeacherLoadPanel teachers={teachers} />
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Modal */}
@@ -125,8 +180,8 @@ const SubjectAllocationDashboard = () => {
                     onSave={handleSaveAllocation}
                     initialData={editingAlloc}
                     teachers={teachers}
-                    classes={classesData}
-                    subjects={availableSubjects}
+                    classes={classSessions}
+                    subjects={subjects}
                 />
             </div>
         </DashboardLayout>

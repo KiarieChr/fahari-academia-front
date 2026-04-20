@@ -68,6 +68,7 @@ const StudentInvoicesDashboard = () => {
             if (filters.year) params.append('year', filters.year);
             if (filters.status) params.append('status', filters.status);
             if (filters.search) params.append('search', filters.search);
+            if (filters.classId) params.append('grade', filters.classId); // FIX: was missing
 
             const data = await api.get(`/api/fees/billing/invoices/?${params.toString()}`);
 
@@ -215,8 +216,18 @@ const StudentInvoicesDashboard = () => {
                     <InvoiceTable
                         invoices={invoices}
                         onView={setSelectedInvoice}
-                        onPrint={(inv) => alert(`Printing Invoice ${inv.invoiceNumber}...`)}
-                        onEmail={(inv) => alert(`Emailing ${inv.studentName}...`)}
+                        onPrint={(inv) => {
+                            // Open browser print dialog for the invoice
+                            const printWindow = window.open('', '_blank');
+                            if (printWindow) {
+                                printWindow.document.write(`<html><body><h2>Invoice ${inv.invoiceNumber}</h2><p>Student: ${inv.studentName}</p><p>Amount: KES ${inv.totalAmount?.toLocaleString()}</p><p>Status: ${inv.status}</p></body></html>`);
+                                printWindow.document.close();
+                                printWindow.print();
+                            } else {
+                                toast.info(`Print Invoice ${inv.invoiceNumber} — enable popups for direct print`);
+                            }
+                        }}
+                        onEmail={(inv) => toast.info(`Email feature coming soon — ${inv.studentName}'s invoice will be sent via configured SMTP`)}
                     />
                 )}
 

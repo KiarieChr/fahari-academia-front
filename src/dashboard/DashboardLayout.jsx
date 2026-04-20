@@ -18,10 +18,12 @@ import {
     Search,
     Bell,
     Sun,
-    Moon
+    Moon,
+    CalendarDays,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { toast } from 'react-toastify';
+import { usePermissions } from '../auth/PermissionProvider';
 
 const DashboardLayout = ({ children, title }) => {
     const navigate = useNavigate();
@@ -33,6 +35,8 @@ const DashboardLayout = ({ children, title }) => {
     const [pageTitle, setPageTitle] = useState('Overview');
     const [currentUser, setCurrentUser] = useState(null);
 
+    const { hasModuleAccess, isSuperuser } = usePermissions();
+
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
         { sectionLabel: 'ACADEMICS' },
@@ -40,19 +44,35 @@ const DashboardLayout = ({ children, title }) => {
             icon: Users,
             label: 'Student Management',
             path: '/dashboard/students',
+            module: 'students',
             subItems: [
                 { label: 'Admission Book', path: '/dashboard/students/admission' },
+                { label: 'Academic Sessions', path: '/dashboard/students/academic-sessions' },
                 { label: 'Class Sessions', path: '/dashboard/students/sessions' },
                 { label: 'Curriculums', path: '/dashboard/students/curriculums' },
                 { label: 'Reports', path: '/dashboard/students/reports' },
-                { label: 'Class Times', path: '/dashboard/students/times' },
                 { label: 'Settings / Setup', path: '/dashboard/students/settings' }
+            ]
+        },
+        {
+            icon: CalendarDays,
+            label: 'Timetables',
+            path: '/dashboard/timetables',
+            module: 'timetables',
+            subItems: [
+                { label: 'Weekly Timetable', path: '/dashboard/timetables' },
+                { label: 'Day Structure', path: '/dashboard/timetables?tab=slots' },
+                { label: 'Work Allocations', path: '/dashboard/timetables?tab=allocations' },
+                { label: 'Teacher Schedules', path: '/dashboard/timetables?tab=teachers' },
+                { label: 'Room Allocation', path: '/dashboard/timetables?tab=rooms' },
+                { label: 'Analytics', path: '/dashboard/timetables?tab=analytics' },
             ]
         },
         {
             icon: GraduationCap,
             label: 'Student Academics',
             path: '/dashboard/academics',
+            module: 'academics',
             subItems: [
                 { label: 'Marks Inputs', path: '/dashboard/academics/marks' },
                 { label: 'Curriculum Setup', path: '/dashboard/academics/curriculum' },
@@ -60,26 +80,30 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Subject Allocation', path: '/dashboard/academics/allocation' },
                 { label: 'Grading Scheme', path: '/dashboard/academics/grading' },
                 { label: 'Reports', path: '/dashboard/academics/reports' },
+                { label: 'Assignments', path: '/dashboard/academics/assignments' },
                 { label: 'Settings', path: '/dashboard/academics/settings' }
             ]
         },
+        { sectionLabel: 'OPERATIONS' },
         {
             icon: CreditCard,
             label: 'Student Fees',
             path: '/dashboard/fees',
+            module: 'fees',
             subItems: [
                 { label: 'Receipt Book', path: '/dashboard/fees/receipts' },
                 { label: 'Student Invoice', path: '/dashboard/fees/invoice' },
                 { label: 'Student Arrears', path: '/dashboard/fees/arrears' },
                 { label: 'Fee Structure', path: '/dashboard/fees/structure' },
+                { label: 'Fee Templates', path: '/dashboard/fees/templates' },
                 { label: 'Report Settings', path: '/dashboard/fees/settings' }
             ]
         },
-        { sectionLabel: 'OPERATIONS' },
         {
             icon: DollarSign,
             label: 'Finance',
             path: '/dashboard/finance',
+            module: 'finance',
             subItems: [
                 { label: 'Accounts Payable', path: '/dashboard/finance/payable' },
                 { label: 'Customer Invoice', path: '/dashboard/fees/invoice' },
@@ -93,10 +117,13 @@ const DashboardLayout = ({ children, title }) => {
             icon: ShoppingCart,
             label: 'Procurement',
             path: '/dashboard/procurement',
+            module: 'procurement',
             subItems: [
                 { label: 'Purchase Requisition', path: '/dashboard/procurement/requisition' },
                 { label: 'Purchase Order', path: '/dashboard/procurement/order' },
+                { label: 'RFQ & Quotations', path: '/dashboard/procurement/rfq' },
                 { label: 'G.R.N', path: '/dashboard/procurement/grn' },
+                { label: 'Contracts', path: '/dashboard/procurement/contracts' },
                 { label: 'Supply Management', path: '/dashboard/procurement/suppliers' },
                 { label: 'Inventories', path: '/dashboard/procurement/inventory' },
                 { label: 'Inventory Journal', path: '/dashboard/procurement/journal' },
@@ -110,6 +137,7 @@ const DashboardLayout = ({ children, title }) => {
             icon: Briefcase,
             label: 'Human Resource',
             path: '/dashboard/hr',
+            module: 'hr',
             subItems: [
                 { label: 'Staff Register', path: '/dashboard/hr/staff-register' },
                 { label: 'Staff Attendance', path: '/dashboard/hr/staff-attendance' },
@@ -124,12 +152,15 @@ const DashboardLayout = ({ children, title }) => {
             icon: DollarSign,
             label: 'Payroll',
             path: '/dashboard/payroll',
+            module: 'payroll',
             subItems: [
                 { label: 'Payroll', path: '/dashboard/payroll/process' },
                 { label: 'Employee Earnings', path: '/dashboard/payroll/earnings' },
                 { label: 'Employee Deductions', path: '/dashboard/payroll/deductions' },
                 { label: 'Financial Institution', path: '/dashboard/payroll/financial' },
                 { label: 'Statutory Settings', path: '/dashboard/payroll/statutory' },
+                { label: 'Pension Schemes', path: '/dashboard/payroll/pension' },
+                { label: 'Payroll Reports', path: '/dashboard/payroll/reports' },
                 { label: 'Payroll Settings', path: '/dashboard/payroll/settings' }
             ]
         },
@@ -138,12 +169,17 @@ const DashboardLayout = ({ children, title }) => {
             icon: UserCog,
             label: 'User Management',
             path: '/dashboard/users',
+            module: 'users',
             subItems: [
                 { label: 'My Account', path: '/dashboard/users/account' },
                 { label: 'Users', path: '/dashboard/users/list' }
             ]
         },
-        { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+        { icon: Settings, label: 'Settings', path: '/dashboard/settings', module: 'settings', subItems: [
+                { label: 'Institution Profile', path: '/dashboard/settings' },
+                { label: 'Campuses', path: '/dashboard/settings?tab=campuses' }
+            ]
+        },
     ];
 
     // Auto-expand the parent whose child is currently active
@@ -304,7 +340,18 @@ const DashboardLayout = ({ children, title }) => {
                 </div>
 
                 <nav className="sidebar-nav">
-                    {navItems.map((item, idx) => {
+                    {navItems.filter(item => {
+                        // Always show section labels and items without a module key
+                        if (item.sectionLabel || !item.module) return true;
+                        return hasModuleAccess(item.module);
+                    }).filter((item, idx, arr) => {
+                        // Remove section labels that have no visible children after them
+                        if (!item.sectionLabel) return true;
+                        const nextItems = arr.slice(idx + 1);
+                        const nextSection = nextItems.findIndex(i => i.sectionLabel);
+                        const children = nextSection === -1 ? nextItems : nextItems.slice(0, nextSection);
+                        return children.some(i => !i.sectionLabel);
+                    }).map((item, idx) => {
                         if (item.sectionLabel) {
                             return (
                                 <div key={`section-${idx}`} className="nav-section-label">

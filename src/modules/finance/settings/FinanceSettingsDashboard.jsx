@@ -164,22 +164,22 @@ const FinanceSettingsDashboard = () => {
                     <p className="text-muted small mb-0">Configure financial system behavior and preferences</p>
                 </div>
 
-                <div className="row g-4">
-                    {/* Left Navigation */}
-                    <div className="col-lg-3">
-                        <div className="card border-0 shadow-sm sticky-top" style={{ top: '20px' }}>
+                <div className="d-flex flex-column flex-lg-row gap-4">
+                    {/* Left Navigation — horizontal scroll on mobile, vertical sidebar on lg+ */}
+                    <div className="flex-shrink-0" style={{ width: 'auto' }}>
+                        <div className="card border-0 shadow-sm" style={{ position: 'sticky', top: '20px' }}>
                             <div className="card-body p-2">
-                                <div className="settings-nav">
+                                <div className="settings-nav d-flex flex-row flex-lg-column overflow-auto">
                                     {sections.map((section) => (
                                         <button
                                             key={section.id}
-                                            className={`settings-nav-item ${activeSection === section.id ? 'active' : ''}`}
+                                            className={`settings-nav-item flex-shrink-0 ${activeSection === section.id ? 'active' : ''}`}
                                             onClick={() => setActiveSection(section.id)}
                                         >
                                             <section.icon size={18} className="me-2" />
-                                            <div className="flex-grow-1 text-start">
+                                            <div className="flex-grow-1 text-start text-nowrap text-lg-wrap">
                                                 <div className="fw-medium">{section.label}</div>
-                                                <small className="text-muted">{section.description}</small>
+                                                <small className="text-muted d-none d-lg-block">{section.description}</small>
                                             </div>
                                         </button>
                                     ))}
@@ -189,7 +189,7 @@ const FinanceSettingsDashboard = () => {
                     </div>
 
                     {/* Right Content */}
-                    <div className="col-lg-9">
+                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
                         <div className="settings-content">
                             {renderContent()}
                         </div>

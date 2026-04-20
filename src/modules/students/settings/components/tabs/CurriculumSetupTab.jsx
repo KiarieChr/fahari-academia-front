@@ -5,7 +5,7 @@ import ClassStreamSetup from '../ClassStreamSetup';
 
 const CurriculumSetupTab = () => {
     return (
-        <div className="space-y-12">
+        <div className="space-y-12 p-4">
             <CurriculumSetup />
             <hr className="border-gray-200" />
             <CurriculumLevelSetup />

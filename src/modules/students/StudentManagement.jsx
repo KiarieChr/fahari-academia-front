@@ -88,7 +88,7 @@ const StudentManagement = () => {
         },
         { 
             title: 'Enrollments', 
-            path: '/dashboard/students/settings', 
+            path: '/dashboard/students/academic-sessions', 
             icon: <BookOpen size={24} />, 
             color: 'purple',
             description: 'Manage enrollments'

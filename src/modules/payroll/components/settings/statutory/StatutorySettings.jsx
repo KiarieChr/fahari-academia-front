@@ -50,9 +50,9 @@ const StatutorySettings = () => {
             ]);
 
             setStatutoryData({
-                taxBands: taxBandsRes.data?.tax_bands || [],
-                taxReliefs: taxReliefsRes.data?.tax_reliefs || [],
-                statutoryRates: statutoryRatesRes.data?.statutory_rates || [],
+                taxBands: taxBandsRes.tax_bands || taxBandsRes.data?.tax_bands || [],
+                taxReliefs: taxReliefsRes.tax_reliefs || taxReliefsRes.data?.tax_reliefs || [],
+                statutoryRates: statutoryRatesRes.statutory_rates || statutoryRatesRes.data?.statutory_rates || [],
                 lastUpdated: new Date().toISOString()
             });
         } catch (error) {

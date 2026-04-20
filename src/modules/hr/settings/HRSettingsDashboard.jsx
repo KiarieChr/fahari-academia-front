@@ -82,7 +82,7 @@ const HRSettingsDashboard = () => {
                         <p className="settings-subtitle">Configure global preferences and system defaults.</p>
                     </div>
 
-                    <div className="settings-layout">
+                    <div className="flex flex-col lg:flex-row gap-5 w-full">
                         <SettingsSidebar
                             categories={settingsCategories}
                             activeCategory={activeCategory}
@@ -94,7 +94,7 @@ const HRSettingsDashboard = () => {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="settings-content"
+                            className="flex-1 min-w-0"
                         >
                             {renderContent()}
                         </motion.div>

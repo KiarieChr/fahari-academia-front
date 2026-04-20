@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 const AutoBillingSettings = () => {
     const [settings, setSettings] = useState({
         auto_billing_enabled: false,
+        billing_mode: 'STRUCTURE',
         default_billing_days: 14,
         // UI only fields (not in backend yet, handled locally for demo)
         prorated_billing: false,
@@ -50,6 +51,7 @@ const AutoBillingSettings = () => {
             // Only send backend fields
             const payload = {
                 auto_billing_enabled: settings.auto_billing_enabled,
+                billing_mode: settings.billing_mode,
                 default_billing_days: settings.default_billing_days,
             };
 
@@ -84,6 +86,47 @@ const AutoBillingSettings = () => {
                     When enabled, the system will automatically generate invoices for students as soon as their status changes to "Reported" for the new term.
                 </p>
             </div>
+
+            <hr className="my-4" />
+
+            <h6 className="fw-bold mb-3">Billing Pipeline</h6>
+
+            <Row className="mb-3">
+                <Col md={8}>
+                    <Form.Label className="fw-medium">Default Billing Mode</Form.Label>
+                    <p className="text-muted small mb-0">Choose which fee pipeline to use when auto-generating invoices.</p>
+                </Col>
+                <Col md={4}>
+                    <Form.Select
+                        size="sm"
+                        value={settings.billing_mode}
+                        onChange={(e) => handleChange('billing_mode', e.target.value)}
+                    >
+                        <option value="STRUCTURE">Per-Grade Fee Structure (Legacy)</option>
+                        <option value="TEMPLATE">Grade-Band Fee Template (Modern)</option>
+                        <option value="AUTO">Auto (Template → Structure fallback)</option>
+                    </Form.Select>
+                </Col>
+            </Row>
+
+            {settings.billing_mode === 'STRUCTURE' && (
+                <Alert variant="secondary" className="small">
+                    <strong>Per-Grade Structure:</strong> Each grade has its own fee structure per term. 
+                    Set up structures under <em>Fee Structures</em> before enabling auto-billing.
+                </Alert>
+            )}
+            {settings.billing_mode === 'TEMPLATE' && (
+                <Alert variant="info" className="small">
+                    <strong>Grade-Band Template:</strong> Group grades into bands (e.g. "Lower Primary", "Junior Secondary") 
+                    and assign one fee template per band. Set up grade bands and templates under <em>Fee Templates</em>.
+                </Alert>
+            )}
+            {settings.billing_mode === 'AUTO' && (
+                <Alert variant="warning" className="small">
+                    <strong>Auto Mode:</strong> The system will first attempt to find a matching fee template for the student's grade band. 
+                    If no template is found, it falls back to the legacy per-grade fee structure.
+                </Alert>
+            )}
 
             <hr className="my-4" />
 

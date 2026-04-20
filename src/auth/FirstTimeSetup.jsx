@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Loader2, X, Check, AlertCircle, User, Mail, Phone, Home, Key } from 'lucide-react';
+import {
+  Eye, EyeOff, Loader2, X, Check, AlertCircle,
+  User, Mail, Phone, MapPin, Key, Shield, ChevronRight
+} from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { toast } from 'react-toastify';
+import { getUserRole, getDashboardPath } from './RoleBasedRoute';
 
-
+const STEPS = [
+  { id: 'personal', label: 'Personal Info', icon: User },
+  { id: 'security', label: 'Set Password', icon: Key },
+];
 
 const FirstTimeSetup = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
-    email: '',
-    username: '',
-    firstName: '',
-    lastName: '',
-    phone: '',
-    address: '',
-    gender: '',
-    password: '',
-    confirmPassword: '',
-    agreeTerms: false
+    email: '', username: '', firstName: '', lastName: '',
+    phone: '', address: '', gender: '',
+    password: '', confirmPassword: '', agreeTerms: false
   });
 
   const [errors, setErrors] = useState({});
@@ -30,76 +31,42 @@ const FirstTimeSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [passwordStrength, setPasswordStrength] = useState({
-    score: 0,
-    feedback: ''
-  });
+  const [emailConflict, setEmailConflict] = useState(false);
 
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+  // â”€â”€ Password strength â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const getPasswordStrength = (pw) => {
+    let s = 0;
+    const checks = [
+      { pass: pw.length >= 8, label: '8+ characters' },
+      { pass: /[A-Z]/.test(pw), label: 'Uppercase' },
+      { pass: /[a-z]/.test(pw), label: 'Lowercase' },
+      { pass: /[0-9]/.test(pw), label: 'Number' },
+      { pass: /[^A-Za-z0-9]/.test(pw), label: 'Special char' },
+    ];
+    checks.forEach(c => { if (c.pass) s++; });
+    return { score: s, checks };
   };
+  const strength = getPasswordStrength(formData.password);
+  const strengthLabel = strength.score <= 2 ? 'Weak' : strength.score <= 3 ? 'Fair' : 'Strong';
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
-  };
-
-  const progressVariants = {
-    hidden: { width: '0%' },
-    visible: { width: '100%', transition: { duration: 0.5 } }
-  };
-
-  // Calculate password strength
-  const calculatePasswordStrength = (password) => {
-    let score = 0;
-    let feedback = [];
-
-    if (password.length >= 8) score += 1;
-    if (/[A-Z]/.test(password)) score += 1;
-    if (/[a-z]/.test(password)) score += 1;
-    if (/[0-9]/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
-
-    if (password.length < 8) feedback.push('At least 8 characters');
-    if (!/[A-Z]/.test(password)) feedback.push('One uppercase letter');
-    if (!/[a-z]/.test(password)) feedback.push('One lowercase letter');
-    if (!/[0-9]/.test(password)) feedback.push('One number');
-    if (!/[^A-Za-z0-9]/.test(password)) feedback.push('One special character');
-
-    return { score, feedback: feedback.length > 0 ? feedback.join(', ') : 'Strong password' };
-  };
-
+  // â”€â”€ Load user data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
-    // Load user data for setup
-    // In the useEffect where you load user data:
     const loadUserData = async () => {
       setIsLoadingUser(true);
       try {
-        // First try without parameters (session-based)
+        const userId = sessionStorage.getItem('first_time_user_id') || location.state?.userId;
         let response;
-        try {
+        if (userId) {
+          response = await api.get(`/api/auth/first-time-setup/?user_id=${userId}`);
+        } else {
           response = await api.get('/api/auth/first-time-setup/');
-        } catch (sessionError) {
-          // If session-based fails, try with user_id parameter
-          const userId = sessionStorage.getItem('first_time_user_id') || location.state?.userId;
-          if (userId) {
-            response = await api.get(`/api/auth/first-time-setup/?user_id=${userId}`);
-          } else {
-            throw new Error('No user ID available');
-          }
         }
+        const result = response.data ? response : { ...response };
 
-        if (response.data.success && response.data.requires_setup) {
-          const user = response.data.user;
+        if (result.success && result.requires_setup) {
+          const user = result.user;
           setCurrentUser(user);
-
+          if (result.email_conflict) setEmailConflict(true);
           setFormData(prev => ({
             ...prev,
             email: user.current_email || user.email || '',
@@ -114,93 +81,60 @@ const FirstTimeSetup = () => {
           toast.error('Setup not required or session expired');
           navigate('/');
         }
-      } catch (error) {
-        console.error('Error loading user data:', error);
+      } catch {
         toast.error('Failed to load user information');
         navigate('/');
       } finally {
         setIsLoadingUser(false);
       }
     };
-
     loadUserData();
   }, [navigate, location.state]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-
-    setFormData(prev => ({
-      ...prev,
-      [name]: newValue
-    }));
-
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
-    }
-
-    // Calculate password strength
-    if (name === 'password') {
-      setPasswordStrength(calculatePasswordStrength(newValue));
-    }
-
-    // Clear confirm password error if passwords match
-    if ((name === 'password' || name === 'confirmPassword') && formData.password === formData.confirmPassword) {
-      setErrors(prev => ({ ...prev, confirmPassword: undefined }));
-    }
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
+  // â”€â”€ Step validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const validateStep = (s) => {
+    const e = {};
+    if (s === 0) {
+      if (!formData.firstName.trim()) e.firstName = 'First name is required';
+      if (!formData.lastName.trim()) e.lastName = 'Last name is required';
+      if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) e.email = 'Invalid email address';
+      if (!formData.username.trim()) e.username = 'Username is required';
+    }
+    if (s === 1) {
+      if (!formData.password) e.password = 'Password is required';
+      else if (formData.password.length < 8) e.password = 'Must be at least 8 characters';
+      if (!formData.confirmPassword) e.confirmPassword = 'Please confirm your password';
+      else if (formData.password !== formData.confirmPassword) e.confirmPassword = 'Passwords do not match';
+      if (!formData.agreeTerms) e.agreeTerms = 'You must agree to the terms';
+    }
+    return e;
+  };
+
+  const handleNext = () => {
+    const errs = validateStep(step);
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
+    setStep(step + 1);
+  };
+
+  // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    const errs = validateStep(1);
+    if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
-
-    // Validate form
-    const newErrors = {};
-
-    // Required fields
-    if (!formData.email.trim()) newErrors.email = ['Email is required'];
-    if (!formData.username.trim()) newErrors.username = ['Username is required'];
-    if (!formData.firstName.trim()) newErrors.firstName = ['First name is required'];
-    if (!formData.lastName.trim()) newErrors.lastName = ['Last name is required'];
-    if (!formData.password) newErrors.password = ['Password is required'];
-    if (!formData.confirmPassword) newErrors.confirmPassword = ['Please confirm your password'];
-
-    // Email validation
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = ['Please enter a valid email address'];
-    }
-
-    // Password validation
-    if (formData.password && formData.password.length < 8) {
-      newErrors.password = ['Password must be at least 8 characters'];
-    }
-
-    // Password match validation
-    if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = ['Passwords do not match'];
-    }
-
-    // Terms agreement
-    if (!formData.agreeTerms) {
-      newErrors.agreeTerms = ['You must agree to the terms and conditions'];
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setIsLoading(false);
-      toast.error('Please correct the errors in the form');
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      // Get user_id from currentUser or session
       const userId = currentUser?.id || sessionStorage.getItem('first_time_user_id');
-
-      // Submit to Django API
-      const response = await api.post('/api/auth/first-time-setup/', {
-        user_id: userId,  // Send user_id in POST data
+      const result = await api.post('/api/auth/first-time-setup/', {
+        user_id: userId,
         email: formData.email,
         username: formData.username,
         first_name: formData.firstName,
@@ -212,485 +146,345 @@ const FirstTimeSetup = () => {
         confirm_password: formData.confirmPassword
       });
 
-      if (response.data.success) {
-        toast.success(response.data.message || 'Profile setup completed successfully!');
-
-        // Store user data
-        if (response.data.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-
-        // Store token if provided
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
-        }
-
-        // Clear any setup session data
+      if (result.success) {
+        if (result.user) localStorage.setItem('user', JSON.stringify(result.user));
+        if (result.token) localStorage.setItem('token', result.token);
         sessionStorage.removeItem('first_time_user_id');
         sessionStorage.removeItem('user_email');
 
-        // Navigate to dashboard
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
+        toast.success(result.message || 'Profile setup completed!');
+        const role = getUserRole(result.user);
+        const dashPath = getDashboardPath(role);
+        setTimeout(() => navigate(dashPath), 1200);
       } else {
-        toast.error(response.data.message || 'Setup failed');
-        if (response.data.errors) {
-          setErrors(response.data.errors);
-        }
+        toast.error(result.message || 'Setup failed');
+        if (result.errors) setErrors(result.errors);
       }
     } catch (error) {
-      console.error('Setup error:', error);
-
-      if (error.response?.data) {
-        const errorData = error.response.data;
-
-        if (errorData.errors) {
-          setErrors(errorData.errors);
-
-          if (errorData.errors.non_field_errors) {
-            const errorMsg = Array.isArray(errorData.errors.non_field_errors)
-              ? errorData.errors.non_field_errors[0]
-              : errorData.errors.non_field_errors;
-            toast.error(errorMsg);
-          } else {
-            toast.error('Please correct the errors in the form');
-          }
-        } else if (errorData.message) {
-          toast.error(errorData.message);
-          setErrors({ non_field_errors: [errorData.message] });
-        } else {
-          toast.error('Setup failed. Please try again.');
-        }
-      } else if (error.request) {
-        toast.error('Unable to connect to server. Please check your network.');
+      const errorData = error.data || error.response?.data;
+      if (errorData?.errors) {
+        setErrors(errorData.errors);
+        const nfe = errorData.errors.non_field_errors;
+        toast.error(nfe ? (Array.isArray(nfe) ? nfe[0] : nfe) : 'Please correct the errors');
       } else {
-        toast.error('An unexpected error occurred.');
+        toast.error(errorData?.message || error.message || 'Setup failed');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Helper to format errors for display
-  const errorList = Object.entries(errors).flatMap(([key, value]) => {
-    if (['success', 'status', 'code'].includes(key)) return [];
+  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const FieldError = ({ name }) => {
+    const err = errors[name];
+    if (!err) return null;
+    const msg = Array.isArray(err) ? err[0] : err;
+    return <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} />{msg}</p>;
+  };
 
-    let messages = [];
-    if (Array.isArray(value)) {
-      messages = value;
-    } else if (typeof value === 'string') {
-      messages = [value];
-    } else if (typeof value === 'object' && value !== null) {
-      return [];
-    }
+  const InputWrapper = ({ icon: Icon, children, error }) => (
+    <div className={`group relative flex items-center rounded-xl border-2 ${error ? 'border-red-300 bg-red-50/30 ring-2 ring-red-100' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/30'} focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 focus-within:bg-white focus-within:shadow-sm transition-all duration-200`}>
+      {Icon && <Icon size={18} className="absolute left-3.5 text-gray-400 group-focus-within:text-indigo-500 transition-colors duration-200 pointer-events-none" />}
+      {children}
+    </div>
+  );
 
-    if (key === 'non_field_errors' || key === 'detail') {
-      return messages;
-    }
-
-    return messages.map(msg => {
-      if (typeof msg === 'object') return JSON.stringify(msg);
-      const fieldName = key.replace(/_/g, ' ');
-      return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}: ${msg}`;
-    });
-  });
-
+  // â”€â”€ Loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isLoadingUser) {
     return (
-      <div className="setup-container" style={{ textAlign: 'center', padding: '3rem' }}>
-        <div className="spinner-container">
-          <Loader2 size={40} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
-          <p style={{ marginTop: '1rem', color: '#5c6bc0' }}>Loading your information...</p>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={36} className="animate-spin text-indigo-500 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Loading your informationâ€¦</p>
         </div>
       </div>
     );
   }
-
-  if (!currentUser) {
-    return null; // Will redirect in useEffect
-  }
+  if (!currentUser) return null;
 
   return (
-    <div className="setup-container">
-      {/* Progress Bar */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12">
       <motion.div
-        className="progress-bar"
-        initial="hidden"
-        animate="visible"
-        variants={progressVariants}
-      />
-
-      {/* Header */}
-      <motion.div
-        className="setup-header"
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="w-full max-w-2xl lg:max-w-[680px] mx-auto"
       >
-        <div className="setup-icon">
-          <User size={32} />
-        </div>
-        <h1 className="setup-title">Complete Your Profile</h1>
-        <p className="setup-subtitle">
-          Welcome! Please complete your profile setup to continue using the portal.
-        </p>
-      </motion.div>
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100/80 overflow-hidden">
 
-      {/* Error Alert */}
-      <AnimatePresence>
-        {errorList.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="error-alert"
-          >
-            <button
-              onClick={() => setErrors({})}
-              className="error-close-btn"
-            >
-              <X size={16} />
-            </button>
-            <div className="error-content">
-              <strong className="error-title">Please correct the following:</strong>
-              <ul className="error-list">
-                {errorList.map((err, idx) => (
-                  <li key={idx} className="error-item">{err}</li>
-                ))}
-              </ul>
+          {/* â”€â”€ Top accent bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-400" />
+
+          {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          <div className="px-8 sm:px-12 md:px-16 pt-8 sm:pt-10 pb-4 text-center">
+            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm">
+              <Shield size={30} className="text-indigo-600" />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <h1 className="text-2xl sm:text-[1.65rem] font-bold text-gray-900">Welcome, {formData.firstName || 'there'}!</h1>
+            <p className="text-sm sm:text-[0.9rem] text-gray-500 mt-1.5 leading-relaxed">Let's get your account set up in just a moment.</p>
+          </div>
 
-      {/* Setup Form */}
-      <motion.form
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        onSubmit={handleSubmit}
-        className="setup-form"
-      >
-        {/* Personal Information Section */}
-        <motion.div variants={itemVariants} className="form-section">
-          <h3 className="section-title">
-            <User size={18} style={{ marginRight: '8px' }} />
-            Personal Information
-          </h3>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">
-                First Name <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                className={`form-input ${errors.firstName ? 'input-error' : ''}`}
-                placeholder="John"
-                value={formData.firstName}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-              {errors.firstName && (
-                <div className="field-error">{Array.isArray(errors.firstName) ? errors.firstName[0] : errors.firstName}</div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                Last Name <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                className={`form-input ${errors.lastName ? 'input-error' : ''}`}
-                placeholder="Doe"
-                value={formData.lastName}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-              {errors.lastName && (
-                <div className="field-error">{Array.isArray(errors.lastName) ? errors.lastName[0] : errors.lastName}</div>
-              )}
+          {/* â”€â”€ Step indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          <div className="px-8 sm:px-12 md:px-16 pb-2">
+            <div className="flex items-center justify-center gap-2">
+              {STEPS.map((s, i) => {
+                const StepIcon = s.icon;
+                const isActive = i === step;
+                const isDone = i < step;
+                return (
+                  <React.Fragment key={s.id}>
+                    {i > 0 && (
+                      <div className={`w-12 h-0.5 rounded-full transition-colors ${isDone ? 'bg-indigo-500' : 'bg-gray-200'}`} />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => { if (isDone) setStep(i); }}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                        ${isActive ? 'bg-indigo-100 text-indigo-700' : isDone ? 'bg-emerald-50 text-emerald-600 cursor-pointer' : 'text-gray-400'}`}
+                    >
+                      {isDone ? <Check size={14} /> : <StepIcon size={14} />}
+                      <span className="hidden sm:inline">{s.label}</span>
+                    </button>
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
 
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">
-                Email Address <span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Mail size={18} className="input-icon" />
-                <input
-                  type="email"
-                  name="email"
-                  className={`form-input ${errors.email ? 'input-error' : ''}`}
-                  placeholder="john.doe@institution.edu"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-              </div>
-              {errors.email && (
-                <div className="field-error">{Array.isArray(errors.email) ? errors.email[0] : errors.email}</div>
-              )}
-              <p className="input-hint">This will be your login email</p>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                Username <span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <User size={18} className="input-icon" />
-                <input
-                  type="text"
-                  name="username"
-                  className={`form-input ${errors.username ? 'input-error' : ''}`}
-                  placeholder="johndoe"
-                  value={formData.username}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-              </div>
-              {errors.username && (
-                <div className="field-error">{Array.isArray(errors.username) ? errors.username[0] : errors.username}</div>
-              )}
-            </div>
-          </div>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">Phone Number</label>
-              <div className="input-with-icon">
-                <Phone size={18} className="input-icon" />
-                <input
-                  type="tel"
-                  name="phone"
-                  className={`form-input ${errors.phone ? 'input-error' : ''}`}
-                  placeholder="+1234567890"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-              </div>
-              {errors.phone && (
-                <div className="field-error">{Array.isArray(errors.phone) ? errors.phone[0] : errors.phone}</div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Gender</label>
-              <select
-                name="gender"
-                className={`form-input ${errors.gender ? 'input-error' : ''}`}
-                value={formData.gender}
-                onChange={handleChange}
-                disabled={isLoading}
-              >
-                <option value="">Select Gender</option>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-                <option value="O">Other</option>
-              </select>
-              {errors.gender && (
-                <div className="field-error">{Array.isArray(errors.gender) ? errors.gender[0] : errors.gender}</div>
-              )}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Address</label>
-            <div className="input-with-icon">
-              <Home size={18} className="input-icon" />
-              <input
-                type="text"
-                name="address"
-                className={`form-input ${errors.address ? 'input-error' : ''}`}
-                placeholder="123 Main St, City, Country"
-                value={formData.address}
-                onChange={handleChange}
-                disabled={isLoading}
-              />
-            </div>
-            {errors.address && (
-              <div className="field-error">{Array.isArray(errors.address) ? errors.address[0] : errors.address}</div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Security Section */}
-        <motion.div variants={itemVariants} className="form-section">
-          <h3 className="section-title">
-            <Key size={18} style={{ marginRight: '8px' }} />
-            Security Settings
-          </h3>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label">
-                Password <span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Key size={18} className="input-icon" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  className={`form-input ${errors.password ? 'input-error' : ''}`}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle"
-                  disabled={isLoading}
+          {/* â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          <form onSubmit={handleSubmit} className="px-8 sm:px-12 md:px-16 pb-10 sm:pb-12 pt-6 m-3">
+            <AnimatePresence mode="wait">
+              {/* â•â•â•â•â•â•â•â•â•â•â• STEP 0: Personal â•â•â•â•â•â•â•â•â•â•â• */}
+              {step === 0 && (
+                <motion.div
+                  key="personal"
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-5 sm:space-y-6"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {errors.password && (
-                <div className="field-error">{Array.isArray(errors.password) ? errors.password[0] : errors.password}</div>
-              )}
-
-              {/* Password Strength Meter */}
-              {formData.password && (
-                <div className="password-strength">
-                  <div className="strength-meter">
-                    {[1, 2, 3, 4, 5].map((level) => (
-                      <div
-                        key={level}
-                        className={`strength-bar ${level <= passwordStrength.score ? 'active' : ''}`}
-                        style={{
-                          backgroundColor: level <= passwordStrength.score
-                            ? ['#ff4444', '#ffbb33', '#ffbb33', '#00C851', '#00C851'][level - 1]
-                            : '#e0e0e0'
-                        }}
-                      />
-                    ))}
+                  {/* Name row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">First Name <span className="text-red-400">*</span></label>
+                      <InputWrapper error={errors.firstName}>
+                        <input name="firstName" value={formData.firstName} onChange={handleChange}
+                          className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="John" />
+                      </InputWrapper>
+                      <FieldError name="firstName" />
+                    </div>
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">Last Name <span className="text-red-400">*</span></label>
+                      <InputWrapper error={errors.lastName}>
+                        <input name="lastName" value={formData.lastName} onChange={handleChange}
+                          className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="Doe" />
+                      </InputWrapper>
+                      <FieldError name="lastName" />
+                    </div>
                   </div>
-                  <div className="strength-feedback">
-                    {formData.password.length > 0 && (
-                      <>
-                        Strength: <span style={{
-                          color: passwordStrength.score <= 2 ? '#ff4444' :
-                            passwordStrength.score <= 3 ? '#ffbb33' : '#00C851',
-                          fontWeight: 600
-                        }}>
-                          {passwordStrength.score <= 2 ? 'Weak' :
-                            passwordStrength.score <= 3 ? 'Fair' : 'Strong'}
-                        </span>
-                        {passwordStrength.feedback && passwordStrength.score < 5 && (
-                          <span className="feedback-text"> - {passwordStrength.feedback}</span>
-                        )}
-                      </>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Email Address</label>
+                    <InputWrapper icon={Mail} error={errors.email}>
+                      <input name="email" type="email" value={formData.email} onChange={handleChange}
+                        className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="john@institution.edu" />
+                    </InputWrapper>
+                    <FieldError name="email" />
+                    {emailConflict && (
+                      <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
+                        <AlertCircle size={12} /> A suggested email was generated because the original is used by another account. You can edit it.
+                      </p>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">
-                Confirm Password <span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Key size={18} className="input-icon" />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  className={`form-input ${errors.confirmPassword ? 'input-error' : ''}`}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="password-toggle"
-                  disabled={isLoading}
+                  {/* Username */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Username <span className="text-red-400">*</span></label>
+                    <InputWrapper icon={User} error={errors.username}>
+                      <input name="username" value={formData.username} onChange={handleChange}
+                        className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="johndoe" />
+                    </InputWrapper>
+                    <FieldError name="username" />
+                  </div>
+
+                  {/* Phone & Gender */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">Phone Number</label>
+                      <InputWrapper icon={Phone}>
+                        <input name="phone" type="tel" value={formData.phone} onChange={handleChange}
+                          className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="+254 700 000000" />
+                      </InputWrapper>
+                    </div>
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">Gender</label>
+                      <InputWrapper>
+                        <select name="gender" value={formData.gender} onChange={handleChange}
+                          className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 outline-none rounded-xl appearance-none cursor-pointer">
+                          <option value="">Selectâ€¦</option>
+                          <option value="M">Male</option>
+                          <option value="F">Female</option>
+                        </select>
+                      </InputWrapper>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Address</label>
+                    <InputWrapper icon={MapPin}>
+                      <input name="address" value={formData.address} onChange={handleChange}
+                        className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="123 Main St, City" />
+                    </InputWrapper>
+                  </div>
+
+                  {/* Next button */}
+                  <div className="flex justify-end pt-3">
+                    <button type="button" onClick={handleNext}
+                      className="flex items-center gap-2 px-7 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-sm hover:shadow-md hover:shadow-indigo-200">
+                      Continue <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* â•â•â•â•â•â•â•â•â•â•â• STEP 1: Security â•â•â•â•â•â•â•â•â•â•â• */}
+              {step === 1 && (
+                <motion.div
+                  key="security"
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-5 sm:space-y-6"
                 >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <div className="field-error">{Array.isArray(errors.confirmPassword) ? errors.confirmPassword[0] : errors.confirmPassword}</div>
+                  {/* Password */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">New Password <span className="text-red-400">*</span></label>
+                    <InputWrapper icon={Key} error={errors.password}>
+                      <input name="password" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={handleChange}
+                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </InputWrapper>
+                    <FieldError name="password" />
+
+                    {/* Strength meter */}
+                    {formData.password && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="h-1 flex-1 rounded-full transition-all duration-300"
+                              style={{
+                                backgroundColor: i <= strength.score
+                                  ? (strength.score <= 2 ? '#f87171' : strength.score <= 3 ? '#fbbf24' : '#34d399')
+                                  : '#e5e7eb'
+                              }} />
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {strength.checks.map((c, i) => (
+                            <span key={i} className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${
+                              c.pass ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'
+                            }`}>
+                              {c.pass ? <Check size={10} /> : <X size={10} />} {c.label}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-xs font-medium" style={{ color: strength.score <= 2 ? '#ef4444' : strength.score <= 3 ? '#f59e0b' : '#10b981' }}>
+                          {strengthLabel}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Confirm Password <span className="text-red-400">*</span></label>
+                    <InputWrapper icon={Key} error={errors.confirmPassword}>
+                      <input name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange}
+                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100">
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </InputWrapper>
+                    <FieldError name="confirmPassword" />
+                    {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
+                      <p className="mt-1 text-xs text-emerald-500 flex items-center gap-1"><Check size={12} /> Passwords match</p>
+                    )}
+                  </div>
+
+                  {/* Terms */}
+                  <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                    formData.agreeTerms ? 'border-indigo-300 bg-indigo-50/50' : errors.agreeTerms ? 'border-red-300 bg-red-50/30' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/40'
+                  }`}>
+                    <input type="checkbox" name="agreeTerms" checked={formData.agreeTerms} onChange={handleChange}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    <span className="text-xs text-gray-600 leading-relaxed">
+                      I agree to the <Link to="/terms" className="text-indigo-600 hover:underline font-medium">Terms of Service</Link> and <Link to="/privacy" className="text-indigo-600 hover:underline font-medium">Privacy Policy</Link>
+                    </span>
+                  </label>
+                  {errors.agreeTerms && <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} />{errors.agreeTerms}</p>}
+
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-between pt-3">
+                    <button type="button" onClick={() => setStep(0)}
+                      className="px-5 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
+                      Back
+                    </button>
+                    <button type="submit" disabled={isLoading}
+                      className="flex items-center gap-2 px-7 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-sm hover:shadow-md hover:shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                      {isLoading ? (
+                        <><Loader2 size={16} className="animate-spin" /> Setting upâ€¦</>
+                      ) : (
+                        <><Check size={16} /> Complete Setup</>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
               )}
-              {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
-                <div className="success-message" style={{ color: '#00C851', fontSize: '0.85rem', marginTop: '4px' }}>
-                  <Check size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                  Passwords match
-                </div>
+            </AnimatePresence>
+
+            {/* â”€â”€ Error banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            <AnimatePresence>
+              {errors.non_field_errors && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2"
+                >
+                  <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
+                  <div className="text-xs text-red-600">
+                    {Array.isArray(errors.non_field_errors)
+                      ? errors.non_field_errors.map((e, i) => <p key={i}>{e}</p>)
+                      : <p>{errors.non_field_errors}</p>}
+                  </div>
+                  <button type="button" onClick={() => setErrors(p => ({ ...p, non_field_errors: undefined }))} className="ml-auto text-red-400 hover:text-red-600">
+                    <X size={14} />
+                  </button>
+                </motion.div>
               )}
+            </AnimatePresence>
+          </form>
+
+          {/* â”€â”€ Footer hint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          <div className="px-8 sm:px-12 md:px-16 pb-8 sm:pb-10">
+            <div className="flex items-center gap-2.5 text-xs sm:text-[13px] text-gray-400 bg-gray-50 rounded-xl px-4 py-3.5">
+              <AlertCircle size={14} className="text-indigo-400 shrink-0" />
+              <span>You can update this information later in your profile settings.</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Terms and Conditions */}
-        <motion.div variants={itemVariants} className="form-section">
-          <label className={`terms-checkbox ${errors.agreeTerms ? 'error' : ''}`}>
-            <input
-              type="checkbox"
-              name="agreeTerms"
-              checked={formData.agreeTerms}
-              onChange={handleChange}
-              disabled={isLoading}
-              className="checkbox-input"
-            />
-            <span className="checkbox-custom"></span>
-            <span className="terms-text">
-              I agree to the <Link to="/terms" className="terms-link">Terms of Service</Link> and <Link to="/privacy" className="terms-link">Privacy Policy</Link>
-            </span>
-          </label>
-          {errors.agreeTerms && (
-            <div className="field-error" style={{ marginTop: '8px' }}>
-              {Array.isArray(errors.agreeTerms) ? errors.agreeTerms[0] : errors.agreeTerms}
-            </div>
-          )}
-        </motion.div>
-
-        {/* Action Buttons */}
-        <motion.div variants={itemVariants} className="form-actions">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="secondary-btn"
-            disabled={isLoading}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="primary-btn"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="spinner" style={{ animation: 'spin 1s linear infinite', marginRight: '8px' }} />
-                Setting Up...
-              </>
-            ) : (
-              'Complete Setup'
-            )}
-          </button>
-        </motion.div>
-      </motion.form>
-
-      {/* Help Text */}
-      <motion.div
-        variants={itemVariants}
-        className="setup-help"
-      >
-        <AlertCircle size={16} style={{ marginRight: '8px', color: '#5c6bc0' }} />
-        <p>
-          This information will be used to personalize your experience. You can update it later in your profile settings.
-        </p>
+        {/* Branding */}
+        <p className="text-center text-xs text-gray-400 mt-5 mb-2">Fahari Academia &middot; Management Information System</p>
       </motion.div>
     </div>
   );

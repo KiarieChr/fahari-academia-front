@@ -45,7 +45,7 @@ const CustomStatutoryDeductions = ({ onUpdate, showToast }) => {
         try {
             const response = await payrollService.getDeductionTypes();
             // Filter to statutory deductions only
-            const statutory = (response.data?.deduction_types || [])
+            const statutory = (response.deduction_types || response.data?.deduction_types || [])
                 .filter(d => d.category === 'statutory');
             setDeductionTypes(statutory);
         } catch (error) {

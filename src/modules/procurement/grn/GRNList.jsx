@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Eye, Printer, Search, Filter, Plus } from 'lucide-react';
-import { procurementService } from "../../../services/procurementService";
+import { inventoryService } from "../../../services/inventoryService";
 import { toast } from 'react-toastify';
 
 const GRNList = ({ onView, onCreate }) => {
@@ -9,21 +9,38 @@ const GRNList = ({ onView, onCreate }) => {
     const [filter, setFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await procurementService.getGRNs();
-            setGrns(res.data);
+            const res = await inventoryService.getGRNs();
+            const items = (res.results || res || []).map(g => ({
+                id: g.grn_number || String(g.id),
+                rawId: g.id,
+                poId: g.purchase_order ? `PO-${g.purchase_order}` : '-',
+                supplier: g.supplier_name || `Supplier #${g.supplier}`,
+                dateReceived: g.received_date,
+                receivedBy: g.received_by_name || '',
+                deliveryNote: g.notes || '',
+                status: formatGRNStatus(g.status),
+                totalItems: (g.lines || []).length,
+                totalValue: (g.lines || []).reduce((s, l) => s + Number(l.total_cost || 0), 0),
+                items: (g.lines || []).map(l => ({
+                    id: l.id,
+                    name: l.item_name || `Item #${l.item}`,
+                    quantityReceived: Number(l.quantity_received),
+                    quantityRejected: 0,
+                    status: 'Passed',
+                })),
+            }));
+            setGrns(items);
         } catch (error) {
             toast.error("Failed to load GRNs");
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => { loadData(); }, [loadData]);
 
     const getStatusBadge = (status) => {
         const styles = {
@@ -37,10 +54,11 @@ const GRNList = ({ onView, onCreate }) => {
     };
 
     const filteredGrns = grns.filter(grn => {
+        const term = searchTerm.toLowerCase();
         const matchesSearch =
-            grn.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            grn.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            grn.poId.toLowerCase().includes(searchTerm.toLowerCase());
+            String(grn.id).toLowerCase().includes(term) ||
+            String(grn.supplier).toLowerCase().includes(term) ||
+            String(grn.poId).toLowerCase().includes(term);
         const matchesFilter = filter === 'All' || grn.status === filter;
         return matchesSearch && matchesFilter;
     });
@@ -143,4 +161,9 @@ const GRNList = ({ onView, onCreate }) => {
 };
 
 export default GRNList;
+
+function formatGRNStatus(s) {
+    const map = { DRAFT: 'Draft', CONFIRMED: 'Submitted', POSTED: 'Posted' };
+    return map[s] || s;
+}
 

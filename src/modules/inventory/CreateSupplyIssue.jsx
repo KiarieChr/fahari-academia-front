@@ -28,7 +28,7 @@ const CreateSupplyIssue = ({ onCancel, onSuccess }) => {
     const loadInventory = async () => {
         try {
             const res = await inventoryService.getInventoryItems();
-            setInventoryItems(res.data);
+            setInventoryItems(res.data.filter(i => i.status === 'ACTIVE'));
         } catch (error) {
             toast.error("Failed to load inventory items");
         }

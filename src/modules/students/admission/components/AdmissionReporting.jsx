@@ -1,31 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  BarChart, Users, CheckCircle, Search, X, User, BookOpen, AlertCircle, Calendar
+  BarChart, Users, CheckCircle, Search, User, BookOpen, AlertCircle, Calendar, Eye, X
 } from 'lucide-react';
 import { api } from '../../../../services/api';
 import Swal from 'sweetalert2';
+import Modal from '../../../../components/common/Modal';
+import { Input, Select, FormField, inputClass } from '../../../../components/ui/FormField';
 
 
 const AdmissionReporting = () => {
   const [subTab, setSubTab] = useState('report_back');
   const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingStudent, setReportingStudent] = useState(null);
+  const [detailStudent, setDetailStudent] = useState(null);
 
   // Recent Reports Data (Live)
   const [recentReports, setRecentReports] = useState([]);
 
+  // Unreported students
+  const [unreported, setUnreported] = useState([]);
+  const [unreportedMeta, setUnreportedMeta] = useState({});
+  const [loadingUnreported, setLoadingUnreported] = useState(false);
+
   useEffect(() => {
     if (subTab === 'report_back') {
       fetchRecentEnrollments();
+      fetchUnreported();
     }
   }, [subTab]);
 
   const fetchRecentEnrollments = async () => {
     try {
-      const res = await api.get('/api/settings/enrollments/?is_active=true&limit=10'); // Fetch last 10 active
+      const res = await api.get('/api/settings/enrollments/?is_active=true&limit=10');
       setRecentReports(Array.isArray(res) ? res : (res.results || []));
     } catch (error) {
       console.error("Failed to fetch reports", error);
     }
+  };
+
+  const fetchUnreported = async () => {
+    setLoadingUnreported(true);
+    try {
+      const res = await api.get('/api/settings/enrollments/unreported/');
+      setUnreported(res.unreported || []);
+      setUnreportedMeta({
+        currentTerm: res.current_term,
+        currentYear: res.current_year,
+        previousTerm: res.previous_term,
+        total: res.total
+      });
+    } catch (error) {
+      console.error("Failed to fetch unreported", error);
+    } finally {
+      setLoadingUnreported(false);
+    }
+  };
+
+  const handleQuickReport = (student) => {
+    setReportingStudent(student);
+    setShowReportModal(true);
   };
 
   return (
@@ -57,8 +90,13 @@ const AdmissionReporting = () => {
         {subTab === 'report_back' ? (
           <ReportBackView
             reports={recentReports}
-            onOpenModal={() => setShowReportModal(true)}
-            onSuccess={fetchRecentEnrollments}
+            unreported={unreported}
+            unreportedMeta={unreportedMeta}
+            loadingUnreported={loadingUnreported}
+            onOpenModal={() => { setReportingStudent(null); setShowReportModal(true); }}
+            onQuickReport={handleQuickReport}
+            onSuccess={() => { fetchRecentEnrollments(); fetchUnreported(); }}
+            onViewDetail={(student) => setDetailStudent(student)}
           />
         ) : (
           <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
@@ -72,11 +110,22 @@ const AdmissionReporting = () => {
       {/* Modal */}
       {showReportModal && (
         <ReportBackModal
-          onClose={() => setShowReportModal(false)}
+          onClose={() => { setShowReportModal(false); setReportingStudent(null); }}
           onSuccess={() => {
             setShowReportModal(false);
+            setReportingStudent(null);
             fetchRecentEnrollments();
+            fetchUnreported();
           }}
+          preSelectedStudent={reportingStudent}
+        />
+        
+      )}
+
+      {detailStudent && (
+        <StudentReportingDetail
+          student={detailStudent}
+          onClose={() => setDetailStudent(null)}
         />
       )}
     </div>
@@ -84,7 +133,7 @@ const AdmissionReporting = () => {
 };
 
 // --- Report Back View ---
-const ReportBackView = ({ reports, onOpenModal, onSuccess }) => {
+const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported, onOpenModal, onQuickReport, onSuccess, onViewDetail }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center bg-indigo-50 p-6 rounded-xl border border-indigo-100">
@@ -101,6 +150,69 @@ const ReportBackView = ({ reports, onOpenModal, onSuccess }) => {
         </button>
       </div>
 
+      {/* Unreported Students Section */}
+      <div className="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-amber-200 bg-amber-50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="text-amber-600" size={20} />
+            <div>
+              <h3 className="font-semibold text-amber-800">Not Yet Reported</h3>
+              <p className="text-xs text-amber-600">
+                {unreportedMeta.previousTerm
+                  ? `Students from ${unreportedMeta.previousTerm} who haven't reported for ${unreportedMeta.currentTerm} ${unreportedMeta.currentYear}`
+                  : 'Students who haven\'t reported this term'}
+              </p>
+            </div>
+          </div>
+          <span className="text-sm font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+            {unreportedMeta.total || 0} students
+          </span>
+        </div>
+        {loadingUnreported ? (
+          <div className="px-6 py-8 text-center text-gray-500">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
+            <p className="text-sm">Loading unreported students...</p>
+          </div>
+        ) : unreported.length === 0 ? (
+          <div className="px-6 py-8 text-center text-gray-500">
+            <CheckCircle className="mx-auto h-10 w-10 text-green-400 mb-2" />
+            <p className="text-sm font-medium text-green-700">All students have reported!</p>
+          </div>
+        ) : (
+          <div className="max-h-80 overflow-y-auto">
+            <table className="w-full">
+              <thead className="bg-white border-b border-gray-200 sticky top-0">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Adm No</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Class</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Term</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {unreported.map((s) => (
+                  <tr key={s.student_id} className="hover:bg-amber-50/50">
+                    <td className="px-6 py-3 font-medium text-gray-900">{s.student_name}</td>
+                    <td className="px-6 py-3 text-gray-500 text-sm">{s.admission_number}</td>
+                    <td className="px-6 py-3 text-gray-600 text-sm">{s.grade_name} {s.stream_name}</td>
+                    <td className="px-6 py-3 text-gray-500 text-sm">{s.last_term} {s.last_year}</td>
+                    <td className="px-6 py-3 text-right">
+                      <button
+                        onClick={() => onQuickReport(s)}
+                        className="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        Report
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
           <h3 className="font-semibold text-gray-700">Recently Reported</h3>
@@ -113,18 +225,19 @@ const ReportBackView = ({ reports, onOpenModal, onSuccess }) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {reports.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                   No students reported yet this session.
                 </td>
               </tr>
             ) : (
               reports.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
+                <tr key={r.id} className="hover:bg-gray-50 cursor-pointer" onDoubleClick={() => onViewDetail(r)}>
                   <td className="px-6 py-4 font-medium text-gray-900">{r.student_name}</td>
                   <td className="px-6 py-4 text-gray-600">{r.grade_name} {r.stream_name}</td>
                   <td className="px-6 py-4">
@@ -137,6 +250,15 @@ const ReportBackView = ({ reports, onOpenModal, onSuccess }) => {
                   <td className="px-6 py-4 text-xs text-gray-400">
                     {new Date(r.created_at || Date.now()).toLocaleString()}
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onViewDetail(r); }}
+                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="View reporting history"
+                    >
+                      <Eye size={16} />
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -147,16 +269,139 @@ const ReportBackView = ({ reports, onOpenModal, onSuccess }) => {
   );
 };
 
+// --- Student Reporting Detail Modal ---
+const StudentReportingDetail = ({ student, onClose }) => {
+  const [timeline, setTimeline] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTimeline = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get(`/api/settings/enrollments/timeline/?student_id=${student.student || student.student_id}`);
+        setTimeline(res.timeline || []);
+      } catch (error) {
+        console.error('Failed to fetch timeline', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTimeline();
+  }, [student]);
+
+  const statusColor = (status) => {
+    const map = { active: 'bg-green-100 text-green-800', promoted: 'bg-blue-100 text-blue-800', completed: 'bg-gray-100 text-gray-700', repeated: 'bg-amber-100 text-amber-800' };
+    return map[status] || 'bg-gray-100 text-gray-700';
+  };
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Reporting History" size="lg" accentColor="bg-indigo-500"
+      footer={<Modal.CancelButton onClick={onClose}>Close</Modal.CancelButton>}
+    >
+      <div className="space-y-4">
+        <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+          <div className="h-12 w-12 rounded-full bg-indigo-200 flex items-center justify-center">
+            <User className="text-indigo-700" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-indigo-900">{student.student_name}</h3>
+            <p className="text-sm text-indigo-600">{student.admission_number || ''}</p>
+          </div>
+          {student.stay_status && (
+            <span className={`ml-auto inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${student.stay_status === 'boarder' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
+              {student.stay_status === 'boarder' ? 'Boarder' : 'Day Scholar'}
+            </span>
+          )}
+        </div>
+
+        <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Enrollment Sessions</h4>
+
+        {loading ? (
+          <div className="py-8 text-center text-gray-500">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mb-2"></div>
+            <p className="text-sm">Loading history...</p>
+          </div>
+        ) : timeline.length === 0 ? (
+          <div className="py-8 text-center text-gray-400">
+            <Calendar className="mx-auto h-10 w-10 mb-2" />
+            <p className="text-sm">No enrollment records found.</p>
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+            <div className="space-y-4">
+              {timeline.map((e, i) => (
+                <div key={e.id || i} className="relative pl-10">
+                  <div className={`absolute left-2.5 top-2 h-3 w-3 rounded-full border-2 border-white ${e.is_active ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+                  <div className={`p-4 rounded-lg border ${e.is_active ? 'border-indigo-200 bg-indigo-50/50' : 'border-gray-200 bg-white'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">{e.academic_year}</span>
+                        <span className="text-gray-500">·</span>
+                        <span className="text-gray-700">{e.term}</span>
+                        {e.is_active && <span className="px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">Current</span>}
+                      </div>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColor(e.status)}`}>
+                        {e.status_display || e.status}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500 text-xs">Grade</span>
+                        <p className="font-medium text-gray-800">{e.grade} {e.stream || ''}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 text-xs">Curriculum</span>
+                        <p className="font-medium text-gray-800">{e.curriculum || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 text-xs">Type</span>
+                        <p className="font-medium text-gray-800">{e.type_display || e.enrollment_type || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 text-xs">Stay</span>
+                        <p className="font-medium text-gray-800">{e.stay_status === 'boarder' ? 'Boarder' : e.stay_status === 'day_scholar' ? 'Day Scholar' : '-'}</p>
+                      </div>
+                    </div>
+                    {e.enrollment_date && (
+                      <p className="mt-2 text-xs text-gray-400">Enrolled: {new Date(e.enrollment_date).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
 // --- Report Back Modal ---
-const ReportBackModal = ({ onClose, onSuccess }) => {
+const ReportBackModal = ({ onClose, onSuccess, preSelectedStudent }) => {
   const [step, setStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
 
   // Form Data
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(() => {
+    if (preSelectedStudent) {
+      return {
+        id: preSelectedStudent.student_id,
+        text: preSelectedStudent.student_name,
+        admission_number: preSelectedStudent.admission_number,
+        current_grade_id: preSelectedStudent.grade_id,
+        current_grade_name: preSelectedStudent.grade_name,
+        current_stream_id: preSelectedStudent.stream_id,
+        current_curriculum: preSelectedStudent.curriculum_id,
+      };
+    }
+    return null;
+  });
   const [currentTerm, setCurrentTerm] = useState(null);
+  const [billingInfo, setBillingInfo] = useState(null);
+  const [loadingBilling, setLoadingBilling] = useState(false);
   const [formData, setFormData] = useState({
     stay_status: 'day_scholar',
     reporting_reason: 'Opening Day',
@@ -197,6 +442,23 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
     };
     fetchContext();
   }, []);
+
+  // Fetch billing context when student is selected
+  useEffect(() => {
+    if (!selectedStudent) { setBillingInfo(null); return; }
+    const fetchBilling = async () => {
+      setLoadingBilling(true);
+      try {
+        const res = await api.get(`/api/fees/billing/context/?student_id=${selectedStudent.id}`);
+        setBillingInfo(res);
+      } catch {
+        setBillingInfo(null);
+      } finally {
+        setLoadingBilling(false);
+      }
+    };
+    fetchBilling();
+  }, [selectedStudent]);
 
   const handleSearch = async (query) => {
     setSearchTerm(query);
@@ -251,12 +513,6 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
         text: `${selectedStudent.text} has been successfully reported back.`
       });
       onSuccess();
-      Swal.fire({
-        icon: 'success',
-        title: 'Student Reported',
-        text: `${selectedStudent.text} has been successfully reported back.`
-      });
-      onSuccess();
     } catch (error) {
       console.error(error);
       const errorMsg = error.data
@@ -270,16 +526,24 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900">Report Student Back</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X size={20} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Report Student Back"
+      size="md"
+      accentColor="bg-indigo-500"
+      footer={
+        selectedStudent ? (
+          <>
+            <Modal.CancelButton onClick={onClose} />
+            <Modal.SubmitButton form="report-back-form" loading={submitLoading} disabled={!currentTerm}>
+              Report Student
+            </Modal.SubmitButton>
+          </>
+        ) : null
+      }
+    >
+      <form id="report-back-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Student Search */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Find Student</label>
@@ -305,7 +569,7 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
                   placeholder="Search by name or admission number..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className={inputClass + ' pl-10'}
                 />
                 {searchResults.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
@@ -336,10 +600,6 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Class / Grade</label>
                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  {/* If we have a detected grade, show it, but allow override if needed (future feature). For now just show and use it. 
-                        Actually, user wants to FIX the class if it's picking Grade One.
-                        So we should make this editable or at least explicitly visible.
-                    */}
                   {!selectedStudent.current_grade_id ? (
                     <div className="text-red-600 text-sm">
                       Warning: No class detected. Please verify student setup or defaulting to Grade 1.
@@ -382,10 +642,8 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
               </div>
 
               {/* Reason */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Reason</label>
-                <select
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+              <FormField label="Reason">
+                <Select
                   value={formData.reporting_reason}
                   onChange={(e) => setFormData({ ...formData, reporting_reason: e.target.value })}
                 >
@@ -394,18 +652,18 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
                   <option value="From Suspension">From Suspension</option>
                   <option value="Medical Leave Return">Medical Leave Return</option>
                   <option value="Other">Other</option>
-                </select>
+                </Select>
                 {formData.reporting_reason === 'Other' && (
-                  <input
+                  <Input
                     type="text"
-                    className="w-full mt-2 p-2 border border-gray-300 rounded-lg"
+                    className="mt-2"
                     placeholder="Specify reason..."
                     value={formData.other_reason}
                     onChange={(e) => setFormData({ ...formData, other_reason: e.target.value })}
                     required
                   />
                 )}
-              </div>
+              </FormField>
 
               {/* Term Info Display */}
               <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg flex items-center gap-2">
@@ -417,18 +675,57 @@ const ReportBackModal = ({ onClose, onSuccess }) => {
                 </span>
               </div>
 
-              <button
-                type="submit"
-                disabled={submitLoading || !currentTerm}
-                className="w-full py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              >
-                {submitLoading ? 'Submitting...' : 'Report Student'}
-              </button>
+              {/* Billing Info */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Term Billing</span>
+                  {billingInfo && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${billingInfo.billing_source === 'template' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {billingInfo.billing_source === 'template' ? 'Fee Template' : 'Grade Structure'}
+                    </span>
+                  )}
+                </div>
+                <div className="p-4">
+                  {loadingBilling ? (
+                    <div className="text-center py-3 text-gray-400 text-sm">Loading billing...</div>
+                  ) : billingInfo ? (
+                    <div className="space-y-2">
+                      {billingInfo.template && (
+                        <p className="text-xs text-gray-500">Template: <span className="font-medium text-gray-700">{billingInfo.template.name}</span></p>
+                      )}
+                      <div className="max-h-32 overflow-y-auto">
+                        <table className="w-full text-sm">
+                          <tbody className="divide-y divide-gray-100">
+                            {(billingInfo.fee_items || []).map((item, i) => (
+                              <tr key={i} className="text-gray-600">
+                                <td className="py-1">{item.name}</td>
+                                <td className="py-1 text-right font-medium">{Number(item.amount).toLocaleString()}</td>
+                                <td className="py-1 text-right">
+                                  {item.is_optional && <span className="text-xs text-amber-600">Optional</span>}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="pt-2 border-t border-gray-200 flex justify-between font-semibold text-sm">
+                        <span>Total</span>
+                        <span className="text-indigo-700">
+                          {billingInfo.template
+                            ? Number(billingInfo.template.total).toLocaleString()
+                            : (billingInfo.fee_items || []).reduce((sum, i) => sum + Number(i.amount), 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 text-center py-2">No billing structure found for this student.</p>
+                  )}
+                </div>
+              </div>
             </>
           )}
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { X, Play, BookOpen, User, Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import { Play, BookOpen, Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import Modal from '../../../../components/common/Modal';
+import FormField, { Select, Input, TextArea, inputClass } from '../../../../components/ui/FormField';
 
 const EMPTY_FORM = {
     class_session: '',
@@ -22,8 +24,6 @@ const StartSessionModal = ({ isOpen, onClose, classSessions = [], subjects = [],
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
-
-    if (!isOpen) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -60,136 +60,108 @@ const StartSessionModal = ({ isOpen, onClose, classSessions = [], subjects = [],
     };
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-900">Start Class Session</h2>
-                        <p className="text-sm text-gray-500">Initialize a new lesson for a class.</p>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Start Class Session"
+            subtitle="Initialize a new lesson for a class."
+            size="md"
+            accentColor="bg-indigo-500"
+            footer={<>
+                <Modal.CancelButton onClick={onClose} />
+                <Modal.SubmitButton form="start-session-form" loading={saving}>
+                    {!saving && <Play size={16} />}
+                    Start Session
+                </Modal.SubmitButton>
+            </>}
+        >
+            <form id="start-session-form" onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                    <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">
+                        <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+                        {error}
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                        <X size={20} className="text-gray-500" />
-                    </button>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Class" required>
+                        <Select
+                            name="class_session"
+                            value={form.class_session}
+                            onChange={handleChange}
+                        >
+                            <option value="">Select Class…</option>
+                            {classSessions.map((cs) => (
+                                <option key={cs.id} value={cs.id}>
+                                    {cs.name ?? `${cs.grade_name ?? ''} ${cs.term_name ?? ''}`.trim()}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+                    <FormField label="Subject" required>
+                        <Select
+                            name="subject"
+                            value={form.subject}
+                            onChange={handleChange}
+                        >
+                            <option value="">Select Subject…</option>
+                            {subjects.map((s) => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </Select>
+                    </FormField>
                 </div>
 
-                {/* Content */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {error && (
-                        <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">
-                            <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 block mb-1">Class *</label>
-                            <select
-                                name="class_session"
-                                value={form.class_session}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
-                            >
-                                <option value="">Select Class…</option>
-                                {classSessions.map((cs) => (
-                                    <option key={cs.id} value={cs.id}>
-                                        {cs.name ?? `${cs.grade_name ?? ''} ${cs.term_name ?? ''}`.trim()}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 block mb-1">Subject *</label>
-                            <select
-                                name="subject"
-                                value={form.subject}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
-                            >
-                                <option value="">Select Subject…</option>
-                                {subjects.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 block mb-1">Lesson Topic</label>
-                        <div className="relative">
-                            <BookOpen size={18} className="absolute left-3 top-2.5 text-gray-400" />
-                            <input
-                                type="text"
-                                name="topic_taught"
-                                value={form.topic_taught}
-                                onChange={handleChange}
-                                className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm placeholder:text-gray-300"
-                                placeholder="e.g. Introduction to Algebra"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 block mb-1">Delivery Mode</label>
-                            <select
-                                name="delivery_mode"
-                                value={form.delivery_mode}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
-                            >
-                                <option value="in_person">In-Person</option>
-                                <option value="online">Online</option>
-                                <option value="hybrid">Hybrid</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 block mb-1">Start Time</label>
-                            <div className="relative">
-                                <Clock size={18} className="absolute left-3 top-2.5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    readOnly
-                                    value={new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
-                                    className="w-full pl-10 pr-3 py-2 border rounded-lg bg-gray-50 text-gray-500 outline-none text-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 block mb-1">Notes / Remarks</label>
-                        <textarea
-                            name="lesson_notes"
-                            value={form.lesson_notes}
+                <FormField label="Lesson Topic">
+                    <div className="relative">
+                        <BookOpen size={18} className="absolute left-3 top-3 text-gray-400 z-10" />
+                        <Input
+                            type="text"
+                            name="topic_taught"
+                            value={form.topic_taught}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm min-h-[80px] resize-none"
-                            placeholder="Optional notes for this session…"
+                            className="pl-10"
+                            placeholder="e.g. Introduction to Algebra"
                         />
                     </div>
+                </FormField>
 
-                    {/* Footer Actions */}
-                    <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Delivery Mode">
+                        <Select
+                            name="delivery_mode"
+                            value={form.delivery_mode}
+                            onChange={handleChange}
                         >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium shadow-sm shadow-indigo-200 flex items-center gap-2 disabled:opacity-60"
-                        >
-                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                            Start Session
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                            <option value="in_person">In-Person</option>
+                            <option value="online">Online</option>
+                            <option value="hybrid">Hybrid</option>
+                        </Select>
+                    </FormField>
+                    <FormField label="Start Time">
+                        <div className="relative">
+                            <Clock size={18} className="absolute left-3 top-3 text-gray-400 z-10" />
+                            <input
+                                type="text"
+                                readOnly
+                                value={new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+                                className={`${inputClass} pl-10 bg-gray-50 text-gray-500`}
+                            />
+                        </div>
+                    </FormField>
+                </div>
+
+                <FormField label="Notes / Remarks">
+                    <TextArea
+                        name="lesson_notes"
+                        value={form.lesson_notes}
+                        onChange={handleChange}
+                        rows={3}
+                        placeholder="Optional notes for this session…"
+                    />
+                </FormField>
+            </form>
+        </Modal>
     );
 };
 

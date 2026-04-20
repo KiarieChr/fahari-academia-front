@@ -4,6 +4,7 @@ import { Eye, EyeOff, Loader2, AlertCircle, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { toast } from 'react-toastify';
+import { getUserRole, getDashboardPath } from './RoleBasedRoute';
 
 
 
@@ -73,7 +74,7 @@ const LoginForm = () => {
 
         if (authToken) {
           localStorage.setItem('token', authToken);
-          // console.log("Token saved successfully"); 
+          window.dispatchEvent(new Event('auth-change'));
         } else {
           console.warn("No token found in login response", response);
         }
@@ -82,12 +83,18 @@ const LoginForm = () => {
         const isFirstTimeUser = response.requires_setup || response.user?.is_first_login || response.is_first_login;
 
         if (isFirstTimeUser) {
-          toast.success("First time login detected. Please set your new password.");
-          navigate('/reset-password');
+          // Store user ID for first-time setup page
+          const userId = response.user_id || response.user?.id;
+          if (userId) {
+            sessionStorage.setItem('first_time_user_id', String(userId));
+          }
+          toast.success("First time login detected. Please complete your profile setup.");
+          navigate('/first-time-setup', { state: { userId } });
         } else {
           toast.success("Welcome Back " + (response.user?.first_name || 'User') + "!");
-          // Force a small delay or reload to ensure api.js picks up the new token if needed, usually not necessary but good for safety
-          navigate('/dashboard');
+          // Redirect based on user role (student → /student, parent → /parent, staff → /dashboard)
+          const role = getUserRole(response.user);
+          navigate(getDashboardPath(role));
         }
       } else {
         // Registration is supposedly disabled/handled differently
@@ -295,10 +302,10 @@ const LoginForm = () => {
         <motion.div variants={itemVariants} className="form-group">
           <label className="form-label">Email / Username</label>
           <input
-            type="email"
+            type="text"
             name="username"
             className="form-input"
-            placeholder="name@school.edu"
+            placeholder="Username or email"
             value={formData.username}
             onChange={handleChange}
           />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 import { api } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-toastify';
 import './MyAccount.css';
 import {
     User,
@@ -52,6 +53,7 @@ const MyAccount = () => {
     const [previewAvatar, setPreviewAvatar] = useState(null);
     const [activities, setActivities] = useState([]);
     const [activeSessions, setActiveSessions] = useState([]);
+    const [terminatingId, setTerminatingId] = useState(null);
 
     const [userData, setUserData] = useState({
         firstName: '',
@@ -134,14 +136,18 @@ const MyAccount = () => {
                 
                 if (sessions && Array.isArray(sessions)) {
                     const mappedSessions = sessions.map(s => ({
-                        id: s.session_key,
+                        id: s.id ?? s.session_key,
                         device: s.device || 'Unknown Device',
                         browser: s.browser || 'Unknown Browser',
                         os: s.os || 'Unknown OS',
                         location: s.location || 'Unknown',
                         ip: s.ip || 'Unknown IP',
-                        lastActive: s.expire_date ? new Date(s.expire_date).toLocaleString() : 'Unknown',
-                        current: s.current || false
+                        createdAt: s.created_at ? new Date(s.created_at).toLocaleString() : '',
+                        lastActive: s.last_used ? new Date(s.last_used).toLocaleString()
+                            : s.expire_date ? new Date(s.expire_date).toLocaleString()
+                            : 'Unknown',
+                        current: s.current || false,
+                        label: s.label || '',
                     }));
                     setActiveSessions(mappedSessions);
                 } else {
@@ -305,42 +311,29 @@ const MyAccount = () => {
     };
 
     const terminateSession = async (sessionId) => {
-        if (!window.confirm('Are you sure you want to terminate this session?')) return;
-
+        setTerminatingId(sessionId);
         try {
-            const response = await api.post('/api/users/terminate_session/', { session_key: sessionId });
+            const response = await api.post('/api/users/terminate_session/', { token_id: sessionId });
             const data = response?.data;
-            
-            if (data && (data.success || data.message)) {
-                alert(data.message || 'Session terminated successfully');
-                fetchActiveSessions();
-            } else {
-                alert('Session terminated');
-            }
+            toast.success(data?.message || 'Session terminated successfully');
+            fetchActiveSessions();
         } catch (error) {
             console.error('Failed to terminate session:', error);
-            alert('Failed to terminate session: ' + (error.response?.data?.message || error.message));
+            toast.error('Failed to terminate session: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setTerminatingId(null);
         }
     };
 
     const terminateAllSessions = async () => {
-        if (!window.confirm('Are you sure you want to logout from all devices?')) return;
-
         try {
             const response = await api.post('/api/users/logout_all/');
             const data = response?.data;
-            
-            if (data && (data.success || data.message)) {
-                alert(data.message || 'Logged out from all devices successfully');
-                setTimeout(() => {
-                    fetchActiveSessions();
-                }, 500);
-            } else {
-                alert('Logged out from all devices');
-            }
+            toast.success(data?.message || 'Logged out from all devices successfully');
+            setTimeout(() => fetchActiveSessions(), 500);
         } catch (error) {
             console.error('Failed to logout all sessions:', error);
-            alert('Failed to logout all sessions: ' + (error.response?.data?.message || error.message));
+            toast.error('Failed to logout all sessions: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -951,16 +944,23 @@ const MyAccount = () => {
                                                                         </span>
                                                                         <span className="detail-item">
                                                                             <Clock size={14} />
-                                                                            {session.lastActive}
+                                                                            Last active: {session.lastActive}
                                                                         </span>
+                                                                        {session.createdAt && (
+                                                                            <span className="detail-item">
+                                                                                <Clock size={14} />
+                                                                                Signed in: {session.createdAt}
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 {!session.current && (
                                                                     <button
                                                                         className="btn btn-danger btn-sm"
                                                                         onClick={() => terminateSession(session.id)}
+                                                                        disabled={terminatingId === session.id}
                                                                     >
-                                                                        Terminate
+                                                                        {terminatingId === session.id ? 'Terminating…' : 'Terminate'}
                                                                     </button>
                                                                 )}
                                                             </div>

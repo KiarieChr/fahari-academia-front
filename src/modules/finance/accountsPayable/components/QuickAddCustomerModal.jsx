@@ -17,8 +17,8 @@ const QuickAddCustomerModal = ({ show, onClose, onSave }) => {
 
         setLoading(true);
         try {
-            const res = await financeService.createCustomer(formData);
-            onSave(res.data); // Pass back the new customer data
+            const newCustomer = await financeService.createCustomer(formData);
+            onSave(newCustomer);
             onClose();
         } catch (error) {
             console.error("Failed to create customer", error);

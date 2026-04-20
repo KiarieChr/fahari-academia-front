@@ -10,20 +10,20 @@ import VoucherPostingTab from './components/VoucherPostingTab';
 import RefundsTab from './components/RefundsTab';
 import ReportsTab from './components/ReportsTab';
 import CreateCustomerInvoiceModal from './components/CreateCustomerInvoiceModal.jsx';
-import CreateVendorBillModal from './components/CreateVendorBillModal.jsx';
+import CreateSupplierInvoiceModal from './components/CreateSupplierInvoiceModal.jsx';
 // New Accounts Payable Components
 import SupplierInvoicesTab from './components/SupplierInvoicesTab';
 import ImprestRetirementTab from './components/ImprestRetirementTab';
 import SupplierManagementModal from './components/SupplierManagementModal';
 import CreatePaymentVoucherModal from './components/CreatePaymentVoucherModal';
 import PaymentVoucherDetailModal from './components/PaymentVoucherDetailModal';
+import ApprovalThresholdsTab from './components/ApprovalThresholdsTab';
 import './AccountsPayable.css';
 import {
     customerInvoices,
     procurementAPInvoices,
     paymentVouchers,
     refunds,
-    summaryStats,
     apAgingData,
     voucherTypeData,
     supplierSummary,
@@ -47,7 +47,7 @@ const AccountsPayableDashboard = () => {
     const [loading, setLoading] = useState(true);
 
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-    const [showBillModal, setShowBillModal] = useState(false);
+    const [showBillModal, setShowBillModal] = useState(false);  // now opens unified supplier invoice modal
 
     // New modal states for enhanced AP functionality
     const [showSupplierModal, setShowSupplierModal] = useState(false);
@@ -77,15 +77,22 @@ const AccountsPayableDashboard = () => {
     }, []);
 
     const handleCreateRefund = (invoice) => {
-        // This would open the voucher creation modal with refund type pre-selected
-        setActiveTab('vouchers');
-        // In a real implementation, you'd pass the invoice data to the modal
+        setVoucherPrefilledData({
+            voucher_type: 'REFUND',
+            payee_name: invoice.name || invoice.customerName || '',
+            amount: Math.abs(invoice.balance || 0),
+            description: `Refund for overpayment - ${invoice.invoiceNumber || invoice.invoice_number || ''}`
+        });
+        setShowCreateVoucherModal(true);
     };
 
     const handleCreateVoucherFromInvoice = (invoice) => {
-        // Mark invoice as linked
-        // In real app, we would create a voucher backend object here
-        setActiveTab('vouchers');
+        setVoucherPrefilledData({
+            voucher_type: 'AP',
+            amount: parseFloat(invoice.totalAmount || invoice.total_amount || 0),
+            description: `Payment for ${invoice.supplierName || invoice.supplier_name || ''} - ${invoice.invoiceNumber || invoice.invoice_number || ''}`
+        });
+        setShowCreateVoucherModal(true);
     };
 
     const handleVoucherCreated = (newVoucher) => {
@@ -118,7 +125,8 @@ const AccountsPayableDashboard = () => {
         { id: 'imprest', label: 'Imprest Retirement', icon: '🧾' },
         { id: 'posting', label: 'Voucher Posting', icon: '✅' },
         { id: 'refunds', label: 'Refunds', icon: '💸' },
-        { id: 'reports', label: 'Reports', icon: '📈' }
+        { id: 'reports', label: 'Reports', icon: '📈' },
+        { id: 'settings', label: 'Settings', icon: '⚙️' }
     ];
 
     // Helper functions for new voucher workflow
@@ -181,11 +189,8 @@ const AccountsPayableDashboard = () => {
                             <Plus size={14} /> New Voucher
                         </button>
                         <div className="btn-group btn-group-sm">
-                            <button className="btn btn-outline-secondary d-flex align-items-center gap-1">
+                            <button className="btn btn-outline-secondary d-flex align-items-center gap-1" onClick={() => window.print()}>
                                 <Printer size={14} /> Print
-                            </button>
-                            <button className="btn btn-outline-secondary d-flex align-items-center gap-1">
-                                <FileSpreadsheet size={14} /> Export
                             </button>
                         </div>
                     </div>
@@ -209,34 +214,33 @@ const AccountsPayableDashboard = () => {
                     </div>
                 )}
 
-                {/* Tab Navigation */}
-                <div className="ap-tabs-container mb-4">
-                    <div className="ap-tabs">
-                        {tabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                className={`ap-tab ${activeTab === tab.id ? 'active' : ''}`}
-                                onClick={() => setActiveTab(tab.id)}
-                            >
-                                <span className="me-2">{tab.icon}</span>
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
+                {/* Vertical Tabs + Content Layout */}
+                <div className="ap-layout">
+                <div className="ap-sidebar">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            className={`ap-tab ${activeTab === tab.id ? 'active' : ''}`}
+                            onClick={() => setActiveTab(tab.id)}
+                        >
+                            <span className="ap-tab-icon">{tab.icon}</span>
+                            <span className="ap-tab-label">{tab.label}</span>
+                        </button>
+                    ))}
                 </div>
 
                 {/* Tab Content */}
                 <div className="ap-tab-content">
                     {activeTab === 'summary' && (
                         <div>
-                            <DashboardSummary stats={summaryStats} />
+                            <DashboardSummary />
                             <div className="row">
                                 <div className="col-12">
                                     <div className="card border-0 shadow-sm">
                                         <div className="card-body">
                                             <h6 className="fw-bold mb-3">Quick Overview</h6>
                                             <p className="text-muted">
-                                                Welcome to the Accounts Payable Dashboard. Use the tabs above to navigate through different sections:
+                                                Welcome to the Accounts Payable Dashboard. Use the sidebar to navigate through different sections:
                                             </p>
                                             <ul className="text-muted">
                                                 <li><strong>Customer Invoices:</strong> Manage student and sponsor invoices, track overpayments</li>
@@ -297,13 +301,13 @@ const AccountsPayableDashboard = () => {
                     )}
 
                     {activeTab === 'reports' && (
-                        <ReportsTab
-                            agingData={apAgingData}
-                            voucherTypeData={voucherTypeData}
-                            supplierSummary={supplierSummary}
-                            postingStats={postingStats}
-                        />
+                        <ReportsTab />
                     )}
+
+                    {activeTab === 'settings' && (
+                        <ApprovalThresholdsTab />
+                    )}
+                </div>
                 </div>
             </div>
 
@@ -313,10 +317,10 @@ const AccountsPayableDashboard = () => {
                 onSave={() => loadHbData()} // Refresh data
             />
 
-            <CreateVendorBillModal
+            <CreateSupplierInvoiceModal
                 show={showBillModal}
                 onClose={() => setShowBillModal(false)}
-                onSave={() => loadHbData()} // Refresh data
+                onCreated={() => { setShowBillModal(false); loadHbData(); }}
             />
 
             {/* New AP Module Modals */}

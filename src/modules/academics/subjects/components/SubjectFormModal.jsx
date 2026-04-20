@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check } from 'lucide-react';
-import { curriculumOptions, categoryOptions } from '../data/subjectsData';
 
-const SubjectFormModal = ({ isOpen, onClose, onSave, initialData }) => {
+const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, curricula = [], curriculumLevels = [], learningAreas = [] }) => {
     const defaultData = {
         name: '',
         code: '',
-        category: 'Core',
-        type: 'Theory',
-        curriculum: 'CBC',
-        description: '',
-        isGraded: true,
-        status: 'Active'
+        subject_type: 'compulsory',
+        curriculum: '',
+        curriculum_level: '',
+        learning_area: '',
+        weekly_lessons: 5,
+        color_hex: '#3B82F6',
+        is_active: true,
     };
 
     const [formData, setFormData] = useState(initialData || defaultData);
@@ -20,18 +20,37 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData }) => {
     // Reset on open if no initial data
     React.useEffect(() => {
         if (isOpen) {
-            setFormData(initialData || defaultData);
+            setFormData(initialData ? {
+                name: initialData.name || '',
+                code: initialData.code || '',
+                subject_type: initialData.subject_type || 'compulsory',
+                curriculum: initialData.curriculum || '',
+                curriculum_level: initialData.curriculum_level || '',
+                learning_area: initialData.learning_area || '',
+                weekly_lessons: initialData.weekly_lessons || 5,
+                color_hex: initialData.color_hex || '#3B82F6',
+                is_active: initialData.is_active !== false,
+            } : defaultData);
         }
     }, [isOpen, initialData]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(formData);
+        // Send only non-empty fields
+        const payload = { ...formData };
+        if (!payload.curriculum_level) delete payload.curriculum_level;
+        if (!payload.learning_area) delete payload.learning_area;
+        onSave(payload);
     };
 
     const handleChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
     };
+
+    // Filter levels by selected curriculum
+    const filteredLevels = formData.curriculum
+        ? curriculumLevels.filter(l => String(l.curriculum) === String(formData.curriculum))
+        : curriculumLevels;
 
     if (!isOpen) return null;
 
@@ -81,56 +100,77 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData }) => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Curriculum</label>
+                                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Curriculum *</label>
                                         <select
                                             className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                             value={formData.curriculum}
-                                            onChange={(e) => handleChange('curriculum', e.target.value)}
+                                            onChange={(e) => { handleChange('curriculum', e.target.value); handleChange('curriculum_level', ''); }}
+                                            required
                                         >
-                                            {curriculumOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                                            <option value="">Select Curriculum</option>
+                                            {curricula.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Description</label>
-                                    <textarea
-                                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
-                                        placeholder="Brief description of the subject..."
-                                        value={formData.description}
-                                        onChange={(e) => handleChange('description', e.target.value)}
-                                    ></textarea>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Curriculum Level</label>
+                                        <select
+                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={formData.curriculum_level}
+                                            onChange={(e) => handleChange('curriculum_level', e.target.value)}
+                                        >
+                                            <option value="">All Levels</option>
+                                            {filteredLevels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Learning Area</label>
+                                        <select
+                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={formData.learning_area}
+                                            onChange={(e) => handleChange('learning_area', e.target.value)}
+                                        >
+                                            <option value="">None</option>
+                                            {learningAreas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Right Col */}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Category</label>
+                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Subject Type</label>
                                     <select
                                         className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={formData.category}
-                                        onChange={(e) => handleChange('category', e.target.value)}
+                                        value={formData.subject_type}
+                                        onChange={(e) => handleChange('subject_type', e.target.value)}
                                     >
-                                        {categoryOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                                        <option value="compulsory">Compulsory</option>
+                                        <option value="optional">Optional</option>
+                                        <option value="elective">Elective</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Subject Type</label>
-                                    <div className="flex gap-4 p-1 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleChange('type', 'Theory')}
-                                            className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.type === 'Theory' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                        >
-                                            Theory
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleChange('type', 'Practical')}
-                                            className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${formData.type === 'Practical' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                        >
-                                            Practical
-                                        </button>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Weekly Lessons</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={formData.weekly_lessons}
+                                            onChange={(e) => handleChange('weekly_lessons', parseInt(e.target.value) || 1)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Color</label>
+                                        <input
+                                            type="color"
+                                            className="w-full h-[38px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer"
+                                            value={formData.color_hex}
+                                            onChange={(e) => handleChange('color_hex', e.target.value)}
+                                        />
                                     </div>
                                 </div>
 
@@ -139,20 +179,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData }) => {
                                         <input
                                             type="checkbox"
                                             className="w-4 h-4 text-blue-600 rounded"
-                                            checked={formData.isGraded}
-                                            onChange={(e) => handleChange('isGraded', e.target.checked)}
-                                        />
-                                        <div>
-                                            <div className="text-sm font-bold text-slate-800 dark:text-white">Graded Subject</div>
-                                            <div className="text-xs text-slate-500">Subject appears on report cards</div>
-                                        </div>
-                                    </label>
-                                    <label className="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50">
-                                        <input
-                                            type="checkbox"
-                                            className="w-4 h-4 text-blue-600 rounded"
-                                            checked={formData.status === 'Active'}
-                                            onChange={(e) => handleChange('status', e.target.checked ? 'Active' : 'Inactive')}
+                                            checked={formData.is_active}
+                                            onChange={(e) => handleChange('is_active', e.target.checked)}
                                         />
                                         <div>
                                             <div className="text-sm font-bold text-slate-800 dark:text-white">Active Status</div>

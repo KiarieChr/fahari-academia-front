@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../services/studentSettingsService';
+import Modal from '../../../../components/common/Modal';
+import { inputClass, labelClass } from '../../../../components/ui/FormField';
 
 const CurriculumSetup = () => {
     const [curriculums, setCurriculums] = useState([]);
@@ -10,7 +12,7 @@ const CurriculumSetup = () => {
     const [formData, setFormData] = useState({
         name: '',
         code: '',
-        education_level: 'primary',
+        status: 'active',
         description: '',
         is_active: true
     });
@@ -37,7 +39,7 @@ const CurriculumSetup = () => {
             await studentSettingsService.createCurriculum(formData);
             toast.success('Curriculum added successfully');
             setIsModalOpen(false);
-            setFormData({ name: '', code: '', education_level: 'primary', description: '', is_active: true });
+            setFormData({ name: '', code: '', status: 'active', description: '', is_active: true });
             fetchCurricula();
         } catch (e) {
             toast.error("Failed to save curriculum");
@@ -69,7 +71,7 @@ const CurriculumSetup = () => {
     if (loading) return <div className="p-8 text-center text-gray-500">Loading Curricula...</div>;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 m-3 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="flex justify-between items-center px-4 md:px-0">
                 <div>
                     <h3 className="text-xl font-bold text-gray-900">Curricula</h3>
@@ -108,7 +110,7 @@ const CurriculumSetup = () => {
                             </div>
 
                             <h4 className="text-lg font-bold text-gray-900 mb-1">{curr.name} {curr.code && `(${curr.code})`}</h4>
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{curr.education_level.replace('_', ' ')}</span>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{curr.status?.replace('_', ' ') || 'Active'}</span>
 
                             <p className="text-sm text-gray-600 mt-3 line-clamp-2">
                                 {curr.description || 'No description provided.'}
@@ -119,63 +121,49 @@ const CurriculumSetup = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                            <div className="flex items-center gap-3.5">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600">
-                                    <BookOpen size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900">Add Curriculum</h3>
-                                    <p className="text-[0.8rem] text-gray-400 mt-0.5">Define a new curriculum track</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                                <span className="text-gray-400 text-lg">&times;</span>
-                            </button>
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Add Curriculum"
+                    subtitle="Define a new curriculum track"
+                    icon={<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600"><BookOpen size={20} /></div>}
+                    footer={
+                        <>
+                            <Modal.CancelButton onClick={() => setIsModalOpen(false)} />
+                            <Modal.SubmitButton onClick={handleSave}>Save Curriculum</Modal.SubmitButton>
+                        </>
+                    }
+                >
+                    <form onSubmit={handleSave} className="space-y-5">
+                        <div>
+                            <label className={labelClass}>Curriculum Name</label>
+                            <input className={inputClass} placeholder="e.g. CBC" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                         </div>
-
-                        {/* Form Body */}
-                        <form onSubmit={handleSave} className="px-7 py-6 space-y-5">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Curriculum Name</label>
-                                <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="e.g. CBC" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Code (Optional)</label>
-                                <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="e.g. K-CBC" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Education Level</label>
-                                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" value={formData.education_level} onChange={e => setFormData({ ...formData, education_level: e.target.value })}>
-                                    <option value="primary">Primary</option>
-                                    <option value="junior_secondary">Junior Secondary</option>
-                                    <option value="senior_secondary">Senior Secondary</option>
-                                    <option value="international">International</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
-                                <textarea className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm resize-none transition-all" rows="3" placeholder="Brief description..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
-                            </div>
-                            <div className="flex items-center gap-2 pt-1">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.checked })} />
-                                    <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                                    <span className="ml-2.5 text-sm font-medium text-gray-600">Active</span>
-                                </label>
-                            </div>
-                        </form>
-
-                        {/* Footer */}
-                        <div className="px-7 py-4 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3">
-                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">Cancel</button>
-                            <button type="button" onClick={handleSave} className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all">Save Curriculum</button>
+                        <div>
+                            <label className={labelClass}>Code (Optional)</label>
+                            <input className={inputClass} placeholder="e.g. K-CBC" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} />
                         </div>
-                    </div>
-                </div>
+                        <div>
+                            <label className={labelClass}>Status</label>
+                            <select className={inputClass} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="phased_out">Phased Out</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Description</label>
+                            <textarea className={`${inputClass} resize-none`} rows="3" placeholder="Brief description..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" checked={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.checked })} />
+                                <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                                <span className="ml-2.5 text-sm font-medium text-gray-600">Active</span>
+                            </label>
+                        </div>
+                    </form>
+                </Modal>
             )}
         </div>
     );

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Layers, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../services/studentSettingsService';
+import Modal from '../../../../components/common/Modal';
+import { inputClass, labelClass } from '../../../../components/ui/FormField';
 
 const CurriculumLevelSetup = () => {
     const [levels, setLevels] = useState([]);
@@ -110,47 +112,39 @@ const CurriculumLevelSetup = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Add Curriculum Level</h3>
-                                <p className="text-[0.8rem] text-gray-400 mt-0.5">Define a level within a curriculum</p>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                                <span className="text-gray-400 text-lg">&times;</span>
-                            </button>
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Add Curriculum Level"
+                    subtitle="Define a level within a curriculum"
+                    size="sm"
+                    footer={
+                        <>
+                            <Modal.CancelButton onClick={() => setIsModalOpen(false)} />
+                            <Modal.SubmitButton onClick={handleSave}>Save Level</Modal.SubmitButton>
+                        </>
+                    }
+                >
+                    <form onSubmit={handleSave} className="space-y-5">
+                        <div>
+                            <label className={labelClass}>Level Name</label>
+                            <input className={inputClass} placeholder="e.g. Lower Primary" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                         </div>
-
-                        {/* Form Body */}
-                        <form onSubmit={handleSave} className="px-7 py-6 space-y-5">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Level Name</label>
-                                <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="e.g. Lower Primary" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Curriculum</label>
-                                <select className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" value={formData.curriculum} onChange={e => setFormData({ ...formData, curriculum: e.target.value })} required>
-                                    <option value="">Select Curriculum</option>
-                                    {curricula.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Order</label>
-                                <input type="number" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" value={formData.order} onChange={e => setFormData({ ...formData, order: e.target.value })} required />
-                            </div>
-                        </form>
-
-                        {/* Footer */}
-                        <div className="px-7 py-4 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3">
-                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">Cancel</button>
-                            <button type="button" onClick={handleSave} className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all">Save Level</button>
+                        <div>
+                            <label className={labelClass}>Curriculum</label>
+                            <select className={inputClass} value={formData.curriculum} onChange={e => setFormData({ ...formData, curriculum: e.target.value })} required>
+                                <option value="">Select Curriculum</option>
+                                {curricula.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
                         </div>
-                    </div>
-                </div>
+                        <div>
+                            <label className={labelClass}>Order</label>
+                            <input type="number" className={inputClass} value={formData.order} onChange={e => setFormData({ ...formData, order: e.target.value })} required />
+                        </div>
+                    </form>
+                </Modal>
             )}
         </div>
     );

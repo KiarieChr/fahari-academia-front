@@ -1,248 +1,261 @@
-import React, { useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import Modal from '../../../../../components/common/Modal';
+import FormField, { Select, Input } from '../../../../../components/ui/FormField';
+import { api } from '../../../../../services/apiClient';
 
-const CreateEditTimetableModal = ({ isOpen, onClose, editingId }) => {
+const DAY_OPTIONS = [
+    { value: 0, label: 'Monday' },
+    { value: 1, label: 'Tuesday' },
+    { value: 2, label: 'Wednesday' },
+    { value: 3, label: 'Thursday' },
+    { value: 4, label: 'Friday' },
+    { value: 5, label: 'Saturday' },
+];
+
+const CreateEditTimetableModal = ({ isOpen, onClose, classSessionId, editingSlot, onSaved }) => {
+    const [subjects, setSubjects] = useState([]);
+    const [rooms, setRooms] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [periods, setPeriods] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [conflicts, setConflicts] = useState([]);
+
     const [formData, setFormData] = useState({
-        classLevel: 'Grade 4',
-        stream: 'East',
-        term: 'Term 1',
-        year: '2024',
-        slots: [
-            { time: '08:00 - 08:40', subject: 'Maths', teacher: '', room: '' },
-            { time: '08:40 - 09:20', subject: 'English', teacher: '', room: '' },
-        ]
+        subject: '',
+        teacher: '',
+        room: '',
+        day_of_week: 0,
+        start_time: '',
+        end_time: '',
     });
 
-    const handleInputChange = (e) => {
+    useEffect(() => {
+        const fetchOptions = async () => {
+            setLoading(true);
+            try {
+                const [subjectData, roomData, periodData, allocationData] = await Promise.all([
+                    api.timetable.getSubjects({ is_active: true }),
+                    api.timetable.getRooms({ is_active: true }),
+                    api.timetable.getSchedulablePeriods(),
+                    classSessionId ? api.timetable.getAllocationsByClass(classSessionId) : Promise.resolve([]),
+                ]);
+                setSubjects((subjectData.results || subjectData) || []);
+                setRooms((roomData.results || roomData) || []);
+                setPeriods((periodData.results || periodData) || []);
+
+                // Extract unique teachers from allocations
+                const allocations = allocationData.results || allocationData || [];
+                const teacherMap = {};
+                allocations.forEach(a => { teacherMap[a.teacher] = a.teacher_name; });
+                setTeachers(Object.entries(teacherMap).map(([id, name]) => ({ id: Number(id), name })));
+            } catch {
+                toast.error('Failed to load form options');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchOptions();
+    }, [classSessionId]);
+
+    useEffect(() => {
+        if (editingSlot) {
+            setFormData({
+                subject: editingSlot.subject || '',
+                teacher: editingSlot.teacher || '',
+                room: editingSlot.room || '',
+                day_of_week: editingSlot.day_of_week ?? 0,
+                start_time: editingSlot.start_time?.slice(0, 5) || '',
+                end_time: editingSlot.end_time?.slice(0, 5) || '',
+            });
+        }
+    }, [editingSlot]);
+
+    const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
+        setConflicts([]);
     };
 
-    const handleSlotChange = (index, field, value) => {
-        const newSlots = [...formData.slots];
-        newSlots[index][field] = value;
-        setFormData(prev => ({
-            ...prev,
-            slots: newSlots
-        }));
+    const handlePeriodSelect = (periodId) => {
+        const period = periods.find(p => p.id === Number(periodId));
+        if (period) {
+            setFormData(prev => ({
+                ...prev,
+                start_time: period.start_time?.slice(0, 5) || '',
+                end_time: period.end_time?.slice(0, 5) || '',
+            }));
+        }
     };
 
-    const addSlot = () => {
-        setFormData(prev => ({
-            ...prev,
-            slots: [...prev.slots, { time: '', subject: '', teacher: '', room: '' }]
-        }));
+    const handleCheckConflict = async () => {
+        if (!formData.subject || !formData.teacher || !formData.start_time || !formData.end_time) {
+            toast.warning('Fill in subject, teacher, and time before checking conflicts');
+            return;
+        }
+        try {
+            const result = await api.timetable.checkConflict({
+                class_session: classSessionId,
+                subject: Number(formData.subject),
+                teacher: Number(formData.teacher),
+                room: formData.room ? Number(formData.room) : undefined,
+                day_of_week: Number(formData.day_of_week),
+                start_time: formData.start_time,
+                end_time: formData.end_time,
+            });
+            if (result.is_valid) {
+                setConflicts([]);
+                toast.success('No conflicts found');
+            } else {
+                setConflicts(result.conflicts || []);
+            }
+        } catch (err) {
+            toast.error(err?.data?.error || 'Conflict check failed');
+        }
     };
 
-    const removeSlot = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            slots: prev.slots.filter((_, i) => i !== index)
-        }));
-    };
+    const handleSubmit = async () => {
+        if (!formData.subject || !formData.teacher || !formData.start_time || !formData.end_time) {
+            toast.warning('Please fill in all required fields');
+            return;
+        }
+        setSaving(true);
+        try {
+            const payload = {
+                class_session: classSessionId,
+                subject: Number(formData.subject),
+                teacher: Number(formData.teacher),
+                room: formData.room ? Number(formData.room) : null,
+                day_of_week: Number(formData.day_of_week),
+                start_time: formData.start_time,
+                end_time: formData.end_time,
+                effective_from: new Date().toISOString().split('T')[0],
+            };
 
-    const handleSubmit = () => {
-        console.log('Saved timetable:', formData);
-        onClose();
+            if (editingSlot) {
+                await api.timetable.updateSlot(editingSlot.id, payload);
+                toast.success('Slot updated');
+            } else {
+                await api.timetable.createSlot(payload);
+                toast.success('Slot created');
+            }
+            onSaved?.();
+            onClose();
+        } catch (err) {
+            const errors = err?.data?.non_field_errors || err?.data;
+            if (Array.isArray(errors)) {
+                errors.forEach(e => toast.error(typeof e === 'string' ? e : JSON.stringify(e)));
+            } else {
+                toast.error(err?.data?.error || 'Failed to save slot');
+            }
+        } finally {
+            setSaving(false);
+        }
     };
-
-    if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
-            >
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-900">
-                            {editingId ? 'Edit Timetable' : 'Create New Timetable'}
-                        </h2>
-                        <p className="text-sm text-gray-500">Configure class, term, and schedule slots</p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                    >
-                        <X size={20} className="text-gray-500" />
-                    </button>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={editingSlot ? 'Edit Timetable Slot' : 'Add Timetable Slot'}
+            subtitle="Configure subject, teacher, room, and time"
+            size="lg"
+            accentColor="bg-indigo-500"
+            footer={<>
+                <Modal.CancelButton onClick={onClose} />
+                <button
+                    onClick={handleCheckConflict}
+                    disabled={saving || loading}
+                    className="px-4 py-2 border border-amber-300 text-amber-700 rounded-xl hover:bg-amber-50 text-sm font-medium disabled:opacity-50"
+                >
+                    Check Conflicts
+                </button>
+                <Modal.SubmitButton onClick={handleSubmit} disabled={saving || loading}>
+                    {saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : editingSlot ? 'Update Slot' : 'Create Slot'}
+                </Modal.SubmitButton>
+            </>}
+        >
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                    <Loader2 className="animate-spin text-indigo-600" size={24} />
                 </div>
-
-                {/* Body */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Basic Info */}
-                    <div className="space-y-4">
-                        <h3 className="font-semibold text-gray-900">Basic Information</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 block mb-2">Class Level</label>
-                                <select
-                                    name="classLevel"
-                                    value={formData.classLevel}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                >
-                                    <option>Grade 4</option>
-                                    <option>Grade 5</option>
-                                    <option>Grade 6</option>
-                                </select>
+            ) : (
+                <div className="space-y-5">
+                    {conflicts.length > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+                            <div className="flex items-center gap-2 text-red-700 font-medium text-sm">
+                                <AlertCircle size={16} /> Conflicts Detected
                             </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 block mb-2">Stream</label>
-                                <select
-                                    name="stream"
-                                    value={formData.stream}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                >
-                                    <option>East</option>
-                                    <option>West</option>
-                                    <option>North</option>
-                                    <option>South</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 block mb-2">Term</label>
-                                <select
-                                    name="term"
-                                    value={formData.term}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                >
-                                    <option>Term 1</option>
-                                    <option>Term 2</option>
-                                    <option>Term 3</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 block mb-2">Year</label>
-                                <select
-                                    name="year"
-                                    value={formData.year}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                >
-                                    <option>2023</option>
-                                    <option>2024</option>
-                                    <option>2025</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Slots */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="font-semibold text-gray-900">Class Schedule</h3>
-                            <button
-                                onClick={addSlot}
-                                className="flex items-center gap-2 px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                            >
-                                <Plus size={14} /> Add Slot
-                            </button>
-                        </div>
-
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {formData.slots.map((slot, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    className="flex gap-2 items-end p-4 bg-gray-50 rounded-lg border border-gray-200"
-                                >
-                                    <div className="flex-1">
-                                        <label className="text-xs font-medium text-gray-600 block mb-1">Time Slot</label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g., 08:00 - 08:40"
-                                            value={slot.time}
-                                            onChange={(e) => handleSlotChange(idx, 'time', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="flex-1">
-                                        <label className="text-xs font-medium text-gray-600 block mb-1">Subject</label>
-                                        <select
-                                            value={slot.subject}
-                                            onChange={(e) => handleSlotChange(idx, 'subject', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        >
-                                            <option>Maths</option>
-                                            <option>English</option>
-                                            <option>Science</option>
-                                            <option>Social Studies</option>
-                                            <option>C.R.E</option>
-                                            <option>P.E</option>
-                                            <option>Art</option>
-                                            <option>BREAK</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="flex-1">
-                                        <label className="text-xs font-medium text-gray-600 block mb-1">Teacher</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Teacher name"
-                                            value={slot.teacher}
-                                            onChange={(e) => handleSlotChange(idx, 'teacher', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="flex-1">
-                                        <label className="text-xs font-medium text-gray-600 block mb-1">Room</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Room no."
-                                            value={slot.room}
-                                            onChange={(e) => handleSlotChange(idx, 'room', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        />
-                                    </div>
-
-                                    <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => removeSlot(idx)}
-                                        className="p-2 hover:bg-red-100 rounded-lg text-red-600 transition-colors"
-                                    >
-                                        <Trash2 size={16} />
-                                    </motion.button>
-                                </motion.div>
+                            {conflicts.map((c, i) => (
+                                <p key={i} className="text-xs text-red-600 ml-6">{c.message || c}</p>
                             ))}
                         </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField label="Subject *">
+                            <Select name="subject" value={formData.subject} onChange={handleChange}>
+                                <option value="">Select subject...</option>
+                                {subjects.map(s => (
+                                    <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                                ))}
+                            </Select>
+                        </FormField>
+
+                        <FormField label="Teacher *">
+                            <Select name="teacher" value={formData.teacher} onChange={handleChange}>
+                                <option value="">Select teacher...</option>
+                                {teachers.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                ))}
+                            </Select>
+                        </FormField>
+
+                        <FormField label="Room">
+                            <Select name="room" value={formData.room} onChange={handleChange}>
+                                <option value="">No room</option>
+                                {rooms.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name} ({r.room_type_display})</option>
+                                ))}
+                            </Select>
+                        </FormField>
+
+                        <FormField label="Day of Week *">
+                            <Select name="day_of_week" value={formData.day_of_week} onChange={handleChange}>
+                                {DAY_OPTIONS.map(d => (
+                                    <option key={d.value} value={d.value}>{d.label}</option>
+                                ))}
+                            </Select>
+                        </FormField>
+                    </div>
+
+                    {periods.length > 0 && (
+                        <FormField label="Quick Select Period">
+                            <Select onChange={(e) => handlePeriodSelect(e.target.value)} value="">
+                                <option value="">Choose a period to auto-fill times...</option>
+                                {periods.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name} ({p.start_time?.slice(0, 5)} - {p.end_time?.slice(0, 5)})
+                                    </option>
+                                ))}
+                            </Select>
+                        </FormField>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField label="Start Time *">
+                            <Input type="time" name="start_time" value={formData.start_time} onChange={handleChange} />
+                        </FormField>
+                        <FormField label="End Time *">
+                            <Input type="time" name="end_time" value={formData.end_time} onChange={handleChange} />
+                        </FormField>
                     </div>
                 </div>
-
-                {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-                    >
-                        {editingId ? 'Update' : 'Create'} Timetable
-                    </button>
-                </div>
-            </motion.div>
-        </div>
+            )}
+        </Modal>
     );
 };
 

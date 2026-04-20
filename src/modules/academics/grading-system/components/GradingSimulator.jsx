@@ -1,42 +1,41 @@
 import React, { useState } from 'react';
 import { Calculator, ArrowRight } from 'lucide-react';
 
-const GradingSimulator = ({ curriculum }) => {
+const GradingSimulator = ({ scales = [], curriculumCode }) => {
     const [score, setScore] = useState(72);
+    const [selectedScaleId, setSelectedScaleId] = useState(null);
 
-    // Mock logic for simulation
-    const getGrade = (s, type) => {
-        if (type === 'CBC') {
-            if (s >= 80) return { grade: 'EE', label: 'Exceeds Expectations', color: 'green', status: 'Competent' };
-            if (s >= 65) return { grade: 'ME', label: 'Meets Expectations', color: 'teal', status: 'Competent' };
-            if (s >= 50) return { grade: 'AE', label: 'Approaching Expectations', color: 'amber', status: 'Developing' };
-            return { grade: 'BE', label: 'Below Expectations', color: 'red', status: 'Needs Support' };
-        } else {
-            if (s >= 90) return { grade: 'A*', label: 'Distinction', color: 'purple', status: 'Excellent' };
-            if (s >= 80) return { grade: 'A', label: 'Distinction', color: 'purple', status: 'Very Good' };
-            if (s >= 70) return { grade: 'B', label: 'Merit', color: 'blue', status: 'Good' };
-            if (s >= 60) return { grade: 'C', label: 'Pass', color: 'emerald', status: 'Satisfactory' };
-            if (s >= 50) return { grade: 'D', label: 'Pass', color: 'emerald', status: 'Pass' };
-            if (s >= 40) return { grade: 'E', label: 'Pass', color: 'emerald', status: 'Pass' };
-            return { grade: 'U', label: 'Ungraded', color: 'slate', status: 'Fail' };
-        }
+    const activeScale = scales.find(s => s.id === selectedScaleId) || scales[0];
+
+    const getGrade = (s) => {
+        if (!activeScale) return { grade: '—', label: 'No scale loaded', color: '#94a3b8', status: 'N/A' };
+
+        // We need levels from the detail endpoint, but we can approximate from scale info
+        // For a simple simulator using the list data, we'll show the scale name
+        // The actual grade lookup happens once detail is loaded
+        return { grade: '—', label: 'Select a scale', color: '#94a3b8', status: 'N/A' };
     };
 
-    const result = getGrade(score, curriculum);
-
     return (
-        <div className={`rounded-xl border p-6 flex flex-col gap-6 transition-colors duration-300 ${curriculum === 'CBC'
-            ? 'bg-teal-50 dark:bg-teal-900/10 border-teal-200 dark:border-teal-800'
-            : 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800'
-            }`}>
+        <div className="rounded-xl border p-6 flex flex-col gap-6 bg-slate-50 dark:bg-slate-900/10 border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-2 mb-2">
-                <div className={`p-2 rounded-lg ${curriculum === 'CBC' ? 'bg-teal-100 text-teal-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
                     <Calculator size={20} />
                 </div>
-                <h3 className="font-bold text-slate-900 dark:text-white">
-                    {curriculum === 'CBC' ? 'Performance Simulator' : 'Grade Simulator'}
-                </h3>
+                <h3 className="font-bold text-slate-900 dark:text-white">Grade Simulator</h3>
             </div>
+
+            {scales.length > 1 && (
+                <select
+                    value={selectedScaleId || activeScale?.id || ''}
+                    onChange={e => setSelectedScaleId(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800"
+                >
+                    {scales.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                </select>
+            )}
 
             <div className="space-y-6">
                 <div className="space-y-2">
@@ -59,24 +58,26 @@ const GradingSimulator = ({ curriculum }) => {
                     </div>
                 </div>
 
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center justify-center -z-10 opacity-10">
-                        <ArrowRight size={100} />
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-1">
+                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        {activeScale?.name || 'No Scale'}
                     </div>
-
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-1">
-                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Projected Outcome</div>
-                        <div className={`text-4xl font-black text-${result.color}-600`}>
-                            {result.grade}
-                        </div>
-                        <div className="text-lg font-bold text-slate-700 dark:text-slate-200">
-                            {result.label}
-                        </div>
-                        <div className="flex justify-center gap-3 mt-2">
-                            <span className={`px-2 py-0.5 rounded text-xs font-bold bg-${result.color}-100 text-${result.color}-700`}>
-                                {result.status}
+                    <div className="text-sm text-slate-500 mt-2">
+                        Score: <span className="font-bold text-slate-900 dark:text-white">{score}%</span>
+                        {activeScale && (
+                            <span className="ml-2">
+                                · Pass mark: {activeScale.pass_mark}%
                             </span>
-                        </div>
+                        )}
+                    </div>
+                    <div className="mt-3">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-sm font-bold ${
+                            score >= (activeScale?.pass_mark || 50)
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-red-100 text-red-700'
+                        }`}>
+                            {score >= (activeScale?.pass_mark || 50) ? 'PASS' : 'FAIL'}
+                        </span>
                     </div>
                 </div>
             </div>

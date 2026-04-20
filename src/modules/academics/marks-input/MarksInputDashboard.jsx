@@ -1,79 +1,135 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Save, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
+import { CheckCircle, Upload, RotateCcw, BarChart2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
-// Components
 import ContextSelectionPanel from './components/ContextSelectionPanel';
 import StudentMarksTable from './components/StudentMarksTable';
 import BulkActionsPanel from './components/BulkActionsPanel';
 import GradeInsightsPanel from './components/GradeInsightsPanel';
 import ReviewSubmitModal from './components/ReviewSubmitModal';
 
-// Data
-import { contextData, initialStudents, getClassStats, calculateGrade } from './data/marksData';
+import { examService } from '../../../services/examService';
 
 const MarksInputDashboard = () => {
-    // State
+    // Context state — IDs from API
     const [context, setContext] = useState({
         academicYear: '',
         term: '',
-        class: '',
+        grade: '',
         stream: '',
         subject: '',
-        assessment: ''
+        assessmentType: '',
+        classSession: '',
+        examination: '',
     });
-    const [students, setStudents] = useState([]); // Start empty, wait for context
+
+    const [students, setStudents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [showInsights, setShowInsights] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
-    const [saveStatus, setSaveStatus] = useState('saved'); // saved, saving, unsaved
+    const [saveStatus, setSaveStatus] = useState('saved');
+    const [examMeta, setExamMeta] = useState({ max_mark: 100, exam_name: '', grading_scale: null });
+    const [analysis, setAnalysis] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
-    const stats = getClassStats(students);
+    const autosaveTimer = useRef(null);
+    const pendingChanges = useRef(new Set());
+    const fileInputRef = useRef(null);
 
-    // Mock loading data when context changes
+    // Load students when exam is selected
     useEffect(() => {
-        if (context.class && context.subject) {
-            // In a real app, fetch data here. We'll simulate loading.
-            setStudents(initialStudents.map(s => ({ ...s }))); // Reset to initial on switch
-            toast.success("Loaded class list");
-        } else {
+        if (!context.examination) {
             setStudents([]);
+            setAnalysis(null);
+            return;
         }
-    }, [context.class, context.subject]);
+        loadExamStudents(context.examination);
+    }, [context.examination]);
 
-    // Autosave Simulation
+    const loadExamStudents = async (examId) => {
+        try {
+            setLoading(true);
+            const data = await examService.getExamStudents(examId);
+            setExamMeta({
+                max_mark: data.max_mark,
+                exam_name: data.exam_name,
+                grading_scale: data.grading_scale,
+            });
+            setStudents(data.students.map(s => ({
+                ...s,
+                _dirty: false,
+            })));
+            setSaveStatus('saved');
+            pendingChanges.current.clear();
+        } catch (err) {
+            toast.error('Failed to load students');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Autosave: debounce 2s after last change
     useEffect(() => {
-        if (saveStatus === 'unsaved') {
-            const timer = setTimeout(() => {
-                setSaveStatus('saving');
-                setTimeout(() => {
-                    setSaveStatus('saved');
-                }, 800);
-            }, 2000); // Save after 2s of inactivity
-            return () => clearTimeout(timer);
-        }
-    }, [saveStatus]);
+        if (pendingChanges.current.size === 0) return;
 
-    // Handlers
-    const handleUpdateStudent = useCallback((id, field, value) => {
-        setStudents(prev => prev.map(s => {
-            if (s.id === id) {
-                const updated = { ...s, [field]: value };
-                if (field === 'marks') {
-                    updated.grade = calculateGrade(value);
-                }
-                return updated;
-            }
-            return s;
+        if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = setTimeout(() => {
+            doAutosave();
+        }, 2000);
+
+        return () => {
+            if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+        };
+    }, [students]);
+
+    const doAutosave = async () => {
+        if (!context.examination || pendingChanges.current.size === 0) return;
+
+        const dirtyIds = new Set(pendingChanges.current);
+        pendingChanges.current.clear();
+        setSaveStatus('saving');
+
+        const dirtyStudents = students.filter(s => dirtyIds.has(s.student_id));
+        const marks = dirtyStudents.map(s => ({
+            student: s.student_id,
+            raw_mark: s.is_absent ? null : s.raw_mark,
+            is_absent: s.is_absent,
+            teacher_remark: s.teacher_remark || '',
+            stream: s.stream_id || undefined,
         }));
+
+        try {
+            const result = await examService.submitBulkMarks(context.examination, marks);
+            setSaveStatus('saved');
+            // Reload to get computed grades
+            await loadExamStudents(context.examination);
+        } catch (err) {
+            setSaveStatus('unsaved');
+            // Re-add failed changes
+            dirtyIds.forEach(id => pendingChanges.current.add(id));
+            toast.error('Auto-save failed');
+        }
+    };
+
+    // Mark a student field as changed
+    const handleUpdateStudent = useCallback((studentId, field, value) => {
+        setStudents(prev => prev.map(s => {
+            if (s.student_id !== studentId) return s;
+            const updated = { ...s, [field]: value, _dirty: true };
+            if (field === 'is_absent' && value) {
+                updated.raw_mark = null;
+            }
+            return updated;
+        }));
+        pendingChanges.current.add(studentId);
         setSaveStatus('unsaved');
     }, []);
 
-    const handleSelectStudent = (id) => {
+    const handleSelectStudent = (studentId) => {
         setSelectedStudents(prev =>
-            prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
+            prev.includes(studentId) ? prev.filter(id => id !== studentId) : [...prev, studentId]
         );
     };
 
@@ -81,58 +137,147 @@ const MarksInputDashboard = () => {
         if (selectedStudents.length === students.length) {
             setSelectedStudents([]);
         } else {
-            setSelectedStudents(students.map(s => s.id));
+            setSelectedStudents(students.map(s => s.student_id));
         }
     };
 
     const handleBulkAction = (action) => {
-        let updatedCount = 0;
+        let count = 0;
         setStudents(prev => prev.map(s => {
-            if (!selectedStudents.includes(s.id)) return s;
-
-            updatedCount++;
-            if (action === 'markPresent') return { ...s, status: 'Present' };
-            if (action === 'fillZeros' && s.marks === '') return { ...s, marks: 0, grade: 'E' };
-            if (action === 'clear') return { ...s, marks: '', grade: '-', remarks: '' };
+            if (!selectedStudents.includes(s.student_id)) return s;
+            count++;
+            if (action === 'markAbsent') {
+                pendingChanges.current.add(s.student_id);
+                return { ...s, is_absent: true, raw_mark: null, _dirty: true };
+            }
+            if (action === 'markPresent') {
+                pendingChanges.current.add(s.student_id);
+                return { ...s, is_absent: false, _dirty: true };
+            }
+            if (action === 'fillZeros') {
+                if (s.raw_mark === null || s.raw_mark === undefined) {
+                    pendingChanges.current.add(s.student_id);
+                    return { ...s, raw_mark: 0, is_absent: false, _dirty: true };
+                }
+                return s;
+            }
+            if (action === 'clear') {
+                pendingChanges.current.add(s.student_id);
+                return { ...s, raw_mark: null, teacher_remark: '', is_absent: false, _dirty: true };
+            }
             return s;
         }));
-
-        toast.success(`Updated ${updatedCount} students`);
-        setSelectedStudents([]); // Clear selection
         setSaveStatus('unsaved');
+        toast.success(`Updated ${count} students`);
+        setSelectedStudents([]);
     };
 
-    const handleSubmit = () => {
-        setStudents(prev => prev.map(s => ({ ...s, locked: true })));
-        setShowReviewModal(false);
-        toast.success("Marks submitted successfully!");
+    // Excel upload
+    const handleFileUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !context.examination) return;
+
+        try {
+            setLoading(true);
+            const result = await examService.uploadMarksFile(context.examination, file);
+            toast.success(`Upload complete: ${result.created} created, ${result.updated} updated${result.errors?.length ? `, ${result.errors.length} errors` : ''}`);
+            if (result.errors?.length) {
+                result.errors.slice(0, 3).forEach(err => {
+                    toast.warn(`Row ${err.row} (${err.admission_number}): ${err.error}`);
+                });
+            }
+            await loadExamStudents(context.examination);
+        } catch (err) {
+            toast.error('Upload failed: ' + (err.message || 'Unknown error'));
+        } finally {
+            setLoading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
+
+    // Submit (publish)
+    const handleSubmit = async () => {
+        if (!context.examination) return;
+
+        // Save any pending changes first
+        if (pendingChanges.current.size > 0) {
+            await doAutosave();
+        }
+
+        try {
+            setSubmitting(true);
+            await examService.publishExam(context.examination);
+            toast.success('Marks submitted and published!');
+            setShowReviewModal(false);
+            await loadExamStudents(context.examination);
+        } catch (err) {
+            toast.error('Failed to submit marks');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Load analysis when opening insights
+    const handleToggleInsights = async () => {
+        if (!showInsights && context.examination) {
+            try {
+                const data = await examService.getExamAnalysis(context.examination);
+                setAnalysis(data);
+            } catch {
+                toast.error('Failed to load analysis');
+            }
+        }
+        setShowInsights(!showInsights);
+    };
+
+    // Compute live stats from current student data
+    const stats = (() => {
+        const scored = students.filter(s => !s.is_absent && s.raw_mark !== null && s.raw_mark !== undefined);
+        if (scored.length === 0) return { average: 0, highest: 0, lowest: 0, passRate: 0, entered: 0, total: students.length, absent: students.filter(s => s.is_absent).length };
+
+        const marks = scored.map(s => Number(s.raw_mark));
+        const avg = marks.reduce((a, b) => a + b, 0) / marks.length;
+        const passed = marks.filter(m => m >= 40).length;
+        return {
+            average: avg.toFixed(1),
+            highest: Math.max(...marks),
+            lowest: Math.min(...marks),
+            passRate: ((passed / marks.length) * 100).toFixed(1),
+            entered: scored.length,
+            total: students.length,
+            absent: students.filter(s => s.is_absent).length,
+        };
+    })();
 
     return (
         <DashboardLayout title="Marks Input">
             <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 pb-20 relative">
+                {/* Hidden file input */}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".csv,.xlsx,.xls"
+                    className="hidden"
+                />
 
-                {/* 1. Context Selection (Sticky) */}
+                {/* Context Selection */}
                 <ContextSelectionPanel
                     context={context}
                     setContext={setContext}
-                    data={contextData}
+                    maxMark={examMeta.max_mark}
                 />
 
                 <div className="max-w-[1600px] mx-auto p-4 flex gap-4 relative">
-                    {/* 2. Main Area */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex-1 transition-all duration-300 ${showInsights ? 'mr-80' : ''}`}
-                    >
+                    <div className={`flex-1 transition-all duration-300 ${showInsights ? 'mr-80' : ''}`}>
                         {/* Toolbar */}
                         <div className="mb-4 flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">Marks Entry</h1>
-                                {/* Autosave Indicator */}
+                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                                    {examMeta.exam_name || 'Marks Entry'}
+                                </h1>
                                 <div className="flex items-center gap-1 text-xs font-medium text-slate-400">
-                                    {saveStatus === 'saving' && <span className="animate-pulse">Saving...</span>}
+                                    {saveStatus === 'saving' && <span className="animate-pulse text-blue-500">Saving...</span>}
                                     {saveStatus === 'saved' && <span className="flex items-center gap-1 text-green-600"><CheckCircle size={10} /> Saved</span>}
                                     {saveStatus === 'unsaved' && <span className="text-amber-500">Unsaved changes</span>}
                                 </div>
@@ -140,59 +285,79 @@ const MarksInputDashboard = () => {
 
                             <div className="flex gap-2">
                                 <button
-                                    className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                                    onClick={() => setStudents(initialStudents.map(s => ({ ...s })))}
-                                    title="Reset Demo"
+                                    onClick={handleToggleInsights}
+                                    className="px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                    title="Performance Insights"
+                                >
+                                    <BarChart2 size={16} />
+                                </button>
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={!context.examination || loading}
+                                    className="px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                    title="Upload Excel/CSV"
+                                >
+                                    <Upload size={16} />
+                                    <span className="hidden sm:inline">Upload</span>
+                                </button>
+                                <button
+                                    onClick={() => context.examination && loadExamStudents(context.examination)}
+                                    disabled={!context.examination || loading}
+                                    className="px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                                    title="Reload"
                                 >
                                     <RotateCcw size={16} />
                                 </button>
                                 <button
                                     onClick={() => setShowReviewModal(true)}
                                     disabled={students.length === 0}
-                                    className="px-4 py-2 bg-blue-600 text-black rounded-lg text-sm font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     Review & Submit
                                 </button>
                             </div>
                         </div>
 
-                        {/* 2. Marks Table */}
+                        {/* Marks Table */}
                         <StudentMarksTable
                             students={students}
                             onUpdateStudent={handleUpdateStudent}
                             selectedStudents={selectedStudents}
                             onSelectStudent={handleSelectStudent}
                             onSelectAll={handleSelectAll}
+                            maxMark={examMeta.max_mark}
+                            loading={loading}
                         />
-                    </motion.div>
+                    </div>
 
-                    {/* 3. Insights Panel */}
+                    {/* Insights Panel */}
                     <GradeInsightsPanel
                         stats={stats}
+                        analysis={analysis}
                         isOpen={showInsights}
-                        togglePanel={() => setShowInsights(!showInsights)}
+                        togglePanel={handleToggleInsights}
                     />
                 </div>
 
-                {/* 4. Bulk Actions (Floating) */}
+                {/* Bulk Actions */}
                 <BulkActionsPanel
                     selectedCount={selectedStudents.length}
                     onAction={handleBulkAction}
                 />
 
-                {/* 5. Review Modal */}
+                {/* Review Modal */}
                 <ReviewSubmitModal
                     isOpen={showReviewModal}
                     onClose={() => setShowReviewModal(false)}
                     stats={stats}
                     context={context}
+                    examMeta={examMeta}
                     onSubmit={handleSubmit}
+                    submitting={submitting}
                 />
-
             </div>
         </DashboardLayout>
     );
 };
 
 export default MarksInputDashboard;
-

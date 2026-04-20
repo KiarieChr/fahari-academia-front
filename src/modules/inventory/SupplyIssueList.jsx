@@ -27,20 +27,21 @@ const SupplyIssueList = ({ onView, onCreate }) => {
 
     const getStatusBadge = (status) => {
         const styles = {
-            'Draft': 'bg-gray-100 text-gray-800',
-            'Pending': 'bg-yellow-100 text-yellow-800',
-            'Approved': 'bg-blue-100 text-blue-800',
-            'Issued': 'bg-green-100 text-green-800',
-            'Returned': 'bg-red-100 text-red-800'
+            'DRAFT': 'bg-gray-100 text-gray-800',
+            'PENDING': 'bg-yellow-100 text-yellow-800',
+            'APPROVED': 'bg-blue-100 text-blue-800',
+            'ISSUED': 'bg-green-100 text-green-800',
+            'REJECTED': 'bg-red-100 text-red-800'
         };
         return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[status] || 'bg-gray-100'}`}>{status}</span>;
     };
 
     const filteredIssues = issues.filter(issue => {
+        const searchLower = searchTerm.toLowerCase();
         const matchesSearch =
-            issue.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            issue.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            issue.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
+            (issue.id || '').toString().toLowerCase().includes(searchLower) ||
+            (issue.department || '').toLowerCase().includes(searchLower) ||
+            (issue.requestedBy || '').toLowerCase().includes(searchLower);
         const matchesFilter = filter === 'All' || issue.status === filter;
         return matchesSearch && matchesFilter;
     });
@@ -66,9 +67,9 @@ const SupplyIssueList = ({ onView, onCreate }) => {
                         onChange={(e) => setFilter(e.target.value)}
                     >
                         <option value="All">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Issued">Issued</option>
-                        <option value="Approved">Approved</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="ISSUED">Issued</option>
+                        <option value="APPROVED">Approved</option>
                     </select>
                     <button
                         onClick={loadData}

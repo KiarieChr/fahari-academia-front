@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import { Plus, RefreshCcw } from 'lucide-react';
 import StatsCards from './components/StatsCards';
 import RequisitionList from './components/RequisitionList';
 import RequisitionForm from './components/RequisitionForm';
 import RequisitionDetails from './components/RequisitionDetails';
-import { procurementService } from '../../../services/procurementService';
+import procurementApi from '../../../services/procurementApiService';
 import { toast } from 'react-toastify';
 import './PurchaseRequisition.css';
 
@@ -18,46 +18,119 @@ const PurchaseRequisitionDashboard = () => {
     const [stats, setStats] = useState({});
     const [selectedRequisition, setSelectedRequisition] = useState(null);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await procurementService.getRequisitions();
-            setRequisitions(res.data);
-            setStats(res.stats);
+            const [listRes, statsRes] = await Promise.all([
+                procurementApi.requisitions.list(),
+                procurementApi.requisitions.stats(),
+            ]);
+            const items = listRes.results || listRes || [];
+            setRequisitions(items.map(r => ({
+                ...r,
+                id: r.id,
+                title: r.justification || r.requisition_number,
+                requestedBy: r.requested_by_name || '',
+                requestDate: r.created_at?.split('T')[0],
+                requiredDate: r.date_needed,
+                totalAmount: Number(r.total_estimated_cost) || 0,
+                status: formatStatus(r.status),
+                priority: capitalize(r.priority),
+                items: [],
+                approvals: [],
+            })));
+            setStats({
+                total: statsRes.total || 0,
+                pending: statsRes.submitted || 0,
+                approved: statsRes.approved || 0,
+                rejected: statsRes.rejected || 0,
+                poCreated: statsRes.converted || 0,
+                totalAmount: items.reduce((s, r) => s + (Number(r.total_estimated_cost) || 0), 0),
+            });
         } catch (error) {
             console.error(error);
             toast.error("Failed to load requisitions");
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleCreate = async (data) => {
         try {
             toast.loading("Submitting requisition...");
-            await procurementService.createRequisition(data);
-            toast.dismiss();
-            toast.success("Requisition created successfully!");
+            const payload = {
+                department: data.department,
+                date_needed: data.requiredDate,
+                priority: (data.priority || 'MEDIUM').toUpperCase(),
+                justification: data.description || data.title,
+                notes: data.notes || '',
+                lines: (data.items || []).map(item => ({
+                    description: item.name || item.description,
+                    quantity: item.quantity,
+                    unit_of_measure: item.unit || 'Pcs',
+                    estimated_unit_cost: item.unitCost || 0,
+                })),
+            };
+            if (selectedRequisition?.id) {
+                await procurementApi.requisitions.update(selectedRequisition.id, payload);
+                toast.dismiss();
+                toast.success("Requisition updated!");
+            } else {
+                await procurementApi.requisitions.create(payload);
+                toast.dismiss();
+                toast.success("Requisition created successfully!");
+            }
             setViewMode('list');
             fetchData();
         } catch (error) {
             toast.dismiss();
-            toast.error("Failed to create requisition");
+            toast.error(error?.data?.detail || "Failed to save requisition");
         }
     };
 
-    const handleView = (req) => {
-        setSelectedRequisition(req);
-        setViewMode('view');
+    const handleView = async (req) => {
+        try {
+            const detail = await procurementApi.requisitions.get(req.id);
+            setSelectedRequisition({
+                ...req,
+                ...detail,
+                title: detail.justification || detail.requisition_number,
+                requestedBy: detail.requested_by_name || '',
+                requestDate: detail.created_at?.split('T')[0],
+                requiredDate: detail.date_needed,
+                totalAmount: Number(detail.total_estimated_cost) || 0,
+                status: formatStatus(detail.status),
+                priority: capitalize(detail.priority),
+                description: detail.justification,
+                budgetLine: detail.budget_line || '',
+                items: (detail.lines || []).map(l => ({
+                    id: l.id,
+                    name: l.description,
+                    category: '',
+                    quantity: Number(l.quantity),
+                    unit: l.unit_of_measure,
+                    unitCost: Number(l.estimated_unit_cost),
+                    total: Number(l.estimated_total),
+                })),
+                approvals: detail.approved_by_name ? [{
+                    stage: 'Approver',
+                    status: detail.status === 'REJECTED' ? 'Rejected' : 'Approved',
+                    user: detail.approved_by_name,
+                    date: detail.approved_at || '',
+                    comments: detail.rejection_reason || 'Approved',
+                }] : [],
+            });
+            setViewMode('view');
+        } catch {
+            toast.error("Failed to load requisition details");
+        }
     };
 
     const handleEdit = (req) => {
         setSelectedRequisition(req);
-        setViewMode('create'); // Reuse form for edit
+        setViewMode('create');
     };
 
     return (
@@ -113,4 +186,17 @@ const PurchaseRequisitionDashboard = () => {
 };
 
 export default PurchaseRequisitionDashboard;
+
+function formatStatus(s) {
+    const map = {
+        DRAFT: 'Draft', SUBMITTED: 'Pending Approval', APPROVED: 'Approved',
+        REJECTED: 'Rejected', CONVERTED: 'PO Created', CANCELLED: 'Cancelled',
+    };
+    return map[s] || s;
+}
+
+function capitalize(s) {
+    if (!s) return '';
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
 

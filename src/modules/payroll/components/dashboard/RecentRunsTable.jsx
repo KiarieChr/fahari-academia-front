@@ -60,7 +60,7 @@ const RecentRunsTable = () => {
     // Loading skeleton
     if (loading) {
         return (
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                     <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
                     <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
@@ -77,15 +77,15 @@ const RecentRunsTable = () => {
     // Error state
     if (error) {
         return (
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
                 <div className="text-center py-8">
                     <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
                     <p className="text-red-700 mb-3">{error}</p>
                     <button
                         onClick={fetchRecentRuns}
-                        className="flex items-center gap-2 mx-auto px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm"
+                        className="btn btn-secondary mx-auto mt-2"
                     >
-                        <RefreshCw size={14} /> Retry
+                        <RefreshCw size={16} /> Retry
                     </button>
                 </div>
             </div>
@@ -93,7 +93,7 @@ const RecentRunsTable = () => {
     }
 
     return (
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-gray-500" />
@@ -119,12 +119,12 @@ const RecentRunsTable = () => {
                     <table className="w-full text-sm text-left">
                         <thead className="bg-gray-50 text-gray-600 font-semibold text-xs uppercase tracking-wider border-b border-gray-200">
                             <tr>
-                                <th className="px-4 py-3 rounded-tl-lg">Period</th>
-                                <th className="px-4 py-3">Employees</th>
-                                <th className="px-4 py-3">Gross Pay</th>
-                                <th className="px-4 py-3">Net Pay</th>
-                                <th className="px-4 py-3">Status</th>
-                                <th className="px-4 py-3 text-right rounded-tr-lg">Actions</th>
+                                <th className="px-6 py-4 rounded-tl-lg">Period</th>
+                                <th className="px-6 py-4">Employees</th>
+                                <th className="px-6 py-4">Gross Pay</th>
+                                <th className="px-6 py-4">Net Pay</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 text-right rounded-tr-lg">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -136,7 +136,7 @@ const RecentRunsTable = () => {
                                     transition={{ delay: index * 0.05 }}
                                     className="hover:bg-blue-50/30 transition-colors group"
                                 >
-                                    <td className="px-4 py-4">
+                                    <td className="px-6 py-5">
                                         <div>
                                             <span className="font-semibold text-gray-800">{run.period}</span>
                                             {run.payment_date && (
@@ -146,18 +146,18 @@ const RecentRunsTable = () => {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-4">
+                                    <td className="px-6 py-5">
                                         <span className="flex items-center gap-1.5 text-gray-600">
                                             <Users size={14} className="text-gray-400" />
                                             {run.employees}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-4 font-medium text-gray-700">{formatCurrency(run.gross_pay)}</td>
-                                    <td className="px-4 py-4 font-medium text-emerald-600">{formatCurrency(run.net_pay)}</td>
-                                    <td className="px-4 py-4">
+                                    <td className="px-6 py-5 font-medium text-gray-700">{formatCurrency(run.gross_pay)}</td>
+                                    <td className="px-6 py-5 font-medium text-emerald-600">{formatCurrency(run.net_pay)}</td>
+                                    <td className="px-6 py-5">
                                         {getStatusBadge(run.status)}
                                     </td>
-                                    <td className="px-4 py-4 text-right">
+                                    <td className="px-6 py-5 text-right">
                                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => setSelectedRun(run)}

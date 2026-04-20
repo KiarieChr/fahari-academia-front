@@ -4,26 +4,25 @@ import {
     Layers,
     Wallet,
     PiggyBank,
-    Scale,
     CheckSquare,
     FileText,
     Settings,
     Save,
     Loader2,
-    Landmark // Added for Finance
+    Landmark
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 
 import PayrollCycleSettings from './components/settings/PayrollCycleSettings';
-import SalaryStructureSettings from './components/settings/SalaryStructureSettings';
+import PayGradesSteps from './components/dashboard/PayGradesSteps';
 import AllowancesBenefits from './components/settings/AllowancesBenefits';
 import DeductionsTaxes from './components/settings/DeductionsTaxes';
+import PayrollAccounts from './components/settings/PayrollAccounts';
 import ApprovalWorkflow from './components/settings/ApprovalWorkflow';
 import PayslipSettings from './components/settings/PayslipSettings';
 import SystemDefaults from './components/settings/SystemDefaults';
-import FinanceIntegration from './components/settings/FinanceIntegration'; // Imported
 
 const PayrollSettings = () => {
     const [activeTab, setActiveTab] = useState('cycle');
@@ -34,7 +33,7 @@ const PayrollSettings = () => {
         { id: 'salary', label: 'Pay Grades', icon: Layers, desc: 'Structure & Scale' },
         { id: 'allowances', label: 'Allowances', icon: Wallet, desc: 'Benefits & Claims' },
         { id: 'deductions', label: 'Deductions', icon: PiggyBank, desc: 'Taxes & Relief' },
-        { id: 'finance', label: 'Finance Integration', icon: Landmark, desc: 'GL & Accounts' }, // New Tab
+        { id: 'accounts', label: 'Payroll Accounts', icon: Landmark, desc: 'Earnings & Deductions' },
         { id: 'approval', label: 'Approvals', icon: CheckSquare, desc: 'Workflow Logic' },
         { id: 'payslip', label: 'Payslip', icon: FileText, desc: 'Templates' },
         { id: 'system', label: 'Security & Logs', icon: Settings, desc: 'Audit & Access' },
@@ -53,10 +52,10 @@ const PayrollSettings = () => {
     const renderContent = () => {
         switch (activeTab) {
             case 'cycle': return <PayrollCycleSettings />;
-            case 'salary': return <SalaryStructureSettings />;
+            case 'salary': return <PayGradesSteps />;
             case 'allowances': return <AllowancesBenefits />;
             case 'deductions': return <DeductionsTaxes />;
-            case 'finance': return <FinanceIntegration />; // New Case
+            case 'accounts': return <PayrollAccounts />;
             case 'approval': return <ApprovalWorkflow />;
             case 'payslip': return <PayslipSettings />;
             case 'system': return <SystemDefaults />;
@@ -71,9 +70,9 @@ const PayrollSettings = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-8rem)] flex flex-col overflow-hidden">
 
                 {/* Header */}
-                <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white z-10">
+                <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white z-10">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Payroll Configuration</h1>
+                        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 tracking-tight">Payroll Configuration</h1>
                         <p className="text-sm text-gray-500 mt-1 font-medium">Manage global payroll rules, taxes, and structures</p>
                     </div>
                     <button
@@ -86,27 +85,27 @@ const PayrollSettings = () => {
                     </button>
                 </div>
 
-                <div className="flex flex-1 overflow-hidden">
-                    {/* Sidebar Navigation */}
-                    <div className="w-64 border-r border-gray-100 bg-gray-50/50 flex flex-col overflow-y-auto">
-                        <div className="p-4 space-y-1">
+                <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+                    {/* Sidebar Navigation — horizontal scroll on mobile, vertical on lg+ */}
+                    <div className="lg:w-64 border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50/50 flex-shrink-0 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto">
+                        <div className="flex lg:flex-col gap-1 p-3 lg:p-4 lg:space-y-1 min-w-max lg:min-w-0">
                             {tabs.map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeTab === tab.id
+                                    className={`flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2 lg:py-3 text-left rounded-xl transition-all duration-200 group whitespace-nowrap lg:whitespace-normal lg:w-full ${activeTab === tab.id
                                         ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
                                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                                         }`}
                                 >
-                                    <div className={`p-2 rounded-lg transition-colors ${activeTab === tab.id ? 'bg-blue-50' : 'bg-gray-100 group-hover:bg-white'}`}>
+                                    <div className={`p-1.5 lg:p-2 rounded-lg transition-colors ${activeTab === tab.id ? 'bg-blue-50' : 'bg-gray-100 group-hover:bg-white'}`}>
                                         <tab.icon size={18} className={activeTab === tab.id ? 'text-blue-600' : 'text-gray-500'} />
                                     </div>
-                                    <div>
-                                        <span className={`block text-sm font-semibold ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-600'}`}>
+                                    <div className="min-w-0">
+                                        <span className={`block text-xs lg:text-sm font-semibold ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-600'}`}>
                                             {tab.label}
                                         </span>
-                                        <span className="text-[11px] text-gray-400 font-medium">{tab.desc}</span>
+                                        <span className="hidden lg:block text-[11px] text-gray-400 font-medium">{tab.desc}</span>
                                     </div>
                                 </button>
                             ))}
@@ -114,7 +113,7 @@ const PayrollSettings = () => {
                     </div>
 
                     {/* Content Area with Transitions */}
-                    <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-8">
+                    <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-4 sm:p-6 lg:p-8">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={activeTab}

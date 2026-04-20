@@ -67,12 +67,12 @@ const AnalyticsSection = () => {
     // Loading skeleton
     if (loading) {
         return (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-gray-100 shadow-sm animate-pulse">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-gray-100 shadow-sm animate-pulse">
                     <div className="h-6 w-40 bg-gray-200 rounded mb-6" />
                     <div className="h-64 bg-gray-100 rounded" />
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm animate-pulse">
+                <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm animate-pulse">
                     <div className="h-6 w-32 bg-gray-200 rounded mb-4" />
                     <div className="h-48 bg-gray-100 rounded" />
                 </div>
@@ -83,23 +83,23 @@ const AnalyticsSection = () => {
     // Error state
     if (error) {
         return (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center mb-8">
                 <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
                 <p className="text-red-700">{error}</p>
                 <button
                     onClick={fetchAnalyticsData}
-                    className="mt-3 flex items-center gap-2 mx-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                    className="mt-4 btn btn-secondary mx-auto"
                 >
-                    <RefreshCw size={14} /> Retry
+                    <RefreshCw size={16} /> Retry
                 </button>
             </div>
         );
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             {/* Trend Chart */}
-            <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+            <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
                         <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -159,7 +159,7 @@ const AnalyticsSection = () => {
             </div>
 
             {/* Distribution Pie */}
-            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col">
                 <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4">Cost Distribution</h3>
                 <div className="flex-1 min-h-[200px] relative">
                     {distributionData.length > 0 ? (

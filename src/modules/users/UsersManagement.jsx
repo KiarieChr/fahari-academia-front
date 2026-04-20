@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 import { api } from '../../services/api';
+import { userService } from '../../services/userService';
+import { toast } from 'react-toastify';
+import Modal from '../../components/common/Modal';
 import './users.css';
 import {
     Users,
@@ -16,9 +19,14 @@ import {
     Trash2,
     Edit,
     Eye,
+    EyeOff,
     X,
     ChevronDown,
-    Briefcase
+    Briefcase,
+    Lock,
+    Link2,
+    User,
+    Shield
 } from 'lucide-react';
 
 const UsersManagement = () => {
@@ -41,11 +49,10 @@ const UsersManagement = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await api.get('/api/users/');
-            const data = response?.data;
+            const data = await api.get('/api/users/');
             
             if (data) {
-                const usersList = data.success ? data.results : (Array.isArray(data) ? data : []);
+                const usersList = data.results || (Array.isArray(data) ? data : []);
                 const mappedUsers = usersList.map(u => ({
                     id: u.id,
                     name: `${u.first_name} ${u.last_name}`.trim() || u.username,
@@ -79,22 +86,29 @@ const UsersManagement = () => {
         try {
             setSubmitting(true);
             const payload = {
-                username: userData.email.split('@')[0],
+                username: userData.username || userData.email.split('@')[0],
                 email: userData.email,
-                first_name: userData.name.split(' ')[0],
-                last_name: userData.name.split(' ').slice(1).join(' ') || '',
-                phone: userData.phone
+                first_name: userData.first_name,
+                last_name: userData.last_name,
+                phone: userData.phone,
+                password: userData.password,
+                confirm_password: userData.confirm_password,
+                is_student: userData.is_student || false,
+                is_lecturer: userData.is_lecturer || false,
+                is_parent: userData.is_parent || false,
+                gender: userData.gender || '',
             };
-            
-            const response = await api.post('/api/users/', payload);
-            if (response?.data?.success || response?.data?.id) {
-                setIsAddUserOpen(false);
-                fetchUsers();
-                alert('User created successfully');
-            }
+            if (userData.employee_id) payload.employee_id = userData.employee_id;
+
+            await userService.createUser(payload);
+            setIsAddUserOpen(false);
+            fetchUsers();
+            toast.success('User created successfully');
         } catch (error) {
             console.error('Failed to add user:', error);
-            alert(error.response?.data?.message || 'Failed to add user');
+            const errData = error.data || {};
+            // Re-throw with parsed server errors so the dialog can display them inline
+            throw { serverErrors: errData };
         } finally {
             setSubmitting(false);
         }
@@ -111,7 +125,7 @@ const UsersManagement = () => {
             setActiveActionDropdown(null);
         } catch (error) {
             console.error('Failed to delete user:', error);
-            alert(error.response?.data?.message || 'Failed to delete user');
+            alert(error.data?.message || error.message || 'Failed to delete user');
         } finally {
             setSubmitting(false);
         }
@@ -120,17 +134,13 @@ const UsersManagement = () => {
     const handleStatusChange = async (userId, newStatus) => {
         try {
             setSubmitting(true);
-            const payload = {
-                is_active: newStatus === 'Active'
-            };
-            
-            await api.put(`/api/users/${userId}/`, payload);
+            await api.post(`/api/users/${userId}/quick_actions/`, { action: 'toggle_active' });
             fetchUsers();
             setActiveActionDropdown(null);
             alert(`User status changed to ${newStatus}`);
         } catch (error) {
             console.error('Failed to change user status:', error);
-            alert(error.response?.data?.message || 'Failed to change user status');
+            alert(error.data?.message || error.message || 'Failed to change user status');
         } finally {
             setSubmitting(false);
         }
@@ -397,104 +407,352 @@ const StatCard = ({ title, value, icon: Icon, color, iconColor, trend, trendLabe
 
 const AddUserDialog = ({ onClose, onSubmit }) => {
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        role: 'Teacher'
+        first_name: '', last_name: '', email: '', username: '',
+        phone: '', password: '', confirm_password: '',
+        gender: '', is_student: false, is_lecturer: false, is_parent: false,
+        employee_id: null,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [errors, setErrors] = useState({});
+    const [serverErrors, setServerErrors] = useState({});
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    // Employee picker state
+    const [employeeSearch, setEmployeeSearch] = useState('');
+    const [unlinkedEmployees, setUnlinkedEmployees] = useState([]);
+    const [employeeLoading, setEmployeeLoading] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+    const validate = () => {
+        const errs = {};
+        if (!formData.first_name.trim()) errs.first_name = 'Required';
+        if (!formData.last_name.trim()) errs.last_name = 'Required';
+        if (!formData.email.trim()) errs.email = 'Required';
+        else if (!/\S+@\S+\.\S+/.test(formData.email)) errs.email = 'Invalid email';
+        if (!formData.password) errs.password = 'Required';
+        else if (formData.password.length < 8) errs.password = 'Minimum 8 characters';
+        if (formData.password !== formData.confirm_password) errs.confirm_password = 'Passwords do not match';
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
+    const handleSubmit = async () => {
+        if (!validate()) return;
         setIsSubmitting(true);
+        setServerErrors({});
         try {
             await onSubmit(formData);
-            setFormData({ name: '', email: '', phone: '', role: 'Teacher' });
-        } catch (error) {
-            console.error('Form submission error:', error);
+        } catch (err) {
+            if (err?.serverErrors) {
+                setServerErrors(err.serverErrors);
+                // Also merge into field-level errors for highlighting
+                const fieldErrs = {};
+                Object.entries(err.serverErrors).forEach(([field, msgs]) => {
+                    if (field !== 'success' && field !== 'status' && field !== 'non_field_errors') {
+                        fieldErrs[field] = Array.isArray(msgs) ? msgs[0] : msgs;
+                    }
+                });
+                setErrors(prev => ({ ...prev, ...fieldErrs }));
+            } else {
+                toast.error('Failed to create user');
+            }
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    const handleEmployeeSearch = async (val) => {
+        setEmployeeSearch(val);
+        if (val.length < 2) { setUnlinkedEmployees([]); return; }
+        setEmployeeLoading(true);
+        try {
+            const data = await userService.getUnlinkedEmployees(val);
+            setUnlinkedEmployees(Array.isArray(data) ? data : data.results || []);
+        } catch { setUnlinkedEmployees([]); }
+        finally { setEmployeeLoading(false); }
+    };
+
+    const selectEmployee = (emp) => {
+        setSelectedEmployee(emp);
+        const genderMap = { male: 'M', female: 'F', other: 'O' };
+        setFormData(p => ({
+            ...p,
+            first_name: emp.first_name || '',
+            last_name: emp.last_name || '',
+            email: emp.email || emp.official_email || '',
+            phone: emp.phone || emp.phone_primary || '',
+            gender: genderMap[emp.gender] || '',
+            is_lecturer: emp.employee_category === 'teaching',
+            employee_id: emp.id,
+        }));
+        setEmployeeSearch('');
+        setUnlinkedEmployees([]);
+        setErrors({});
+    };
+
+    const clearEmployee = () => {
+        setSelectedEmployee(null);
+        setFormData(p => ({ ...p, first_name: '', last_name: '', email: '', phone: '', gender: '', is_lecturer: false, employee_id: null }));
+    };
+
+    const inputClass = (field) =>
+        `w-full px-4 py-2.5 bg-white border rounded-xl outline-none transition-all text-sm ${errors[field]
+            ? 'border-red-300 focus:ring-4 focus:ring-red-500/10 focus:border-red-500'
+            : 'border-gray-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500'
+        }`;
+
+    const userTypes = [
+        { key: 'is_student', label: 'Student', icon: '🎓', color: 'emerald' },
+        { key: 'is_lecturer', label: 'Teacher / Lecturer', icon: '👨‍🏫', color: 'blue' },
+        { key: 'is_parent', label: 'Parent / Guardian', icon: '👤', color: 'amber' },
+    ];
+
     return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <div className="modal-header">
-                    <h2>Add New User</h2>
-                    <button onClick={onClose} className="close-btn"><X size={24} /></button>
+        <Modal isOpen={true} onClose={onClose}
+            title="Create New User"
+            subtitle="Add a new user account to the system"
+            icon={UserPlus} size="lg" accentColor="bg-indigo-500"
+            footer={
+                <>
+                    <Modal.CancelButton onClick={onClose} />
+                    <Modal.SubmitButton onClick={handleSubmit} loading={isSubmitting} label="Create User" />
+                </>
+            }
+        >
+            <div className="space-y-6">
+                {/* ─── Link from HR Employee ─── */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Link2 size={16} className="text-blue-600" />
+                        <span className="text-sm font-semibold text-blue-800">Link to HR Employee</span>
+                        <span className="text-[10px] font-medium bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Optional</span>
+                    </div>
+                    <p className="text-xs text-blue-500 mb-3">Select an existing employee to auto-fill details and link their account</p>
+
+                    {selectedEmployee ? (
+                        <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-blue-200 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-sm font-bold text-blue-600">
+                                    {(selectedEmployee.first_name?.[0] || '')}{(selectedEmployee.last_name?.[0] || '')}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900">
+                                        {selectedEmployee.full_name || `${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {selectedEmployee.employee_no} · {selectedEmployee.email || selectedEmployee.official_email}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={clearEmployee} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors group">
+                                <X size={16} className="text-gray-400 group-hover:text-red-500" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-sm"
+                                placeholder="Search employees by name, ID, or email..."
+                                value={employeeSearch}
+                                onChange={(e) => handleEmployeeSearch(e.target.value)}
+                            />
+                            {employeeSearch.length >= 2 && (
+                                <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-52 overflow-y-auto">
+                                    {employeeLoading ? (
+                                        <div className="px-4 py-4 text-sm text-gray-400 text-center">
+                                            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                                            Searching employees...
+                                        </div>
+                                    ) : unlinkedEmployees.length === 0 ? (
+                                        <div className="px-4 py-4 text-sm text-gray-400 text-center">
+                                            <Briefcase size={20} className="mx-auto mb-1 opacity-40" />
+                                            No unlinked employees found
+                                        </div>
+                                    ) : unlinkedEmployees.map(emp => (
+                                        <button key={emp.id} onClick={() => selectEmployee(emp)}
+                                            className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0">
+                                            <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500">
+                                                {(emp.first_name?.[0] || '')}{(emp.last_name?.[0] || '')}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                    {emp.full_name || `${emp.first_name} ${emp.last_name}`}
+                                                </p>
+                                                <p className="text-xs text-gray-500 truncate">
+                                                    {emp.employee_no} · {emp.email || emp.official_email}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="modal-body">
-                        <div className="form-group">
-                            <label className="form-label">Full Name</label>
-                            <input
-                                required
-                                type="text"
-                                className="form-control"
-                                placeholder="John Doe"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            />
+                {/* ─── Personal Information ─── */}
+                <div>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <User size={14} /> Personal Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-400">*</span></label>
+                            <input className={inputClass('first_name')} value={formData.first_name}
+                                onChange={e => { setFormData(p => ({ ...p, first_name: e.target.value })); setErrors(p => ({ ...p, first_name: undefined })); }}
+                                placeholder="Jane" />
+                            {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name}</p>}
                         </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Email Address</label>
-                            <input
-                                required
-                                type="email"
-                                className="form-control"
-                                placeholder="john@example.com"
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                            />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-400">*</span></label>
+                            <input className={inputClass('last_name')} value={formData.last_name}
+                                onChange={e => { setFormData(p => ({ ...p, last_name: e.target.value })); setErrors(p => ({ ...p, last_name: undefined })); }}
+                                placeholder="Doe" />
+                            {errors.last_name && <p className="text-xs text-red-500 mt-1">{errors.last_name}</p>}
                         </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Phone Number</label>
-                            <input
-                                required
-                                type="tel"
-                                className="form-control"
-                                placeholder="+1 234 567 890"
-                                value={formData.phone}
-                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                            />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-400">*</span></label>
+                            <div className="relative">
+                                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input type="email" className={`${inputClass('email')} pl-9`} value={formData.email}
+                                    onChange={e => { setFormData(p => ({ ...p, email: e.target.value })); setErrors(p => ({ ...p, email: undefined })); }}
+                                    placeholder="jane@school.com" />
+                            </div>
+                            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                         </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Role</label>
-                            <div className="select-wrapper">
-                                <select
-                                    className="form-control"
-                                    value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                >
-                                    <option value="Admin">Admin</option>
-                                    <option value="Management">Management</option>
-                                    <option value="Teacher">Teacher</option>
-                                    <option value="Finance">Finance</option>
-                                    <option value="Procurement">Procurement</option>
-                                    <option value="HR">HR</option>
-                                    <option value="Parent">Parent</option>
-                                </select>
-                                <ChevronDown className="select-arrow" size={16} />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Username <span className="text-gray-400 text-xs font-normal">(auto-generated if empty)</span></label>
+                            <input className={inputClass('username')} value={formData.username}
+                                onChange={e => setFormData(p => ({ ...p, username: e.target.value }))}
+                                placeholder={formData.email ? formData.email.split('@')[0] : 'janedoe'} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                            <select className={inputClass('gender')} value={formData.gender}
+                                onChange={e => setFormData(p => ({ ...p, gender: e.target.value }))}>
+                                <option value="">Select gender...</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <div className="relative">
+                                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input className={`${inputClass('phone')} pl-9`} value={formData.phone}
+                                    onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                                    placeholder="+254 700 000 000" />
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="modal-footer">
-                        <button type="button" onClick={onClose} className="btn" style={{ background: 'var(--bg-white)', border: '1px solid var(--border-color-light)' }} disabled={isSubmitting}>
-                            Cancel
-                        </button>
-                        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? 'Creating...' : 'Create User'}
-                        </button>
+                {/* ─── Security ─── */}
+                <div>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <Lock size={14} /> Security
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Password <span className="text-red-400">*</span></label>
+                            <div className="relative">
+                                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input type={showPassword ? 'text' : 'password'}
+                                    className={`${inputClass('password')} pl-9 pr-10`} value={formData.password}
+                                    onChange={e => { setFormData(p => ({ ...p, password: e.target.value })); setErrors(p => ({ ...p, password: undefined })); }}
+                                    placeholder="••••••••" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password <span className="text-red-400">*</span></label>
+                            <div className="relative">
+                                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input type={showConfirmPassword ? 'text' : 'password'}
+                                    className={`${inputClass('confirm_password')} pl-9 pr-10`} value={formData.confirm_password}
+                                    onChange={e => { setFormData(p => ({ ...p, confirm_password: e.target.value })); setErrors(p => ({ ...p, confirm_password: undefined })); }}
+                                    placeholder="••••••••" />
+                                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            {errors.confirm_password && <p className="text-xs text-red-500 mt-1">{errors.confirm_password}</p>}
+                        </div>
                     </div>
-                </form>
+                    {formData.password && formData.password.length > 0 && (
+                        <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full transition-all ${formData.password.length >= 12 ? 'w-full bg-green-500'
+                                    : formData.password.length >= 8 ? 'w-2/3 bg-yellow-500'
+                                    : 'w-1/3 bg-red-500'}`} />
+                            </div>
+                            <span className={`text-xs font-medium ${formData.password.length >= 12 ? 'text-green-600'
+                                : formData.password.length >= 8 ? 'text-yellow-600'
+                                : 'text-red-600'}`}>
+                                {formData.password.length >= 12 ? 'Strong' : formData.password.length >= 8 ? 'Good' : 'Weak'}
+                            </span>
+                        </div>
+                    )}
+                    {/* Server-side validation errors */}
+                    {(serverErrors.password || serverErrors.non_field_errors) && (
+                        <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                            <div className="flex items-start gap-2">
+                                <AlertOctagon size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                                <div className="space-y-1">
+                                    {serverErrors.password && (
+                                        (Array.isArray(serverErrors.password) ? serverErrors.password : [serverErrors.password]).map((msg, i) => (
+                                            <p key={i} className="text-xs text-red-600">{msg}</p>
+                                        ))
+                                    )}
+                                    {serverErrors.non_field_errors && (
+                                        (Array.isArray(serverErrors.non_field_errors) ? serverErrors.non_field_errors : [serverErrors.non_field_errors]).map((msg, i) => (
+                                            <p key={`nf-${i}`} className="text-xs text-red-600">{msg}</p>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* ─── User Type ─── */}
+                <div>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <Shield size={14} /> User Type
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {userTypes.map(type => {
+                            const active = formData[type.key];
+                            return (
+                                <button key={type.key} type="button"
+                                    onClick={() => setFormData(p => ({ ...p, [type.key]: !p[type.key] }))}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${active
+                                        ? 'border-indigo-400 bg-indigo-50 shadow-sm shadow-indigo-100'
+                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                                    }`}>
+                                    <span className="text-lg">{type.icon}</span>
+                                    <div>
+                                        <p className={`text-sm font-semibold ${active ? 'text-indigo-700' : 'text-gray-700'}`}>{type.label}</p>
+                                    </div>
+                                    <div className={`ml-auto w-5 h-5 rounded-md flex items-center justify-center ${active
+                                        ? 'bg-indigo-600'
+                                        : 'border border-gray-300'}`}>
+                                        {active && <CheckCircle size={14} className="text-white" />}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
             </div>
-        </div>
+        </Modal>
     );
 };
 

@@ -14,6 +14,7 @@ import StructureBillingSettings from './components/StructureBillingSettings';
 import ArrearsPenaltySettings from './components/ArrearsPenaltySettings';
 import PaymentSettings from './components/PaymentSettings';
 import GeneralSettings from './components/GeneralSettings'; // Logic for diverse settings
+import GradeBandSettings from './components/GradeBandSettings';
 
 const FeeSettingsDashboard = () => {
     const [activeTab, setActiveTab] = useState('auto-billing');
@@ -29,6 +30,8 @@ const FeeSettingsDashboard = () => {
                 return <AutoBillingSettings />;
             case 'structure':
                 return <StructureBillingSettings />;
+            case 'grade-bands':
+                return <GradeBandSettings />;
             case 'arrears':
                 return <ArrearsPenaltySettings />;
             case 'payments':
@@ -71,6 +74,11 @@ const FeeSettingsDashboard = () => {
                                         </Nav.Link>
                                     </Nav.Item>
                                     <Nav.Item>
+                                        <Nav.Link eventKey="grade-bands" className="d-flex align-items-center gap-2 mb-1 py-3">
+                                            <Settings size={18} /> Grade Bands
+                                        </Nav.Link>
+                                    </Nav.Item>
+                                    <Nav.Item>
                                         <Nav.Link eventKey="arrears" className="d-flex align-items-center gap-2 mb-1 py-3">
                                             <AlertTriangle size={18} /> Arrears & Penalties
                                         </Nav.Link>
@@ -106,6 +114,7 @@ const FeeSettingsDashboard = () => {
                                 <h5 className="mb-0 fw-bold">
                                     {activeTab === 'auto-billing' && 'Auto Billing Automation'}
                                     {activeTab === 'structure' && 'Fee Structure & Billing Rules'}
+                                    {activeTab === 'grade-bands' && 'Grade Band Configuration'}
                                     {activeTab === 'arrears' && 'Arrears Management & Penalties'}
                                     {activeTab === 'payments' && 'Payment Methods & Allocation'}
                                     {activeTab === 'notifications' && 'Communication Settings'}

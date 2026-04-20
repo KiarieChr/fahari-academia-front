@@ -20,6 +20,8 @@ import SessionReportsModal from './components/modals/SessionReportsModal';
 import ViewTimetableModal from './components/modals/ViewTimetableModal';
 
 import TimetableTab from './tabs/TimetableTab';
+import AttendanceTab from './tabs/AttendanceTab';
+import DailyRegisterTab from './tabs/DailyRegisterTab';
 
 import useClassSessionsData from './hooks/useClassSessionsData';
 
@@ -225,10 +227,12 @@ const ClassSessionsDashboard = () => {
     } = useClassSessionsData();
 
     const tabs = [
-        { id: 'overview', label: 'Overview', icon: FileText },
-        { id: 'sessions', label: 'Daily Sessions', icon: Calendar },
-        { id: 'timetable', label: 'Timetable', icon: Clock },
-        { id: 'reports', label: 'Reports', icon: BarChart3 }
+        { id: 'overview',    label: 'Overview',        icon: FileText },
+        { id: 'sessions',    label: 'Daily Sessions',   icon: Calendar },
+        { id: 'register',    label: 'Daily Register',   icon: CheckCircle },
+        { id: 'attendance',  label: 'Lesson Attendance', icon: Users },
+        { id: 'timetable',   label: 'Timetable',        icon: Clock },
+        { id: 'reports',     label: 'Reports',          icon: BarChart3 }
     ];
 
     const quickActions = [
@@ -249,7 +253,7 @@ const ClassSessionsDashboard = () => {
         {
             label: 'Mark Attendance',
             icon: Users,
-            onClick: () => setActiveTab('sessions'),
+            onClick: () => setActiveTab('attendance'),
             style: 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50',
             iconStyle: 'text-gray-500',
         },
@@ -446,6 +450,18 @@ const ClassSessionsDashboard = () => {
                             <SessionStats analytics={analytics} />
                             <SessionsList todaySessions={todaySessions} onComplete={completeSession} onCancel={cancelSession} />
                         </>
+                    )}
+
+                    {/* ── DAILY REGISTER ── */}
+                    {activeTab === 'register' && (
+                        <DailyRegisterTab />
+                    )}
+
+                    {/* ── LESSON ATTENDANCE ── */}
+                    {activeTab === 'attendance' && (
+                        <AttendanceTab
+                            todaySessions={todaySessions}
+                        />
                     )}
 
                     {/* ── TIMETABLE ── */}

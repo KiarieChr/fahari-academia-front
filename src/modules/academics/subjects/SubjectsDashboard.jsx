@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
-import { Plus, Download, Upload, Library } from 'lucide-react';
+import { Plus, Download, Upload, Library, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 // Components
@@ -8,13 +8,40 @@ import SubjectsStats from './components/SubjectsStats';
 import SubjectsTable from './components/SubjectsTable';
 import SubjectFormModal from './components/SubjectFormModal';
 
-// Data
-import { subjectsData } from './data/subjectsData';
+// API
+import { api } from '../../../services/apiClient';
+import { curriculumService } from '../../../services/curriculumService';
 
 const SubjectsDashboard = () => {
-    const [subjects, setSubjects] = useState(subjectsData);
+    const [subjects, setSubjects] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
+    const [curricula, setCurricula] = useState([]);
+    const [curriculumLevels, setCurriculumLevels] = useState([]);
+    const [learningAreas, setLearningAreas] = useState([]);
+
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [subjectsData, curriculaData, levelsData, areasData] = await Promise.all([
+                api.timetable.getSubjects(),
+                curriculumService.getCurricula(),
+                curriculumService.getCurriculumLevels(),
+                curriculumService.getLearningAreas(),
+            ]);
+            setSubjects((subjectsData.results || subjectsData) || []);
+            setCurricula((curriculaData.results || curriculaData) || []);
+            setCurriculumLevels((levelsData.results || levelsData) || []);
+            setLearningAreas((areasData.results || areasData) || []);
+        } catch (err) {
+            toast.error('Failed to load subjects');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { loadData(); }, [loadData]);
 
     const handleAddSubject = () => {
         setEditingSubject(null);
@@ -26,23 +53,47 @@ const SubjectsDashboard = () => {
         setIsModalOpen(true);
     };
 
-    const handleDeleteSubject = (id) => {
-        if (confirm('Are you sure you want to remove this subject?')) {
-            setSubjects(subjects.filter(s => s.id !== id));
+    const handleDeleteSubject = async (id) => {
+        if (!confirm('Are you sure you want to remove this subject?')) return;
+        try {
+            await api.timetable.deleteSubject(id);
             toast.success('Subject removed');
+            loadData();
+        } catch {
+            toast.error('Failed to delete subject');
         }
     };
 
-    const handleSaveSubject = (data) => {
-        if (editingSubject) {
-            setSubjects(subjects.map(s => s.id === editingSubject.id ? { ...data, id: s.id } : s));
-            toast.success('Subject updated successfully');
-        } else {
-            setSubjects([...subjects, { ...data, id: Date.now().toString(), classes: [], lessons: 0, teachers: [] }]);
-            toast.success('New subject created');
+    const handleSaveSubject = async (data) => {
+        try {
+            if (editingSubject) {
+                await api.timetable.updateSubject(editingSubject.id, data);
+                toast.success('Subject updated successfully');
+            } else {
+                await api.timetable.createSubject(data);
+                toast.success('New subject created');
+            }
+            setIsModalOpen(false);
+            loadData();
+        } catch (err) {
+            const detail = err?.data?.detail || err?.data?.name?.[0] || err?.data?.code?.[0] || 'Failed to save subject';
+            toast.error(detail);
         }
-        setIsModalOpen(false);
     };
+
+    // Map API data to the shape SubjectsStats/SubjectsTable expect
+    const mappedSubjects = subjects.map(s => ({
+        ...s,
+        category: s.subject_type_display || s.subject_type || 'Core',
+        type: s.subject_type || 'compulsory',
+        curriculum: s.curriculum_name || '',
+        classes: [],
+        lessons: s.weekly_lessons || 0,
+        teachers: [],
+        status: s.is_active ? 'Active' : 'Inactive',
+        description: '',
+        isGraded: true,
+    }));
 
     return (
         <DashboardLayout title="Subject Management">
@@ -60,15 +111,13 @@ const SubjectsDashboard = () => {
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                <Upload size={16} /> Import
-                            </button>
-                            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                <Download size={16} /> Export
+                            <button onClick={loadData}
+                                className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
+                                <RefreshCw size={16} /> Refresh
                             </button>
                             <button
                                 onClick={handleAddSubject}
-                                className="px-4 py-2 bg-blue-600 text-black rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30 flex items-center gap-2 transition-transform active:scale-95"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30 flex items-center gap-2 transition-transform active:scale-95"
                             >
                                 <Plus size={18} /> Add New Subject
                             </button>
@@ -77,15 +126,23 @@ const SubjectsDashboard = () => {
                 </div>
 
                 <div className="max-w-[1600px] mx-auto p-6 space-y-6">
-                    {/* Stats */}
-                    <SubjectsStats subjects={subjects} />
+                    {loading ? (
+                        <div className="flex justify-center py-16">
+                            <Loader2 className="animate-spin text-blue-600" size={28} />
+                        </div>
+                    ) : (
+                        <>
+                            {/* Stats */}
+                            <SubjectsStats subjects={mappedSubjects} />
 
-                    {/* Main Table */}
-                    <SubjectsTable
-                        subjects={subjects}
-                        onEdit={handleEditSubject}
-                        onDelete={handleDeleteSubject}
-                    />
+                            {/* Main Table */}
+                            <SubjectsTable
+                                subjects={mappedSubjects}
+                                onEdit={handleEditSubject}
+                                onDelete={handleDeleteSubject}
+                            />
+                        </>
+                    )}
                 </div>
 
                 {/* Modal */}
@@ -94,6 +151,9 @@ const SubjectsDashboard = () => {
                     onClose={() => setIsModalOpen(false)}
                     onSave={handleSaveSubject}
                     initialData={editingSubject}
+                    curricula={curricula}
+                    curriculumLevels={curriculumLevels}
+                    learningAreas={learningAreas}
                 />
             </div>
         </DashboardLayout>

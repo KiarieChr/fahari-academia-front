@@ -1,5 +1,8 @@
-import React from 'react';
-import { Search, Filter, MoreVertical, Eye, Download, Edit } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, MoreVertical, Eye, Download, Edit, FileText, X } from 'lucide-react';
+import { PDFViewer } from '@react-pdf/renderer';
+import PDFPayslipDocument from './settings/templates/PDFPayslipDocument';
+import payrollService from '../../services/payrollService';
 
 const transactions = [
     { id: 'PAY-001', name: 'John Doe', staffId: 'T-001', dept: 'Science', gross: '150,000', deductions: '25,000', net: '125,000', status: 'Paid' },
@@ -26,6 +29,38 @@ const StatusBadge = ({ status }) => {
 };
 
 const TransactionTable = () => {
+    const [previewTxn, setPreviewTxn] = useState(null);
+    const [config, setConfig] = useState({});
+
+    // Pre-fetch the latest PDF format config from DB
+    useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                const response = await payrollService.getPayslipTemplates();
+                const defaultTpl = response.data.find(t => t.is_default) || response.data[0];
+                if (defaultTpl && defaultTpl.config) {
+                    setConfig(defaultTpl.config);
+                }
+            } catch (err) {
+                console.error("Failed loading payslip format", err);
+            }
+        };
+        fetchConfig();
+    }, []);
+
+    // Format transaction layout data to match PDF expectations
+    const openPreview = (t) => {
+        setPreviewTxn({
+            employeeName: t.name,
+            employeeId: t.staffId,
+            department: t.dept,
+            period: 'Current Period',
+            netPay: t.net,
+            grossPay: t.gross,
+            totalDeductions: t.deductions
+        });
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
             <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -79,6 +114,13 @@ const TransactionTable = () => {
                                 <td className="px-6 py-4"><StatusBadge status={t.status} /></td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button 
+                                            onClick={() => openPreview(t)}
+                                            className="p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-colors" 
+                                            title="Preview PDF Payslip"
+                                        >
+                                            <FileText size={16} />
+                                        </button>
                                         <button className="p-1.5 hover:bg-gray-100 rounded-lg text-blue-600" title="View Details"><Eye size={16} /></button>
                                         <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600" title="Edit"><Edit size={16} /></button>
                                         <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600" title="More"><MoreVertical size={16} /></button>
@@ -92,6 +134,28 @@ const TransactionTable = () => {
             <div className="p-4 border-t border-gray-100 flex justify-center">
                 <button className="text-sm font-medium text-blue-600 hover:text-blue-700">View All Transactions</button>
             </div>
+
+            {/* Live React-PDF Preview Modal for Individual Payslip */}
+            {previewTxn && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden border border-slate-700">
+                        <div className="px-6 py-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
+                            <h3 className="font-bold text-white flex items-center gap-2">
+                                <FileText size={18} className="text-indigo-400"/> 
+                                Payslip Preview: {previewTxn.employeeName}
+                            </h3>
+                            <button onClick={() => setPreviewTxn(null)} className="p-1.5 hover:bg-slate-700 rounded-full text-slate-300 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="flex-1 bg-slate-100 flex items-center justify-center p-4">
+                            <PDFViewer width="100%" height="100%" className="border-0 shadow-lg rounded">
+                                <PDFPayslipDocument config={config} data={previewTxn} />
+                            </PDFViewer>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

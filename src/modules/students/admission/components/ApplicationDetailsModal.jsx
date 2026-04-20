@@ -1,8 +1,31 @@
-import React from 'react';
-import { Calendar, User, BookOpen, School, Phone, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, User, BookOpen, School, Phone, Users, Download } from 'lucide-react';
 import Modal from '../../../../components/common/Modal';
+import { toast } from 'react-toastify';
+import { institutionService } from '../../../../services/institutionService';
+import { documentService } from '../../../../services/documentService';
 
 const ApplicationDetailsModal = ({ app, onClose }) => {
+    const [institution, setInstitution] = useState(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    useEffect(() => {
+        if (app) {
+            institutionService.getProfile().then(res => setInstitution(res.data || res)).catch(() => {});
+        }
+    }, [app]);
+
+    const handleDownload = async (docType) => {
+        try {
+            setIsGenerating(true);
+            await documentService.generateAndDownload(docType, app, institution || {});
+        } catch (err) {
+            toast.error('Failed to generate document');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     if (!app) return null;
 
     return (
@@ -22,9 +45,31 @@ const ApplicationDetailsModal = ({ app, onClose }) => {
             }
             size="lg"
             footer={
-                <button onClick={onClose} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors">
-                    Close
-                </button>
+                <div className="flex justify-between items-center w-full">
+                    <div className="flex gap-2">
+                        {app.application_status === 'accepted' && (
+                            <>
+                                <button 
+                                    onClick={() => handleDownload('offer_letter')}
+                                    disabled={isGenerating || !institution}
+                                    className="px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 font-medium text-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <Download size={16} /> Offer Letter
+                                </button>
+                                <button 
+                                    onClick={() => handleDownload('admission_letter')}
+                                    disabled={isGenerating || !institution}
+                                    className="px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 font-medium text-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <Download size={16} /> Admission Letter
+                                </button>
+                            </>
+                        )}
+                    </div>
+                    <button onClick={onClose} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors">
+                        Close
+                    </button>
+                </div>
             }
         >
             <div className="space-y-6">

@@ -1,56 +1,91 @@
-import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, FileText, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, FileText, CheckCircle, AlertCircle, RefreshCw, Clock, Loader2 } from 'lucide-react';
 import { formatKES } from '../utils/formatters';
+import { financeService } from '../../../../services/financeService';
 
-const DashboardSummary = ({ stats }) => {
+const DashboardSummary = () => {
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadSummary();
+    }, []);
+
+    const loadSummary = async () => {
+        setLoading(true);
+        try {
+            const data = await financeService.getAPSummary();
+            setStats(data);
+        } catch (err) {
+            console.error('Failed to load AP summary', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="d-flex justify-content-center align-items-center py-5">
+                <Loader2 className="spin" size={24} />
+                <span className="ms-2 text-muted">Loading summary...</span>
+            </div>
+        );
+    }
+
+    if (!stats) {
+        return (
+            <div className="alert alert-warning">Failed to load summary data. Please refresh.</div>
+        );
+    }
+
     const cards = [
         {
             title: 'Total Payables',
-            value: stats.totalPayables,
+            value: stats.total_payables,
             icon: DollarSign,
             color: 'primary',
-            trend: { value: '+12%', direction: 'up' }
+            isCurrency: true,
         },
         {
-            title: 'Approved AP Invoices',
-            value: stats.approvedAPInvoices,
+            title: 'Approved Invoices',
+            value: stats.approved_invoices,
             icon: CheckCircle,
             color: 'success',
             suffix: ' invoices'
         },
         {
             title: 'Pending Vouchers',
-            value: stats.pendingVouchers,
-            icon: AlertCircle,
+            value: stats.pending_vouchers,
+            icon: Clock,
             color: 'warning',
             suffix: ' vouchers'
         },
         {
-            title: 'Posted Vouchers',
-            value: stats.postedVouchers,
+            title: 'Paid Vouchers',
+            value: stats.paid_vouchers,
             icon: FileText,
             color: 'info',
             suffix: ' vouchers'
         },
         {
             title: 'Refunds Issued',
-            value: stats.refundsIssued,
+            value: stats.refunds_issued,
             icon: RefreshCw,
             color: 'danger',
             suffix: ' refunds'
         },
         {
-            title: 'Customer Balances',
-            value: stats.customerInvoiceBalance,
-            icon: DollarSign,
-            color: 'secondary',
-            trend: { value: '-8%', direction: 'down' }
+            title: 'Overdue Payables',
+            value: stats.overdue_count,
+            icon: AlertCircle,
+            color: stats.overdue_count > 0 ? 'danger' : 'success',
+            suffix: ' items'
         },
         {
-            title: 'Overdue Payables',
-            value: stats.overduePayables,
-            icon: AlertCircle,
-            color: stats.overduePayables > 0 ? 'danger' : 'success',
+            title: 'Pending Retirements',
+            value: stats.pending_retirements,
+            icon: Clock,
+            color: 'secondary',
             suffix: ' items'
         }
     ];
@@ -59,8 +94,6 @@ const DashboardSummary = ({ stats }) => {
         <div className="dashboard-stats-row mb-4">
             {cards.map((card, index) => {
                 const Icon = card.icon;
-                const isCurrency = card.title.includes('Payables') || card.title.includes('Balances');
-
                 return (
                     <div key={index} className="stat-card">
                         <div className="d-flex justify-content-between align-items-start mb-2">
@@ -70,17 +103,8 @@ const DashboardSummary = ({ stats }) => {
                             </div>
                         </div>
                         <div className="stat-card-value">
-                            {isCurrency ? formatKES(card.value) : `${card.value}${card.suffix || ''}`}
+                            {card.isCurrency ? formatKES(card.value) : `${card.value}${card.suffix || ''}`}
                         </div>
-                        {card.trend && (
-                            <div 
-                                className={`small fw-bold text-${card.trend.direction === 'up' ? 'success' : 'danger'}`} 
-                                style={{ fontSize: '11px', marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
-                            >
-                                {card.trend.direction === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                                <span>{card.trend.value}</span>
-                            </div>
-                        )}
                     </div>
                 );
             })}

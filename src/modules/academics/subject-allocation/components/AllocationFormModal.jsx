@@ -4,45 +4,46 @@ import { X, Check, AlertCircle } from 'lucide-react';
 
 const AllocationFormModal = ({ isOpen, onClose, onSave, initialData, teachers, classes, subjects }) => {
     const defaultData = {
-        class: classes[0],
-        subject: subjects[0].name,
-        teacherId: '',
-        lessons: 5,
-        category: 'Core',
-        status: 'Active'
+        class_session: '',
+        subject: '',
+        teacher: '',
+        lessons_per_week: 5,
+        required_room_type: '',
+        notes: '',
     };
 
-    const [formData, setFormData] = useState(initialData || defaultData);
+    const [formData, setFormData] = useState(defaultData);
 
     useEffect(() => {
         if (isOpen) {
-            setFormData(initialData || defaultData);
+            setFormData(initialData ? {
+                class_session: initialData.class_session || '',
+                subject: initialData.subject || '',
+                teacher: initialData.teacher || '',
+                lessons_per_week: initialData.lessons_per_week || 5,
+                required_room_type: initialData.required_room_type || '',
+                notes: initialData.notes || '',
+            } : defaultData);
         }
     }, [isOpen, initialData]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(formData);
+        const payload = { ...formData };
+        if (!payload.teacher) delete payload.teacher;
+        if (!payload.required_room_type) delete payload.required_room_type;
+        onSave(payload);
     };
 
     const handleChange = (field, value) => {
-        setFormData(prev => {
-            const updates = { [field]: value };
-            // Auto update default lessons if subject changes
-            if (field === 'subject') {
-                const subj = subjects.find(s => s.name === value);
-                if (subj) {
-                    updates.lessons = subj.defaultLessons;
-                    updates.category = subj.category;
-                }
-            }
-            return { ...prev, ...updates };
-        });
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    // Calculate teacher availability check (Mock)
-    const selectedTeacher = teachers.find(t => t.id === formData.teacherId);
-    const willOverload = selectedTeacher ? (selectedTeacher.currentLoad + Number(formData.lessons) > selectedTeacher.maxLoad) : false;
+    // Find selected teacher's load
+    const selectedTeacher = teachers.find(t => String(t.id) === String(formData.teacher));
+    const willOverload = selectedTeacher
+        ? (selectedTeacher.currentLoad + Number(formData.lessons_per_week) > selectedTeacher.maxLoad)
+        : false;
 
     if (!isOpen) return null;
 
@@ -68,25 +69,27 @@ const AllocationFormModal = ({ isOpen, onClose, onSave, initialData, teachers, c
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Class</label>
+                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Class Session *</label>
                                     <select
                                         className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={formData.class}
-                                        onChange={(e) => handleChange('class', e.target.value)}
-                                        disabled={!!initialData} // Cannot change class on edit commonly
+                                        value={formData.class_session}
+                                        onChange={(e) => handleChange('class_session', e.target.value)}
+                                        required
                                     >
-                                        {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                                        <option value="">Select Class</option>
+                                        {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Subject</label>
+                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Subject *</label>
                                     <select
                                         className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                         value={formData.subject}
                                         onChange={(e) => handleChange('subject', e.target.value)}
-                                        disabled={!!initialData}
+                                        required
                                     >
-                                        {subjects.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                                        <option value="">Select Subject</option>
+                                        {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -95,8 +98,8 @@ const AllocationFormModal = ({ isOpen, onClose, onSave, initialData, teachers, c
                                 <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Assign Teacher</label>
                                 <select
                                     className={`w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${willOverload ? 'border-amber-500 ring-1 ring-amber-500' : 'border-slate-200 dark:border-slate-700'}`}
-                                    value={formData.teacherId}
-                                    onChange={(e) => handleChange('teacherId', e.target.value)}
+                                    value={formData.teacher}
+                                    onChange={(e) => handleChange('teacher', e.target.value)}
                                 >
                                     <option value="">-- Select Teacher --</option>
                                     {teachers.map(t => (
@@ -115,25 +118,42 @@ const AllocationFormModal = ({ isOpen, onClose, onSave, initialData, teachers, c
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Weekly Lessons</label>
+                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Weekly Lessons *</label>
                                     <input
                                         type="number"
                                         required
                                         min="1"
                                         className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={formData.lessons}
-                                        onChange={(e) => handleChange('lessons', e.target.value)}
+                                        value={formData.lessons_per_week}
+                                        onChange={(e) => handleChange('lessons_per_week', parseInt(e.target.value) || 1)}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Category</label>
-                                    <input
-                                        type="text"
-                                        disabled
-                                        className="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-500"
-                                        value={formData.category}
-                                    />
+                                    <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Room Type</label>
+                                    <select
+                                        className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={formData.required_room_type}
+                                        onChange={(e) => handleChange('required_room_type', e.target.value)}
+                                    >
+                                        <option value="">Any</option>
+                                        <option value="classroom">Classroom</option>
+                                        <option value="laboratory">Laboratory</option>
+                                        <option value="computer_lab">Computer Lab</option>
+                                        <option value="workshop">Workshop</option>
+                                        <option value="field">Field</option>
+                                    </select>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Notes</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Optional notes..."
+                                    value={formData.notes}
+                                    onChange={(e) => handleChange('notes', e.target.value)}
+                                />
                             </div>
                         </div>
 

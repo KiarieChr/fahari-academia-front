@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Package, ClipboardCheck, AlertTriangle, Truck } from 'lucide-react';
-import { procurementService } from "../../../services/procurementService";
+import { inventoryService } from "../../../services/inventoryService";
 import GRNList from './GRNList';
 import CreateGRN from './CreateGRN';
 import { toast } from 'react-toastify';
@@ -17,20 +17,30 @@ const GRNDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [selectedGRN, setSelectedGRN] = useState(null);
 
-    useEffect(() => {
-        loadStats();
-    }, [view]); // Reload stats when view changes (e.g. after creation)
-
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
         try {
-            const res = await procurementService.getGRNs();
-            setStats(res.stats);
+            const res = await inventoryService.getGRNs();
+            const grns = res.results || res || [];
+            const draft = grns.filter(g => g.status === 'DRAFT').length;
+            const posted = grns.filter(g => g.status === 'POSTED').length;
+            const totalValue = grns.reduce((s, g) => {
+                const lines = g.lines || [];
+                return s + lines.reduce((ls, l) => ls + Number(l.total_cost || 0), 0);
+            }, 0);
+            setStats({
+                total: grns.length,
+                pendingInspection: draft,
+                posted,
+                totalValue,
+            });
         } catch (error) {
             console.error("Failed to load GRN stats", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => { loadStats(); }, [view, loadStats]);
 
     const StatCard = ({ title, value, icon: Icon, color }) => (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">

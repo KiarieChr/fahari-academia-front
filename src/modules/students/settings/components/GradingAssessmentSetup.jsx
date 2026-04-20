@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Settings2, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import Modal from '../../../../components/common/Modal';
+import { inputClass, labelClass } from '../../../../components/ui/FormField';
 
 const GradingAssessmentSetup = () => {
     const [grades, setGrades] = useState([
@@ -75,57 +77,48 @@ const GradingAssessmentSetup = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Define New Grade"
+                    subtitle="Set up a grading scale entry"
+                    footer={
+                        <>
+                            <Modal.CancelButton onClick={() => setIsModalOpen(false)} />
+                            <Modal.SubmitButton onClick={handleSave}>Save</Modal.SubmitButton>
+                        </>
+                    }
+                >
+                    <form onSubmit={handleSave} className="space-y-5">
+                        <div className="grid grid-cols-2 gap-5">
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900">Define New Grade</h3>
-                                <p className="text-[0.8rem] text-gray-400 mt-0.5">Set up a grading scale entry</p>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                                <span className="text-gray-400 text-lg">&times;</span>
-                            </button>
-                        </div>
-
-                        {/* Form Body */}
-                        <form onSubmit={handleSave} className="px-7 py-6 space-y-5">
-                            <div className="grid grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Grade</label>
-                                    <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="A, B..." value={newGrade.grade} onChange={e => setNewGrade({ ...newGrade, grade: e.target.value })} required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Color</label>
-                                    <div className="w-full h-[42px] rounded-xl border border-gray-200 flex items-center px-1.5">
-                                        <input type="color" className="w-full h-8 cursor-pointer rounded-lg bg-transparent" value={newGrade.color} onChange={e => setNewGrade({ ...newGrade, color: e.target.value })} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Min Score</label>
-                                    <input type="number" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" value={newGrade.min} onChange={e => setNewGrade({ ...newGrade, min: Number(e.target.value) })} required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Max Score</label>
-                                    <input type="number" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" value={newGrade.max} onChange={e => setNewGrade({ ...newGrade, max: Number(e.target.value) })} required />
-                                </div>
+                                <label className={labelClass}>Grade</label>
+                                <input className={inputClass} placeholder="A, B..." value={newGrade.grade} onChange={e => setNewGrade({ ...newGrade, grade: e.target.value })} required />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Remarks</label>
-                                <input className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all" placeholder="e.g. Excellent" value={newGrade.remark} onChange={e => setNewGrade({ ...newGrade, remark: e.target.value })} required />
+                                <label className={labelClass}>Color</label>
+                                <div className="w-full h-[42px] rounded-xl border border-gray-200 flex items-center px-1.5">
+                                    <input type="color" className="w-full h-8 cursor-pointer rounded-lg bg-transparent" value={newGrade.color} onChange={e => setNewGrade({ ...newGrade, color: e.target.value })} />
+                                </div>
                             </div>
-                        </form>
-
-                        {/* Footer */}
-                        <div className="px-7 py-4 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3">
-                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all">Cancel</button>
-                            <button type="button" onClick={handleSave} className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all">Save</button>
                         </div>
-                    </div>
-                </div>
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div>
+                                <label className={labelClass}>Min Score</label>
+                                <input type="number" className={inputClass} value={newGrade.min} onChange={e => setNewGrade({ ...newGrade, min: Number(e.target.value) })} required />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Max Score</label>
+                                <input type="number" className={inputClass} value={newGrade.max} onChange={e => setNewGrade({ ...newGrade, max: Number(e.target.value) })} required />
+                            </div>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Remarks</label>
+                            <input className={inputClass} placeholder="e.g. Excellent" value={newGrade.remark} onChange={e => setNewGrade({ ...newGrade, remark: e.target.value })} required />
+                        </div>
+                    </form>
+                </Modal>
             )}
         </div>
     );

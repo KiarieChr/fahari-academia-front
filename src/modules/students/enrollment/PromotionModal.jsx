@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import Modal from '../../../components/common/Modal';
+import { inputClass, labelClass } from '../../../components/ui/FormField';
 import studentSettingsService from '../../../services/studentSettingsService';
 
 const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) => {
@@ -41,11 +43,18 @@ const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) =
                 studentSettingsService.getClasses()
             ]);
 
+            const yearsList = academicYears.data || [];
             setOptions(prev => ({
                 ...prev,
-                academicYears: academicYears.data || [],
+                academicYears: yearsList,
                 grades: grades.data || []
             }));
+
+            // Auto-select the current academic year
+            const currentYear = yearsList.find(y => y.is_current);
+            if (currentYear) {
+                setFormData(prev => prev.target_academic_year ? prev : { ...prev, target_academic_year: currentYear.id });
+            }
         } catch (err) {
             console.error('Error fetching options:', err);
         }
@@ -104,33 +113,37 @@ const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) =
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Promote Students</h2>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Promoting {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''}
-                        </p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Promote Students"
+            subtitle={`Promoting ${selectedStudents.length} student${selectedStudents.length !== 1 ? 's' : ''}`}
+            size="lg"
+            accentColor="bg-blue-500"
+            footer={
+                <>
+                    <Modal.CancelButton onClick={onClose}>
+                        {results ? 'Close' : 'Cancel'}
+                    </Modal.CancelButton>
+                    {!results && (
+                        <Modal.SubmitButton form="promotion-form" loading={loading}>
+                            <ArrowRight className="w-4 h-4" />
+                            {loading ? 'Promoting...' : 'Promote Students'}
+                        </Modal.SubmitButton>
+                    )}
+                </>
+            }
+        >
+                <form id="promotion-form" onSubmit={handleSubmit} className="space-y-5">
                     {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                             <span className="text-sm text-red-800">{error}</span>
                         </div>
                     )}
 
                     {results && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                             <div className="flex items-center gap-3 mb-3">
                                 <CheckCircle className="w-5 h-5 text-green-600" />
                                 <span className="font-medium text-green-900">
@@ -152,24 +165,17 @@ const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) =
 
                     {!results && (
                         <>
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                                 <p className="text-sm text-blue-800">
                                     <strong>Note:</strong> If you don't specify a target grade, students will be automatically promoted to the next grade in their current curriculum based on level order.
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Target Academic Year *
-                                    </label>
-                                    <select
-                                        name="target_academic_year"
-                                        value={formData.target_academic_year}
-                                        onChange={handleChange}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
+                                    <label className={labelClass}>Target Academic Year *</label>
+                                    <select name="target_academic_year" value={formData.target_academic_year}
+                                        onChange={handleChange} required className={inputClass}>
                                         <option value="">Select Academic Year</option>
                                         {options.academicYears.map(year => (
                                             <option key={year.id} value={year.id}>{year.name}</option>
@@ -178,17 +184,10 @@ const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) =
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Target Term *
-                                    </label>
-                                    <select
-                                        name="target_term"
-                                        value={formData.target_term}
-                                        onChange={handleChange}
-                                        required
-                                        disabled={!formData.target_academic_year}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                                    >
+                                    <label className={labelClass}>Target Term *</label>
+                                    <select name="target_term" value={formData.target_term}
+                                        onChange={handleChange} required disabled={!formData.target_academic_year}
+                                        className={inputClass}>
                                         <option value="">Select Term</option>
                                         {options.terms.map(term => (
                                             <option key={term.id} value={term.id}>{term.name}</option>
@@ -197,15 +196,9 @@ const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) =
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Target Grade (Optional)
-                                    </label>
-                                    <select
-                                        name="target_grade"
-                                        value={formData.target_grade}
-                                        onChange={handleChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
+                                    <label className={labelClass}>Target Grade (Optional)</label>
+                                    <select name="target_grade" value={formData.target_grade}
+                                        onChange={handleChange} className={inputClass}>
                                         <option value="">Auto-calculate next grade</option>
                                         {options.grades.map(grade => (
                                             <option key={grade.id} value={grade.id}>
@@ -216,21 +209,14 @@ const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) =
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Remarks
-                                    </label>
-                                    <textarea
-                                        name="remarks"
-                                        value={formData.remarks}
-                                        onChange={handleChange}
-                                        rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Promotion remarks..."
-                                    />
+                                    <label className={labelClass}>Remarks</label>
+                                    <textarea name="remarks" value={formData.remarks} onChange={handleChange}
+                                        rows={3} className={inputClass + ' resize-none'}
+                                        placeholder="Promotion remarks..." />
                                 </div>
                             </div>
 
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                                 <p className="text-sm font-medium text-gray-700 mb-2">Students to be promoted:</p>
                                 <div className="max-h-32 overflow-y-auto space-y-1">
                                     {selectedStudents.map(student => (
@@ -243,29 +229,8 @@ const PromotionModal = ({ isOpen, onClose, onSuccess, selectedStudents = [] }) =
                             </div>
                         </>
                     )}
-
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                            {results ? 'Close' : 'Cancel'}
-                        </button>
-                        {!results && (
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <ArrowRight className="w-4 h-4" />
-                                {loading ? 'Promoting...' : 'Promote Students'}
-                            </button>
-                        )}
-                    </div>
                 </form>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

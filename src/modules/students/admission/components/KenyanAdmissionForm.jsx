@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { studentManagementService } from '../../../../services/studentManagementService';
+import { institutionService } from '../../../../services/institutionService';
+import studentSettingsService from '../../../../services/studentSettingsService';
 import DateInput from '../../../../components/common/DateInput';
 import Modal from '../../../../components/common/Modal';
 
@@ -67,7 +69,8 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
     const [options, setOptions] = useState({
         intakes: [],
         curriculums: [],
-        classes: []
+        classes: [],
+        campuses: []
     });
 
     const [formData, setFormData] = useState({
@@ -88,6 +91,7 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
         intake: '',
         curriculum: '',
         applyingForGrade: '',
+        campus: '',
         isTransfer: false,
 
         // Step 2: Parent/Guardian Information
@@ -143,16 +147,29 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const [intakes, curriculums, classes] = await Promise.all([
+                const [intakes, curriculums, classes, campusesRes, yearsRes] = await Promise.all([
                     studentManagementService.getIntakes(),
                     studentManagementService.getCurriculums(),
-                    studentManagementService.getClasses()
+                    studentManagementService.getClasses(),
+                    institutionService.getCampuses(),
+                    studentSettingsService.getAcademicYears(),
                 ]);
                 setOptions({
                     intakes: intakes.results || intakes,
                     curriculums: curriculums.results || curriculums,
-                    classes: classes.results || classes
+                    classes: classes.results || classes,
+                    campuses: campusesRes.results || campusesRes || []
                 });
+                // Default intake to one from the current academic year
+                const allIntakes = intakes.results || intakes || [];
+                const allYears = yearsRes?.results || yearsRes || [];
+                const currentYear = allYears.find(y => y.is_current);
+                if (currentYear) {
+                    const currentYearIntake = allIntakes.find(i => i.academic_year === currentYear.id);
+                    if (currentYearIntake && !formData.intake) {
+                        setFormData(prev => ({ ...prev, intake: currentYearIntake.id }));
+                    }
+                }
             } catch (error) {
                 console.error("Error fetching options:", error);
                 toast.error("Failed to load form options");
@@ -246,6 +263,9 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
                 submitData.append('applying_for_level', selectedGrade.curriculum_level);
             }
             submitData.append('is_transfer', formData.isTransfer);
+            if (formData.campus) {
+                submitData.append('campus', formData.campus);
+            }
 
             // Guardian
             submitData.append('guardian_name', formData.guardianName);
@@ -539,6 +559,19 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
                                 .map(cls => (
                                     <option key={cls.id} value={cls.id}>{cls.name}</option>
                                 ))}
+                        </select>
+                    </InputField>
+                    <InputField label="Campus">
+                        <select
+                            name="campus"
+                            value={formData.campus}
+                            onChange={handleChange}
+                            className={inputClasses}
+                        >
+                            <option value="">Select Campus...</option>
+                            {options.campuses.map(campus => (
+                                <option key={campus.id} value={campus.id}>{campus.name}</option>
+                            ))}
                         </select>
                     </InputField>
                 </div>
@@ -1105,6 +1138,12 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
                             <span className="text-gray-500 block text-xs">Applying For</span>
                             <span className="font-medium text-indigo-700">
                                 {options.classes.find(c => c.id == formData.applyingForGrade)?.name || 'N/A'}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 block text-xs">Campus</span>
+                            <span className="font-medium">
+                                {options.campuses.find(c => c.id == formData.campus)?.name || 'N/A'}
                             </span>
                         </div>
                         <div>

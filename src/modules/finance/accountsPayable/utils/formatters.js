@@ -64,3 +64,74 @@ export const validateVoucherBalance = (lineItems) => {
     const total = lineItems.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
     return total > 0;
 };
+
+// Expense account keyword mappings for auto-suggestion
+export const EXPENSE_ACCOUNT_KEYWORDS = {
+    'hosting': ['hosting', 'internet', 'web hosting', 'server', 'cloud'],
+    'internet': ['hosting', 'internet', 'web hosting', 'bandwidth', 'connectivity'],
+    'web': ['hosting', 'internet', 'web hosting'],
+    'server': ['hosting', 'internet', 'server', 'cloud'],
+    'cloud': ['hosting', 'cloud', 'server', 'aws', 'azure'],
+    'electricity': ['electricity', 'power', 'utility', 'utilities'],
+    'power': ['electricity', 'power', 'utility'],
+    'water': ['water', 'utility', 'utilities'],
+    'utility': ['utility', 'utilities', 'electricity', 'water'],
+    'phone': ['telephone', 'phone', 'communication', 'airtime'],
+    'telephone': ['telephone', 'phone', 'communication'],
+    'airtime': ['telephone', 'phone', 'airtime', 'communication'],
+    'mobile': ['telephone', 'mobile', 'phone'],
+    'transport': ['transport', 'travel', 'fuel', 'vehicle'],
+    'travel': ['travel', 'transport', 'accommodation'],
+    'fuel': ['fuel', 'transport', 'vehicle', 'petrol', 'diesel'],
+    'vehicle': ['vehicle', 'transport', 'fuel', 'motor'],
+    'stationery': ['stationery', 'office', 'supplies', 'printing'],
+    'office': ['office', 'stationery', 'supplies'],
+    'printing': ['printing', 'stationery', 'office'],
+    'supplies': ['supplies', 'stationery', 'office'],
+    'repair': ['repair', 'maintenance', 'service'],
+    'maintenance': ['maintenance', 'repair', 'service'],
+    'service': ['service', 'maintenance', 'repair'],
+    'food': ['food', 'catering', 'meals', 'kitchen'],
+    'catering': ['catering', 'food', 'meals'],
+    'meals': ['meals', 'food', 'catering'],
+    'kitchen': ['kitchen', 'food', 'catering'],
+    'cleaning': ['cleaning', 'sanitation', 'janitorial'],
+    'sanitation': ['sanitation', 'cleaning'],
+    'security': ['security', 'guard', 'surveillance'],
+    'guard': ['security', 'guard'],
+    'training': ['training', 'professional development', 'workshop'],
+    'workshop': ['workshop', 'training', 'seminar'],
+    'seminar': ['seminar', 'training', 'workshop'],
+    'insurance': ['insurance', 'premium'],
+    'rent': ['rent', 'lease', 'rental'],
+    'lease': ['lease', 'rent', 'rental'],
+    'bank': ['bank charge', 'bank fee', 'transaction fee'],
+    'subscription': ['subscription', 'license', 'software'],
+    'license': ['license', 'subscription', 'software'],
+    'software': ['software', 'subscription', 'license'],
+};
+
+export const VAT_RATES = [
+    { value: 0, label: '0% (Exempt)' },
+    { value: 8, label: '8% (Reduced)' },
+    { value: 16, label: '16% (Standard)' }
+];
+
+// Export CSV utility
+export const exportToCSV = (data, headers, filename) => {
+    const csvRows = [headers.map(h => h.label).join(',')];
+    data.forEach(row => {
+        csvRows.push(headers.map(h => {
+            const val = typeof h.accessor === 'function' ? h.accessor(row) : row[h.accessor];
+            const str = String(val ?? '').replace(/"/g, '""');
+            return `"${str}"`;
+        }).join(','));
+    });
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+};

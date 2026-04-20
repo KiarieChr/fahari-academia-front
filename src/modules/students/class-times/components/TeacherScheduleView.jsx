@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { User, X, Printer } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { User, Printer } from 'lucide-react';
+import Modal from '../../../../components/common/Modal';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -124,78 +124,58 @@ const TeacherScheduleView = ({ slots = [], subjects = [] }) => {
             </div>
 
             {/* ── Teacher Schedule Drawer ─────────────────────────────── */}
-            <AnimatePresence>
-                {selectedTeacher && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 flex flex-col"
-                        >
-                            {/* Header */}
-                            <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 font-bold text-xl">
-                                        {selectedTeacher.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-xl text-slate-900 dark:text-white">{selectedTeacher.name}</h3>
-                                        <p className="text-sm text-slate-500">{selectedTeacher.totalSlots} slots this week</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setSelectedTeacherKey(null)}
-                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
+            <Modal
+                isOpen={!!selectedTeacher}
+                onClose={() => setSelectedTeacherKey(null)}
+                title={selectedTeacher?.name}
+                subtitle={selectedTeacher ? `${selectedTeacher.totalSlots} slots this week` : ''}
+                icon={
+                    selectedTeacher && (
+                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 font-bold text-xl">
+                            {selectedTeacher.name.charAt(0).toUpperCase()}
+                        </div>
+                    )
+                }
+                size="xl"
+                noPadding
+                footer={
+                    <>
+                        <button className="px-4 py-2 text-slate-600 dark:text-slate-400 font-medium hover:bg-white border border-slate-200 rounded-lg transition-all flex items-center gap-2">
+                            <Printer size={16} /> Print
+                        </button>
+                        <Modal.CancelButton onClick={() => setSelectedTeacherKey(null)}>Close</Modal.CancelButton>
+                    </>
+                }
+            >
+                {/* Weekly grid */}
+                <div className="p-6 overflow-x-auto">
+                    <div className="grid grid-cols-[80px_repeat(5,1fr)] text-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                        {/* Column headers */}
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900 border-b border-r border-slate-200 dark:border-slate-700" />
+                        {DAY_NAMES.map((day) => (
+                            <div key={day} className="p-3 font-bold text-center text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border-b border-l border-slate-200 dark:border-slate-700">
+                                {day}
                             </div>
-
-                            {/* Weekly grid */}
-                            <div className="p-6 overflow-x-auto">
-                                <div className="grid grid-cols-[80px_repeat(5,1fr)] text-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                                    {/* Column headers */}
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-900 border-b border-r border-slate-200 dark:border-slate-700" />
-                                    {DAY_NAMES.map((day) => (
-                                        <div key={day} className="p-3 font-bold text-center text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 border-b border-l border-slate-200 dark:border-slate-700">
-                                            {day}
+                        ))}
+                        {/* Single summary row per day */}
+                        <div className="p-3 text-xs font-semibold text-slate-400 border-r border-slate-200 dark:border-slate-700 flex items-center justify-center">Slots</div>
+                        {DAY_NAMES.map((_, di) => (
+                            <div key={di} className="p-2 border-l border-slate-200 dark:border-slate-700 space-y-1">
+                                {(teacherSlots[di] ?? []).length === 0
+                                    ? <div className="text-center text-xs text-slate-300 py-3">Free</div>
+                                    : (teacherSlots[di] ?? []).map((s) => (
+                                        <div key={s.id} className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded p-2">
+                                            <div className="font-bold text-blue-700 dark:text-blue-300 text-xs">{s.subject_name}</div>
+                                            <div className="text-[10px] text-blue-500 mt-0.5">{s.class_session_name}</div>
+                                            <div className="text-[10px] text-slate-400 font-mono">{s.start_time} – {s.end_time}</div>
                                         </div>
-                                    ))}
-                                    {/* Single summary row per day */}
-                                    <div className="p-3 text-xs font-semibold text-slate-400 border-r border-slate-200 dark:border-slate-700 flex items-center justify-center">Slots</div>
-                                    {DAY_NAMES.map((_, di) => (
-                                        <div key={di} className="p-2 border-l border-slate-200 dark:border-slate-700 space-y-1">
-                                            {(teacherSlots[di] ?? []).length === 0
-                                                ? <div className="text-center text-xs text-slate-300 py-3">Free</div>
-                                                : (teacherSlots[di] ?? []).map((s) => (
-                                                    <div key={s.id} className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded p-2">
-                                                        <div className="font-bold text-blue-700 dark:text-blue-300 text-xs">{s.subject_name}</div>
-                                                        <div className="text-[10px] text-blue-500 mt-0.5">{s.class_session_name}</div>
-                                                        <div className="text-[10px] text-slate-400 font-mono">{s.start_time} – {s.end_time}</div>
-                                                    </div>
-                                                ))
-                                            }
-                                        </div>
-                                    ))}
-                                </div>
+                                    ))
+                                }
                             </div>
-
-                            <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-900/50">
-                                <button className="px-4 py-2 text-slate-600 dark:text-slate-400 font-medium hover:bg-white border border-slate-200 rounded-lg transition-all flex items-center gap-2">
-                                    <Printer size={16} /> Print
-                                </button>
-                                <button
-                                    onClick={() => setSelectedTeacherKey(null)}
-                                    className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </motion.div>
+                        ))}
                     </div>
-                )}
-            </AnimatePresence>
+                </div>
+            </Modal>
         </div>
     );
 };

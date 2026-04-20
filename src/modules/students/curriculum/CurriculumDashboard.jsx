@@ -14,6 +14,7 @@ import {
 import CurriculumOverview from './components/CurriculumOverview';
 import CurriculumList from './components/CurriculumList';
 import SubjectManagement from './components/SubjectManagement';
+import LearningAreaManagement from './components/LearningAreaManagement';
 import AddItemModal from './components/modals/AddItemModal';
 import CurriculumSettings from './components/CurriculumSettings';
 
@@ -27,6 +28,7 @@ const CurriculumDashboard = () => {
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
         { id: 'curricula', label: 'Curricula', icon: BookOpen },
         { id: 'subjects', label: 'Subjects', icon: Library },
+        { id: 'learning-areas', label: 'Learning Areas', icon: Layers },
     ];
 
     // Determine default modal type based on active tab
@@ -107,6 +109,16 @@ const CurriculumDashboard = () => {
                                         <p className="text-sm text-gray-500">Manage subjects and learning areas</p>
                                     </div>
                                     <SubjectManagement refreshKey={refreshKey} />
+                                </div>
+                            )}
+
+                            {activeTab === 'learning-areas' && (
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-bold text-gray-800">Learning Areas</h3>
+                                        <p className="text-sm text-gray-500">Organize subjects into broad academic categories</p>
+                                    </div>
+                                    <LearningAreaManagement refreshKey={refreshKey} />
                                 </div>
                             )}
                         </div>

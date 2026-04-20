@@ -1,10 +1,95 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, FileSpreadsheet, Printer } from 'lucide-react';
-import { formatKES } from '../utils/formatters';
+import { Download, FileSpreadsheet, Printer, Loader2 } from 'lucide-react';
+import { formatKES, exportToCSV } from '../utils/formatters';
+import { financeService } from '../../../../services/financeService';
 
-const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats }) => {
+const VOUCHER_TYPE_LABELS = {
+    AP: 'AP Payment',
+    GENERAL: 'General Payment',
+    IMPREST: 'Imprest',
+    REFUND: 'Refund',
+};
+
+const ReportsTab = () => {
+    const [agingData, setAgingData] = useState([]);
+    const [voucherTypeData, setVoucherTypeData] = useState([]);
+    const [supplierSummary, setSupplierSummary] = useState([]);
+    const [loading, setLoading] = useState(true);
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+    useEffect(() => {
+        loadReportData();
+    }, []);
+
+    const loadReportData = async () => {
+        setLoading(true);
+        try {
+            const [agingRes, voucherRes, suppliersRes] = await Promise.all([
+                financeService.getAPAging().catch(() => null),
+                financeService.getVouchersByType().catch(() => []),
+                financeService.getSuppliers({ is_active: true }).catch(() => null),
+            ]);
+
+            // Transform aging data for chart
+            if (agingRes) {
+                setAgingData([
+                    { bucket: '0-30 Days', amount: parseFloat(agingRes.current || 0) },
+                    { bucket: '31-60 Days', amount: parseFloat(agingRes['31_60'] || 0) },
+                    { bucket: '61-90 Days', amount: parseFloat(agingRes['61_90'] || 0) },
+                    { bucket: '90+ Days', amount: parseFloat(agingRes.over_90 || 0) },
+                ]);
+            }
+
+            // Transform voucher type data
+            const vtData = (Array.isArray(voucherRes) ? voucherRes : voucherRes?.results || []).map(v => ({
+                type: VOUCHER_TYPE_LABELS[v.voucher_type] || v.voucher_type,
+                count: v.count,
+                amount: parseFloat(v.total_amount || 0),
+            }));
+            setVoucherTypeData(vtData);
+
+            // Build supplier summary from supplier list with outstanding_balance
+            const suppliers = suppliersRes?.results || suppliersRes || [];
+            const summary = suppliers
+                .filter(s => parseFloat(s.outstanding_balance || 0) > 0 || true)
+                .map(s => ({
+                    supplier: s.name,
+                    outstanding: parseFloat(s.outstanding_balance || 0),
+                }))
+                .filter(s => s.outstanding > 0);
+            setSupplierSummary(summary);
+        } catch (err) {
+            console.error('Failed to load report data', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleExportAging = () => {
+        exportToCSV(agingData, [
+            { label: 'Aging Bucket', accessor: 'bucket' },
+            { label: 'Amount (KES)', accessor: 'amount' },
+        ], 'ap_aging_report');
+    };
+
+    const handleExportSuppliers = () => {
+        exportToCSV(supplierSummary, [
+            { label: 'Supplier', accessor: 'supplier' },
+            { label: 'Outstanding (KES)', accessor: 'outstanding' },
+        ], 'supplier_outstanding');
+    };
+
+    const handlePrint = () => window.print();
+
+    if (loading) {
+        return (
+            <div className="d-flex justify-content-center align-items-center py-5">
+                <Loader2 className="spin" size={24} />
+                <span className="ms-2 text-muted">Loading reports...</span>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -12,15 +97,15 @@ const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats 
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h5 className="fw-bold mb-0">Reports & Analytics</h5>
                 <div className="btn-group">
-                    <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
-                        <Download size={16} />
-                        PDF
-                    </button>
-                    <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+                    <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" onClick={handleExportAging}>
                         <FileSpreadsheet size={16} />
-                        Excel
+                        Aging CSV
                     </button>
-                    <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+                    <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" onClick={handleExportSuppliers}>
+                        <Download size={16} />
+                        Suppliers CSV
+                    </button>
+                    <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" onClick={handlePrint}>
                         <Printer size={16} />
                         Print
                     </button>
@@ -77,18 +162,18 @@ const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats 
                 </div>
             </div>
 
-            {/* Supplier Summary Table */}
+            {/* Supplier Outstanding Table */}
             <div className="card border-0 shadow-sm mb-4">
                 <div className="card-body">
-                    <h6 className="fw-bold mb-3">Payables Summary by Supplier</h6>
+                    <h6 className="fw-bold mb-3">Supplier Outstanding Balances</h6>
+                    {supplierSummary.length === 0 ? (
+                        <p className="text-muted">No outstanding balances.</p>
+                    ) : (
                     <div className="table-responsive">
                         <table className="table table-hover">
                             <thead className="table-light">
                                 <tr>
                                     <th>Supplier</th>
-                                    <th className="text-end">Total Invoices</th>
-                                    <th className="text-end">Total Amount</th>
-                                    <th className="text-end">Paid</th>
                                     <th className="text-end">Outstanding</th>
                                 </tr>
                             </thead>
@@ -96,9 +181,6 @@ const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats 
                                 {supplierSummary.map((supplier, index) => (
                                     <tr key={index}>
                                         <td className="fw-bold">{supplier.supplier}</td>
-                                        <td className="text-end">{supplier.totalInvoices}</td>
-                                        <td className="text-end">{formatKES(supplier.totalAmount)}</td>
-                                        <td className="text-end text-success">{formatKES(supplier.paid)}</td>
                                         <td className="text-end text-warning fw-bold">{formatKES(supplier.outstanding)}</td>
                                     </tr>
                                 ))}
@@ -106,15 +188,6 @@ const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats 
                             <tfoot className="table-light">
                                 <tr>
                                     <td className="fw-bold">Total</td>
-                                    <td className="text-end fw-bold">
-                                        {supplierSummary.reduce((sum, s) => sum + s.totalInvoices, 0)}
-                                    </td>
-                                    <td className="text-end fw-bold">
-                                        {formatKES(supplierSummary.reduce((sum, s) => sum + s.totalAmount, 0))}
-                                    </td>
-                                    <td className="text-end fw-bold text-success">
-                                        {formatKES(supplierSummary.reduce((sum, s) => sum + s.paid, 0))}
-                                    </td>
                                     <td className="text-end fw-bold text-warning">
                                         {formatKES(supplierSummary.reduce((sum, s) => sum + s.outstanding, 0))}
                                     </td>
@@ -122,36 +195,13 @@ const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats 
                             </tfoot>
                         </table>
                     </div>
+                    )}
                 </div>
             </div>
 
-            {/* Posting Statistics */}
+            {/* Voucher Type Summary */}
             <div className="row">
-                <div className="col-md-6">
-                    <div className="card border-0 shadow-sm">
-                        <div className="card-body">
-                            <h6 className="fw-bold mb-3">Posted vs Unposted Vouchers</h6>
-                            <div className="row text-center">
-                                <div className="col-6">
-                                    <div className="p-3 bg-success-subtle rounded">
-                                        <div className="text-muted small mb-1">Posted</div>
-                                        <div className="h4 mb-0 text-success">{postingStats.posted.count}</div>
-                                        <div className="small text-muted">{formatKES(postingStats.posted.amount)}</div>
-                                    </div>
-                                </div>
-                                <div className="col-6">
-                                    <div className="p-3 bg-warning-subtle rounded">
-                                        <div className="text-muted small mb-1">Unposted</div>
-                                        <div className="h4 mb-0 text-warning">{postingStats.unposted.count}</div>
-                                        <div className="small text-muted">{formatKES(postingStats.unposted.amount)}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="col-md-6">
+                <div className="col-12">
                     <div className="card border-0 shadow-sm">
                         <div className="card-body">
                             <h6 className="fw-bold mb-3">Voucher Type Summary</h6>
@@ -161,7 +211,7 @@ const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats 
                                         <tr>
                                             <th>Type</th>
                                             <th className="text-end">Count</th>
-                                            <th className="text-end">Amount</th>
+                                            <th className="text-end">Total Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -173,6 +223,13 @@ const ReportsTab = ({ agingData, voucherTypeData, supplierSummary, postingStats 
                                             </tr>
                                         ))}
                                     </tbody>
+                                    <tfoot className="table-light">
+                                        <tr>
+                                            <td className="fw-bold">Total</td>
+                                            <td className="text-end fw-bold">{voucherTypeData.reduce((s, v) => s + v.count, 0)}</td>
+                                            <td className="text-end fw-bold">{formatKES(voucherTypeData.reduce((s, v) => s + v.amount, 0))}</td>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         </div>

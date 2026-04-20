@@ -1,39 +1,40 @@
 import React from 'react';
-import { Layers, CheckCircle2, AlertTriangle, BookOpen, GraduationCap } from 'lucide-react';
+import { Layers, GraduationCap, BookOpen, AlertTriangle } from 'lucide-react';
 
-const GradingSummaryCards = () => {
+const GradingSummaryCards = ({ scales = [], activeScales = [], loading }) => {
+    const activeSystems = scales.filter(s => s.is_active).length;
+    const totalLevels = scales.reduce((sum, s) => sum + (s.level_count || 0), 0);
+    const curriculaCount = new Set(scales.map(s => s.curriculum)).size;
+    const activeScaleLevels = activeScales.reduce((sum, s) => sum + (s.level_count || 0), 0);
+
     const stats = [
         {
             label: 'Active Systems',
-            value: 4,
-            subtext: 'Across 3 Curricula',
+            value: loading ? '—' : activeSystems,
+            subtext: `Across ${curriculaCount} Curricula`,
             icon: Layers,
             color: 'blue',
-            trend: '+1 this term'
         },
         {
             label: 'Total Grades',
-            value: 28,
+            value: loading ? '—' : totalLevels,
             subtext: 'Defined Levels',
             icon: GraduationCap,
             color: 'purple',
-            trend: 'Stable'
         },
         {
-            label: 'Linked Subjects',
-            value: 124,
-            subtext: 'Using Grading Rules',
+            label: 'Current Scales',
+            value: loading ? '—' : activeScales.length,
+            subtext: `${activeScaleLevels} levels defined`,
             icon: BookOpen,
             color: 'emerald',
-            trend: '98% Coverage'
         },
         {
-            label: 'Validation Issues',
-            value: 2,
-            subtext: 'Requires Attention',
+            label: 'Scale Types',
+            value: loading ? '—' : new Set(scales.map(s => s.scale_type)).size,
+            subtext: [...new Set(scales.map(s => s.scale_type))].join(', ') || 'N/A',
             icon: AlertTriangle,
             color: 'amber',
-            trend: 'Low Priority'
         }
     ];
 
@@ -45,9 +46,6 @@ const GradingSummaryCards = () => {
                         <div className={`p-3 rounded-xl bg-${stat.color}-50 dark:bg-${stat.color}-900/20 text-${stat.color}-600 group-hover:scale-110 transition-transform`}>
                             <stat.icon size={22} />
                         </div>
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full bg-${stat.color}-50 dark:bg-${stat.color}-900/10 text-${stat.color}-600`}>
-                            {stat.trend}
-                        </span>
                     </div>
                     <div>
                         <h4 className="text-3xl font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">

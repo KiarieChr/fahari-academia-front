@@ -73,6 +73,11 @@ const studentSettingsService = {
     getClassSessions: (params) => api.get('/api/academics/sessions/', { params }),
     generateSessions: (data) => api.post('/api/academics/sessions/auto_generate/', data),
     getSessionEnrollments: (params) => api.get('/api/academics/enrollments/', { params }),
+    createSessionEnrollment: (data) => api.post('/api/academics/enrollments/', data),
+    updateSessionEnrollment: (id, data) => api.patch(`/api/academics/enrollments/${id}/`, data),
+    deleteSessionEnrollment: (id) => api.delete(`/api/academics/enrollments/${id}/`),
+    transferSessionEnrollment: (id, data) => api.post(`/api/academics/enrollments/${id}/transfer/`, data),
+    bulkSessionEnroll: (data) => api.post('/api/academics/enrollments/bulk_session_enroll/', data),
 
     // Enrollments
     getEnrollments: (params) => api.get('/api/settings/enrollments/', { params }),

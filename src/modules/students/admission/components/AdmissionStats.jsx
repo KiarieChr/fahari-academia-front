@@ -31,72 +31,9 @@ import {
     Legend
 } from 'recharts';
 import { studentManagementService } from '../../../../services/studentManagementService';
+import StatCardMini from '../../../../dashboard/components/StatCardMini';
 
-// Memoized Metric Card Component
-const MetricCard = React.memo(({ title, value, subValue, icon: Icon, change, isPositive, color, onClick }) => {
-    const getChangeIndicator = useCallback(() => {
-        if (change === undefined) return null;
-
-        const ChangeIcon = isPositive ? ChevronUp : ChevronDown;
-        const changeColor = isPositive ? 'text-green-700' : 'text-red-600';
-        const bgBadge = isPositive ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100';
-
-        return (
-            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${bgBadge} ${changeColor} text-xs font-semibold`}>
-                <ChangeIcon size={11} />
-                <span className="tabular-nums">{Math.abs(change)}%</span>
-            </div>
-        );
-    }, [change, isPositive]);
-
-    return (
-        <div
-            onClick={onClick}
-            className={[
-                'relative bg-white rounded-2xl border border-gray-100 overflow-hidden',
-                'shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]',
-                'transition-all duration-200 group p-5',
-                onClick
-                    ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(63,81,181,0.12)] hover:border-indigo-100'
-                    : ''
-            ].join(' ')}
-        >
-            {/* Top accent strip — brand indigo */}
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-400 via-indigo-500 to-indigo-400" />
-
-            {/* Icon row */}
-            <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-xl ${color} shadow-sm transition-all duration-200 group-hover:scale-110`}>
-                    <Icon size={20} />
-                </div>
-                {getChangeIndicator()}
-            </div>
-
-            {/* Value */}
-            <h3 className="text-[1.7rem] font-bold text-gray-900 tracking-tight tabular-nums leading-none mb-1">
-                {value}
-            </h3>
-
-            {/* Sub-value */}
-            {subValue && (
-                <p className="text-xs font-medium text-gray-400">{subValue}</p>
-            )}
-
-            {/* Footer row */}
-            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                <p className="text-[0.7rem] font-bold text-gray-400 uppercase tracking-widest">{title}</p>
-                {onClick && (
-                    <span className="inline-flex items-center gap-0.5 text-[0.7rem] text-indigo-500 font-semibold
-                                    opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        Details <ChevronRight size={10} />
-                    </span>
-                )}
-            </div>
-        </div>
-    );
-});
-
-MetricCard.displayName = 'MetricCard';
+import '../../../../dashboard/dashboard.css';
 
 // Memoized Line Chart Component
 const TrendChart = React.memo(({ data }) => {
@@ -555,7 +492,7 @@ const AdmissionStats = () => {
     if (!stats) return null;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* Section header */}
             <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-1">
@@ -574,58 +511,56 @@ const AdmissionStats = () => {
                 </span>
             </div>
 
-            {/* Metrics Grid with Enhanced Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                <MetricCard
+            {/* Metrics Grid — same compact cards as main dashboard */}
+            <div className="stats-grid-dense">
+                <StatCardMini
                     title="Total Applications"
                     value={stats.metrics.total_apps?.toLocaleString() || '0'}
-                    subValue={`${derivedMetrics?.admissionRate}% admission rate`}
-                    icon={ClipboardList}
-                    color="bg-blue-50 text-blue-600"
+                    icon="clipboard-list"
+                    color="#dbeafe"
+                    iconColor="#2563eb"
                     change={derivedMetrics?.admissionChange}
-                    isPositive={derivedMetrics?.admissionTrend === 'up'}
-                    onClick={() => handleMetricClick('applications')}
+                    trendLabel={`${derivedMetrics?.admissionRate}% admission rate`}
                 />
-                <MetricCard
+                <StatCardMini
                     title="Admitted Students"
                     value={stats.metrics.admitted?.toLocaleString() || '0'}
-                    subValue={`${derivedMetrics?.conversionRate}% conversion rate`}
-                    icon={UserPlus}
-                    color="bg-green-50 text-green-600"
-                    onClick={() => handleMetricClick('admitted')}
+                    icon="user-plus"
+                    color="#dcfce7"
+                    iconColor="#16a34a"
+                    trendLabel={`${derivedMetrics?.conversionRate}% conversion rate`}
                 />
-                <MetricCard
+                <StatCardMini
                     title="Pending Review"
                     value={stats.metrics.pending?.toLocaleString() || '0'}
-                    subValue={`${Math.round((stats.metrics.pending / stats.metrics.total_apps) * 100)}% of total`}
-                    icon={Users}
-                    color="bg-yellow-50 text-yellow-600"
+                    icon="users"
+                    color="#fef9c3"
+                    iconColor="#ca8a04"
                     change={derivedMetrics?.pendingChange}
-                    isPositive={derivedMetrics?.pendingTrend === 'up'}
-                    onClick={() => handleMetricClick('pending')}
+                    trendLabel={`${Math.round((stats.metrics.pending / (stats.metrics.total_apps || 1)) * 100)}% of total`}
                 />
-                <MetricCard
+                <StatCardMini
                     title="Repeaters"
                     value={stats.metrics.repeaters?.toLocaleString() || '0'}
-                    subValue={`${derivedMetrics?.repeaterPercentage}% of admitted`}
-                    icon={Repeat}
-                    color="bg-orange-50 text-orange-600"
-                    onClick={() => handleMetricClick('repeaters')}
+                    icon="repeat"
+                    color="#ffedd5"
+                    iconColor="#ea580c"
+                    trendLabel={`${derivedMetrics?.repeaterPercentage}% of admitted`}
                 />
-                <MetricCard
+                <StatCardMini
                     title="Net Transfers"
                     value={stats.metrics.transfers?.toLocaleString() || '0'}
-                    subValue={stats.metrics.transfers >= 0 ? "Net gain" : "Net loss"}
-                    icon={ArrowRightLeft}
-                    color="bg-purple-50 text-purple-600"
-                    onClick={() => handleMetricClick('transfers')}
+                    icon="arrow-right-left"
+                    color="#f3e8ff"
+                    iconColor="#9333ea"
+                    trendLabel={stats.metrics.transfers >= 0 ? "Net gain" : "Net loss"}
                 />
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 {/* Line Chart - Application Trends */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100
+                <div className="bg-white p-7 rounded-2xl border border-gray-100
                                shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:col-span-2 min-w-0">
                     <div className="flex items-center justify-between mb-6">
                         <div>
@@ -649,7 +584,7 @@ const AdmissionStats = () => {
                 </div>
 
                 {/* Pie Chart - Admission Status */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100
+                <div className="bg-white p-7 rounded-2xl border border-gray-100
                                shadow-[0_1px_3px_rgba(0,0,0,0.06)] min-w-0">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-base font-bold text-gray-900 tracking-tight">Status Distribution</h3>
@@ -678,7 +613,7 @@ const AdmissionStats = () => {
                 </div>
 
                 {/* Bar Chart - Class-wise Gender Distribution */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100
+                <div className="bg-white p-7 rounded-2xl border border-gray-100
                                shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:col-span-3 min-w-0">
                     <GenderBarChart data={stats.class_distribution} />
                     <div className="mt-4 flex items-center justify-between">
@@ -704,7 +639,7 @@ const AdmissionStats = () => {
 
             {/* ── Key Insights Panel ── full-width below charts grid */}
             <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 to-indigo-700
-                rounded-2xl p-6 border border-indigo-500/30
+                rounded-2xl p-7 border border-indigo-500/30
                 shadow-[0_4px_24px_rgba(63,81,181,0.25)]">
                 {/* Decorative background blobs */}
                 <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/5 rounded-full" />
@@ -717,20 +652,20 @@ const AdmissionStats = () => {
                         <span className="text-[0.65rem] text-indigo-200 font-medium">Derived from current data</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
                             <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Admission Efficiency</p>
                             <p className="text-3xl font-bold text-white tabular-nums">{derivedMetrics?.admissionRate}%</p>
                             <p className="text-xs text-indigo-200 mt-1">Applications converted to admissions</p>
                         </div>
-                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
+                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
                             <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Gender Balance</p>
                             <p className="text-3xl font-bold text-white tabular-nums">
                                 {stats.class_distribution.reduce((sum, c) => sum + c.boys, 0)}:{stats.class_distribution.reduce((sum, c) => sum + c.girls, 0)}
                             </p>
                             <p className="text-xs text-indigo-200 mt-1">Overall boys to girls ratio</p>
                         </div>
-                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
+                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
                             <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Top Performing Class</p>
                             <p className="text-3xl font-bold text-white truncate">
                                 {stats.class_distribution.slice().sort((a, b) => (b.boys + b.girls) - (a.boys + a.girls))[0]?.name || 'N/A'}

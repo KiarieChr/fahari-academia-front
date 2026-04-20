@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, User } from 'lucide-react';
-import { incomeAccounts } from '../../fee-structure/data/mockFeeStructureData';
 import { formatKES } from '../utils/invoiceUtils';
 import { api } from '../../../../services/api';
 import Swal from 'sweetalert2';
@@ -15,6 +14,8 @@ const ManualInvoiceModal = ({ show, onClose, onCreate }) => {
     });
 
     const [structureId, setStructureId] = useState(null);
+    const [templateId, setTemplateId] = useState(null);
+    const [billingSource, setBillingSource] = useState(null);
     const [contextLoading, setContextLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
@@ -63,18 +64,33 @@ const ManualInvoiceModal = ({ show, onClose, onCreate }) => {
                 }));
             }
 
-            if (context.structure) {
-                setStructureId(context.structure.id);
-                // Populate items
+            // Handle template-based billing
+            if (context.billing_source === 'template' && context.template) {
+                setBillingSource('template');
+                setTemplateId(context.template.id);
+                setStructureId(null);
                 setItems(context.fee_items.map(item => ({
-                    id: item.id, // Keep FeeItem ID for backend mapping
+                    id: item.id,
+                    name: item.name,
+                    amount: item.amount,
+                    accountId: item.account_id,
+                    is_mandatory: item.is_mandatory
+                })));
+            } else if (context.structure) {
+                setBillingSource('structure');
+                setStructureId(context.structure.id);
+                setTemplateId(null);
+                setItems(context.fee_items.map(item => ({
+                    id: item.id,
                     name: item.name,
                     amount: item.amount,
                     accountId: item.account_id,
                     is_mandatory: item.is_mandatory
                 })));
             } else {
+                setBillingSource(null);
                 setStructureId(null);
+                setTemplateId(null);
                 setItems([]);
             }
 
@@ -123,13 +139,15 @@ const ManualInvoiceModal = ({ show, onClose, onCreate }) => {
 
         const invoicePayload = {
             student_id: formData.studentId,
+            billing_source: billingSource,
             structure_id: structureId,
-            term: formData.term, // Just for ref/validation if needed
+            template_id: templateId,
+            term: formData.term,
             year: formData.year,
             due_date: formData.dueDate,
             remarks: formData.remarks,
             items: items.map(item => ({
-                id: String(item.id).startsWith('new-') ? null : item.id, // Only send valid fee item IDs
+                id: String(item.id).startsWith('new-') ? null : item.id,
                 amount: Number(item.amount)
             }))
         };

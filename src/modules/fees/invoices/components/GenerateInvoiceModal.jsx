@@ -77,25 +77,74 @@ const GenerateInvoiceModal = ({ show, onClose, onGenerate }) => {
                 return;
             }
 
-            // Fetch fee structure for preview
-            const structureRes = await api.get('/api/fees/fee-structures/', {
-                params: {
-                    academic_year: session.academic_year,
-                    term: session.term,
-                    grade: session.grade,
-                    status: 'ACTIVE'
-                }
-            });
-            const structures = Array.isArray(structureRes) ? structureRes : (structureRes.results || []);
+            // Try fee template first (template billing), fall back to legacy fee structure
+            let billingSource = null;
+            let feeItems = [];
+            let feePerStudent = 0;
+            let structureLabel = '';
 
-            if (structures.length === 0) {
-                setPreview({
-                    error: `No ACTIVE fee structure found for ${session.grade_name || session.name}. Please create and activate a fee structure first.`
+            // 1. Check for active Fee Template matching this session's grade
+            try {
+                const templateRes = await api.get('/api/fees/fee-templates/', {
+                    params: {
+                        academic_year: session.academic_year,
+                        term: session.term,
+                        status: 'ACTIVE'
+                    }
                 });
-                return;
+                const templates = Array.isArray(templateRes) ? templateRes : (templateRes.results || []);
+                // Find template that covers this session's grade (via direct grades or grade_band)
+                const matchingTemplate = templates.find(t => {
+                    const coveredGrades = t.covered_grades || [];
+                    return coveredGrades.some(g => g.id === session.grade || g.id == session.grade);
+                });
+
+                if (matchingTemplate) {
+                    billingSource = 'template';
+                    structureLabel = matchingTemplate.name;
+                    const lineItems = matchingTemplate.line_items || [];
+                    const mandatoryItems = lineItems.filter(li => li.is_mandatory);
+                    feeItems = mandatoryItems.map(li => ({
+                        name: li.vote_head_name || li.name,
+                        amount: li.amount,
+                        is_optional: !li.is_mandatory
+                    }));
+                    feePerStudent = mandatoryItems.reduce((sum, li) => sum + parseFloat(li.amount || 0), 0);
+                }
+            } catch (e) {
+                console.warn('Template lookup failed, trying legacy structure', e);
             }
 
-            const structure = structures[0];
+            // 2. Fall back to legacy FeeStructure if no template
+            if (!billingSource) {
+                const structureRes = await api.get('/api/fees/fee-structures/', {
+                    params: {
+                        academic_year: session.academic_year,
+                        term: session.term,
+                        grade: session.grade,
+                        status: 'ACTIVE'
+                    }
+                });
+                const structures = Array.isArray(structureRes) ? structureRes : (structureRes.results || []);
+
+                if (structures.length === 0) {
+                    setPreview({
+                        error: `No ACTIVE fee template or fee structure found for ${session.grade_name || session.name}. Please create and activate a fee template or fee structure first.`
+                    });
+                    return;
+                }
+
+                const structure = structures[0];
+                billingSource = 'structure';
+                structureLabel = `Grade Structure #${structure.id}`;
+                const items = (structure.items || []).filter(item => !item.is_optional);
+                feeItems = items.map(item => ({
+                    name: item.name,
+                    amount: item.amount,
+                    is_optional: item.is_optional
+                }));
+                feePerStudent = items.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+            }
 
             // Fetch enrollment count for this session
             const enrollmentRes = await api.get(`/api/academics/enrollments/`, {
@@ -103,18 +152,14 @@ const GenerateInvoiceModal = ({ show, onClose, onGenerate }) => {
             });
             const enrollments = Array.isArray(enrollmentRes) ? enrollmentRes : (enrollmentRes.results || []);
 
-            // Calculate totals from fee items (mandatory only for bulk)
-            const feeItems = structure.items || [];
-            const mandatoryItems = feeItems.filter(item => !item.is_optional);
-            const feePerStudent = mandatoryItems.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
-
             setPreview({
                 session,
-                structure,
+                billingSource,
+                structureLabel,
                 studentCount: enrollments.length,
                 feePerStudent,
                 totalAmount: feePerStudent * enrollments.length,
-                feeItems: mandatoryItems
+                feeItems
             });
 
         } catch (err) {
@@ -286,7 +331,10 @@ const GenerateInvoiceModal = ({ show, onClose, onGenerate }) => {
 
                                     <div className="d-flex align-items-center text-success mb-2">
                                         <CheckCircle size={16} className="me-2" />
-                                        <small>Using Fee Structure: {preview.structure.id}</small>
+                                        <small>
+                                            Billing via: <strong>{preview.billingSource === 'template' ? 'Fee Template' : 'Grade Fee Structure'}</strong>
+                                            {' — '}{preview.structureLabel}
+                                        </small>
                                     </div>
 
                                     <div className="small text-muted mb-2">

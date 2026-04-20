@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CreditCard, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import { CreditCard, FileText, AlertTriangle, CheckCircle, Layers } from 'lucide-react';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 import StatCard from '../../dashboard/components/StatCard';
 import { toast } from 'react-toastify';
@@ -56,6 +56,7 @@ const StudentFees = () => {
         { title: 'Receipt Book', path: '/dashboard/fees/receipts', icon: <CreditCard size={20} />, color: 'bg-green-100 text-green-600' },
         { title: 'Arrears', path: '/dashboard/fees/arrears', icon: <AlertTriangle size={20} />, color: 'bg-red-100 text-red-600' },
         { title: 'Fee Structure', path: '/dashboard/fees/structure', icon: <CheckCircle size={20} />, color: 'bg-purple-100 text-purple-600' },
+        { title: 'Fee Templates', path: '/dashboard/fees/templates', icon: <Layers size={20} />, color: 'bg-indigo-100 text-indigo-600' },
     ];
 
     return (

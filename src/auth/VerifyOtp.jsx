@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { KeyRound, Loader2, ArrowLeft } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { api } from '../services/api';
+import { toast } from 'react-toastify';
 import AuthLayout from './AuthLayout';
 
 
@@ -15,14 +17,26 @@ const VerifyOtp = () => {
     const [otp, setOtp] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+    const email = location.state?.email || '';
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!email) {
+            toast.error('Email not found. Please start from the forgot password page.');
+            navigate('/forgot-password');
+            return;
+        }
         setIsLoading(true);
-        setTimeout(() => {
+        try {
+            await api.verifyOtp(email, otp);
+            toast.success('OTP verified successfully');
+            navigate('/reset-password', { state: { email, code: otp } });
+        } catch (error) {
+            toast.error(error.message || 'Invalid or expired OTP');
+        } finally {
             setIsLoading(false);
-            navigate('/reset-password');
-        }, 1500);
+        }
     };
 
     return (

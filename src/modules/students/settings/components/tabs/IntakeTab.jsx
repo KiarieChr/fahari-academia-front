@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Users, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Calendar, Users, Edit, Trash2, Search, Loader2, BarChart3, CheckCircle2 } from 'lucide-react';
 import studentSettingsService from '../../../../../services/studentSettingsService';
 import IntakeModal from '../../../intake/IntakeModal';
 
@@ -68,14 +68,14 @@ const IntakeTab = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Student Intakes</h2>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <h2 className="text-xl font-bold text-gray-900">Student Intakes</h2>
+                    <p className="text-sm text-gray-400 mt-1">
                         Manage student intake cohorts and admission groups
                     </p>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="btn btn-primary d-flex align-items-center gap-2"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all"
                 >
                     <Plus className="w-4 h-4" />
                     Add New Intake
@@ -84,34 +84,36 @@ const IntakeTab = () => {
 
             {/* Search Bar */}
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-300 w-4 h-4" />
                 <input
                     type="text"
                     placeholder="Search intakes by name, code, or year..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all bg-white"
                 />
             </div>
 
             {/* Intakes Table */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 {loading ? (
-                    <div className="p-8 text-center">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p className="mt-2 text-gray-600">Loading intakes...</p>
+                    <div className="p-12 text-center">
+                        <Loader2 className="w-7 h-7 text-indigo-500 animate-spin mx-auto" />
+                        <p className="mt-3 text-sm text-gray-400">Loading intakes...</p>
                     </div>
                 ) : filteredIntakes.length === 0 ? (
-                    <div className="p-8 text-center">
-                        <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">No intakes found</h3>
-                        <p className="mt-1 text-sm text-gray-500">
+                    <div className="p-12 text-center">
+                        <div className="p-3.5 bg-gray-50 rounded-xl inline-block mb-3">
+                            <Calendar className="h-7 w-7 text-gray-300" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-gray-900">No intakes found</h3>
+                        <p className="mt-1.5 text-sm text-gray-400 max-w-xs mx-auto">
                             {searchTerm ? 'Try adjusting your search' : 'Get started by creating a new intake cohort'}
                         </p>
                         {!searchTerm && (
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="mt-4 btn btn-primary d-flex align-items-center gap-2 mx-auto"
+                                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all"
                             >
                                 <Plus className="w-4 h-4" />
                                 Add New Intake
@@ -120,87 +122,74 @@ const IntakeTab = () => {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Intake Name
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Code
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Academic Year
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Start Date
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Entry Grade
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Students
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
+                        <table className="min-w-full">
+                            <thead>
+                                <tr className="border-b border-gray-100">
+                                    <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Intake Name</th>
+                                    <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Code</th>
+                                    <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Academic Year</th>
+                                    <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Start Date</th>
+                                    <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Entry Grade</th>
+                                    <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Students</th>
+                                    <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3.5 text-right text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="divide-y divide-gray-50">
                                 {filteredIntakes.map((intake) => (
-                                    <tr key={intake.id} className="hover:bg-gray-50 cursor-pointer" onDoubleClick={() => handleEdit(intake)}>
+                                    <tr key={intake.id} className="hover:bg-indigo-50/30 cursor-pointer transition-colors" onDoubleClick={() => handleEdit(intake)}>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{intake.name}</div>
+                                            <div className="text-sm font-semibold text-gray-900">{intake.name}</div>
                                             {intake.description && (
-                                                <div className="text-sm text-gray-500">{intake.description}</div>
+                                                <div className="text-xs text-gray-400 mt-0.5 truncate max-w-[200px]">{intake.description}</div>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
                                                 {intake.code}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {intake.academic_year_name || 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {intake.start_date ? new Date(intake.start_date).toLocaleDateString() : 'N/A'}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {intake.entry_grade_name || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center text-sm text-gray-900">
-                                                <Users className="w-4 h-4 mr-1 text-gray-400" />
-                                                {intake.student_count || 0}
+                                            <div className="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                                                <Users className="w-3.5 h-3.5 text-gray-400" />
+                                                <span className="font-medium">{intake.student_count || 0}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${intake.is_active
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-gray-100 text-gray-800'
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold ${intake.is_active
+                                                ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                                : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200'
                                                 }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${intake.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
                                                 {intake.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button
-                                                onClick={() => handleEdit(intake)}
-                                                className="text-blue-600 hover:text-blue-900 mr-3"
-                                                title="Edit intake"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(intake.id)}
-                                                className="text-red-600 hover:text-red-900"
-                                                title="Delete intake"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="inline-flex items-center gap-1">
+                                                <button
+                                                    onClick={() => handleEdit(intake)}
+                                                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                    title="Edit intake"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(intake.id)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Delete intake"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -213,20 +202,35 @@ const IntakeTab = () => {
             {/* Summary Stats */}
             {!loading && filteredIntakes.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white p-4 rounded-lg shadow">
-                        <div className="text-sm text-gray-600">Total Intakes</div>
-                        <div className="text-2xl font-semibold text-gray-900">{intakes.length}</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg shadow">
-                        <div className="text-sm text-gray-600">Active Intakes</div>
-                        <div className="text-2xl font-semibold text-green-600">
-                            {intakes.filter(i => i.is_active).length}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4">
+                        <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-gray-50 text-gray-500">
+                            <BarChart3 size={20} />
+                        </div>
+                        <div>
+                            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Intakes</div>
+                            <div className="text-2xl font-bold text-gray-900 mt-0.5">{intakes.length}</div>
                         </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow">
-                        <div className="text-sm text-gray-600">Total Students</div>
-                        <div className="text-2xl font-semibold text-blue-600">
-                            {intakes.reduce((sum, i) => sum + (i.student_count || 0), 0)}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4">
+                        <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600">
+                            <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Intakes</div>
+                            <div className="text-2xl font-bold text-emerald-600 mt-0.5">
+                                {intakes.filter(i => i.is_active).length}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4">
+                        <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600">
+                            <Users size={20} />
+                        </div>
+                        <div>
+                            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Students</div>
+                            <div className="text-2xl font-bold text-indigo-600 mt-0.5">
+                                {intakes.reduce((sum, i) => sum + (i.student_count || 0), 0)}
+                            </div>
                         </div>
                     </div>
                 </div>

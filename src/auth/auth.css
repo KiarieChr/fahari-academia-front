@@ -225,6 +225,9 @@
   margin-top: 1rem;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .submit-btn:hover {
@@ -286,5 +289,25 @@
 
   .brand-title {
     font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-page {
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .auth-right {
+    padding: 1.5rem;
+  }
+
+  .auth-left {
+    min-height: 150px;
+    padding: 1.5rem;
+  }
+
+  .brand-title {
+    font-size: 2rem;
   }
 }

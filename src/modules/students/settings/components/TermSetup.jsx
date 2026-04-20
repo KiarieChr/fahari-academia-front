@@ -3,6 +3,8 @@ import { Plus, Edit2, Trash2, Calendar, CheckCircle, XCircle } from 'lucide-reac
 import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../services/studentSettingsService';
 import DateInput from '../../../../components/common/DateInput';
+import Modal from '../../../../components/common/Modal';
+import { inputClass, labelClass } from '../../../../components/ui/FormField';
 
 const TermSetup = () => {
     const [terms, setTerms] = useState([]);
@@ -160,104 +162,81 @@ const TermSetup = () => {
             )}
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="px-7 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                            <div className="flex items-center gap-3.5">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600">
-                                    <Calendar size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{editingTerm ? 'Edit Term' : 'Add New Term'}</h3>
-                                    <p className="text-[0.8rem] text-gray-400 mt-0.5">Configure academic term details</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                                <XCircle size={18} className="text-gray-400" />
-                            </button>
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title={editingTerm ? 'Edit Term' : 'Add New Term'}
+                    subtitle="Configure academic term details"
+                    icon={<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600"><Calendar size={20} /></div>}
+                    footer={
+                        <>
+                            <Modal.CancelButton onClick={() => setIsModalOpen(false)} />
+                            <Modal.SubmitButton onClick={handleSave}>
+                                {editingTerm ? 'Update Term' : 'Create Term'}
+                            </Modal.SubmitButton>
+                        </>
+                    }
+                >
+                    <form onSubmit={handleSave} className="space-y-5">
+                        <div>
+                            <label className={labelClass}>Term Name</label>
+                            <input
+                                type="text"
+                                required
+                                className={inputClass}
+                                placeholder="e.g. Term 1"
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            />
                         </div>
-
-                        {/* Form Body */}
-                        <form onSubmit={handleSave} className="px-7 py-6 space-y-5">
+                        <div>
+                            <label className={labelClass}>Academic Year</label>
+                            <select
+                                required
+                                className={inputClass}
+                                value={formData.academic_year}
+                                onChange={e => setFormData({ ...formData, academic_year: e.target.value })}
+                            >
+                                {years.map(y => (
+                                    <option key={y.id} value={y.id}>{y.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-5">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Term Name</label>
-                                <input
-                                    type="text"
+                                <label className={labelClass}>Start Date</label>
+                                <DateInput
                                     required
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
-                                    placeholder="e.g. Term 1"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    value={formData.start_date}
+                                    onChange={dateStr => setFormData(prev => ({ ...prev, start_date: dateStr }))}
+                                    placeholder="Start Date"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Academic Year</label>
-                                <select
+                                <label className={labelClass}>End Date</label>
+                                <DateInput
                                     required
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all"
-                                    value={formData.academic_year}
-                                    onChange={e => setFormData({ ...formData, academic_year: e.target.value })}
-                                >
-                                    {years.map(y => (
-                                        <option key={y.id} value={y.id}>{y.name}</option>
-                                    ))}
-                                </select>
+                                    value={formData.end_date}
+                                    onChange={dateStr => setFormData(prev => ({ ...prev, end_date: dateStr }))}
+                                    placeholder="End Date"
+                                    minDate={formData.start_date}
+                                />
                             </div>
-                            <div className="grid grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Start Date</label>
-                                    <DateInput
-                                        required
-                                        value={formData.start_date}
-                                        onChange={dateStr => setFormData(prev => ({ ...prev, start_date: dateStr }))}
-                                        placeholder="Start Date"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">End Date</label>
-                                    <DateInput
-                                        required
-                                        value={formData.end_date}
-                                        onChange={dateStr => setFormData(prev => ({ ...prev, end_date: dateStr }))}
-                                        placeholder="End Date"
-                                        minDate={formData.start_date}
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 pt-1">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only peer"
-                                        checked={formData.is_current}
-                                        onChange={e => setFormData({ ...formData, is_current: e.target.checked })}
-                                    />
-                                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                                    <span className="ml-3 text-sm font-medium text-gray-700">Set as Current Term</span>
-                                </label>
-                            </div>
-                        </form>
-
-                        {/* Footer */}
-                        <div className="px-7 py-4 border-t border-gray-100 bg-gray-50/30 flex justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleSave}
-                                className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all"
-                            >
-                                {editingTerm ? 'Update Term' : 'Create Term'}
-                            </button>
                         </div>
-                    </div>
-                </div>
+                        <div className="flex items-center gap-2 pt-1">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={formData.is_current}
+                                    onChange={e => setFormData({ ...formData, is_current: e.target.checked })}
+                                />
+                                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                <span className="ml-3 text-sm font-medium text-gray-700">Set as Current Term</span>
+                            </label>
+                        </div>
+                    </form>
+                </Modal>
             )}
         </div>
     );

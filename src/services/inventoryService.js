@@ -1,324 +1,240 @@
+import { api } from './api';
 
-// Mock Data for Inventory Items (Expanded for Stock Master)
-const MOCK_ITEMS = [
-    {
-        id: 1,
-        name: 'A4 Paper Reams',
-        category: 'Stationery',
-        type: 'Consumable',
-        stock: 150,
-        unit: 'Ream',
-        unitCost: 500,
-        minLevel: 20,
-        location: 'Store A-12',
-        expiry: null,
-        batch: 'B-2023-001',
-        supplier: 'Office Depot Ltd',
-        status: 'Active'
-    },
-    {
-        id: 2,
-        name: 'Ballpoint Pens (Blue)',
-        category: 'Stationery',
-        type: 'Consumable',
-        stock: 50,
-        unit: 'Box',
-        unitCost: 200,
-        minLevel: 10,
-        location: 'Store A-14',
-        expiry: null,
-        batch: 'B-2023-055',
-        supplier: 'Office Depot Ltd',
-        status: 'Active'
-    },
-    {
-        id: 3,
-        name: 'Staplers',
-        category: 'Office Equipment',
-        type: 'Consumable',
-        stock: 25,
-        unit: 'Pcs',
-        unitCost: 600,
-        minLevel: 5,
-        location: 'Store B-01',
-        expiry: null,
-        batch: '-',
-        supplier: 'Stationery World',
-        status: 'Active'
-    },
-    {
-        id: 4,
-        name: 'File Folders',
-        category: 'Stationery',
-        type: 'Consumable',
-        stock: 300,
-        unit: 'Pcs',
-        unitCost: 100,
-        minLevel: 50,
-        location: 'Store A-10',
-        expiry: null,
-        batch: '-',
-        supplier: 'Office Depot Ltd',
-        status: 'Active'
-    },
-    {
-        id: 5,
-        name: 'Whiteboard Markers',
-        category: 'Stationery',
-        type: 'Consumable',
-        stock: 8,
-        unit: 'Box',
-        unitCost: 1200,
-        minLevel: 10,
-        location: 'Store B-05',
-        expiry: '2024-12-31',
-        batch: 'EXP-991',
-        supplier: 'School Supplies Co',
-        status: 'Active'
-    },
-    {
-        id: 6,
-        name: 'Cleaning Detergent',
-        category: 'Cleaning',
-        type: 'Consumable',
-        stock: 40,
-        unit: 'Jerrican',
-        unitCost: 800,
-        minLevel: 15,
-        location: 'Store C-01',
-        expiry: '2025-06-30',
-        batch: 'CHEM-001',
-        supplier: 'CleanAll Ltd',
-        status: 'Active'
-    },
-    {
-        id: 7,
-        name: 'Toilet Tissue',
-        category: 'Cleaning',
-        type: 'Consumable',
-        stock: 500,
-        unit: 'Bale',
-        unitCost: 400,
-        minLevel: 100,
-        location: 'Store C-02',
-        expiry: null,
-        batch: '-',
-        supplier: 'CleanAll Ltd',
-        status: 'Active'
-    },
-    {
-        id: 8,
-        name: 'Office Projector',
-        category: 'Electronics',
-        type: 'Capital Asset',
-        stock: 2,
-        unit: 'Unit',
-        unitCost: 45000,
-        minLevel: 1,
-        location: 'Secure Store 1',
-        expiry: null,
-        batch: 'SN-998877',
-        supplier: 'Tech Solutions',
-        status: 'Active'
-    },
-    {
-        id: 9,
-        name: 'Expired Chemicals',
-        category: 'Science Lab',
-        type: 'Consumable',
-        stock: 5,
-        unit: 'Liters',
-        unitCost: 2000,
-        minLevel: 0,
-        location: 'Hazmat Store',
-        expiry: '2023-01-01', // Expired
-        batch: 'OLD-001',
-        supplier: 'SciLab Co',
-        status: 'Expired'
+// Map backend snake_case fields to frontend camelCase for display
+const mapItem = (item) => ({
+    ...item,
+    category: item.category_name || item.category?.name || item.category || '',
+    type: item.item_type === 'CAPITAL_ASSET' ? 'Capital Asset'
+        : item.item_type === 'RAW_MATERIAL' ? 'Raw Material'
+        : 'Consumable',
+    stock: parseFloat(item.stock_quantity || 0),
+    unit: item.unit_of_measure || '',
+    unitCost: parseFloat(item.unit_cost || 0),
+    minLevel: parseFloat(item.min_level || 0),
+    batch: item.batch_number || '-',
+    expiry: item.expiry_date || null,
+    supplier: item.supplier_name || '',
+    status: item.status || 'ACTIVE',
+    location: item.location || '',
+    stockValue: parseFloat(item.stock_value || 0),
+});
+
+// Map frontend camelCase form data to backend snake_case for submission
+const mapItemToAPI = (data) => {
+    const payload = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.category !== undefined) payload.category = data.category;
+    if (data.type !== undefined) {
+        payload.item_type = data.type === 'Capital Asset' ? 'CAPITAL_ASSET'
+            : data.type === 'Raw Material' ? 'RAW_MATERIAL' : 'CONSUMABLE';
     }
-];
-
-// Mock Stock Movement History
-const MOCK_MOVEMENTS = [
-    { id: 1, date: '2024-01-15', type: 'IN', reference: 'GRN-2024-001', itemId: 1, quantity: 100, balance: 100, user: 'Store Officer' },
-    { id: 2, date: '2024-01-20', type: 'OUT', reference: 'ISS-2024-001', itemId: 1, quantity: 10, balance: 140, user: 'John Doe' },
-    { id: 3, date: '2024-01-22', type: 'ADJ', reference: 'Audit', itemId: 1, quantity: -5, balance: 145, user: 'Auditor', reason: 'Damaged' }
-];
-
-// Mock Data for Issue Transactions (Existing)
-const MOCK_ISSUES = [
-    {
-        id: 'ISS-2024-001',
-        date: '2024-01-25',
-        department: 'Administration',
-        requestedBy: 'John Doe',
-        approvedBy: 'Store Manager',
-        status: 'Issued',
-        totalItems: 3,
-        totalValue: 12500,
-        items: [
-            { itemId: 1, name: 'A4 Paper Reams', quantity: 10, unit: 'Ream', cost: 500, total: 5000 },
-            { itemId: 2, name: 'Ballpoint Pens (Blue)', quantity: 5, unit: 'Box', cost: 200, total: 1000 },
-            { itemId: 4, name: 'File Folders', quantity: 65, unit: 'Pcs', cost: 100, total: 6500 }
-        ]
-    },
-    {
-        id: 'ISS-2024-002',
-        date: '2024-01-28',
-        department: 'Science Dept',
-        requestedBy: 'Alice Cooper',
-        approvedBy: 'Store Manager',
-        status: 'Pending',
-        totalItems: 1,
-        totalValue: 2400,
-        items: [
-            { itemId: 5, name: 'Whiteboard Markers', quantity: 2, unit: 'Box', cost: 1200, total: 2400 }
-        ]
-    }
-];
+    if (data.unit !== undefined) payload.unit_of_measure = data.unit;
+    if (data.unitCost !== undefined) payload.unit_cost = data.unitCost;
+    if (data.stock !== undefined) payload.stock_quantity = data.stock;
+    if (data.minLevel !== undefined) payload.min_level = data.minLevel;
+    if (data.location !== undefined) payload.location = data.location;
+    if (data.batch !== undefined && data.batch !== '-') payload.batch_number = data.batch;
+    if (data.expiry !== undefined) payload.expiry_date = data.expiry || null;
+    if (data.supplier !== undefined) payload.supplier = data.supplier || null;
+    return payload;
+};
 
 export const inventoryService = {
     // --- ITEM MASTER METHODS ---
 
-    getInventoryItems: async () => {
-        await new Promise(resolve => setTimeout(resolve, 600));
-        const today = new Date().toISOString().split('T')[0];
+    getInventoryItems: async (params = {}) => {
+        const [items, stats] = await Promise.all([
+            api.get('/api/inventory/items/', { params }),
+            api.get('/api/inventory/items/stats/')
+        ]);
+        const rawData = Array.isArray(items) ? items : (items.results || []);
+        const data = rawData.map(mapItem);
 
         return {
-            data: MOCK_ITEMS,
+            data,
             stats: {
-                totalItems: MOCK_ITEMS.length,
-                totalStockValue: MOCK_ITEMS.reduce((sum, i) => sum + (i.stock * i.unitCost), 0),
-                lowStock: MOCK_ITEMS.filter(i => i.stock <= i.minLevel).length,
-                outOfStock: MOCK_ITEMS.filter(i => i.stock === 0).length,
-                expired: MOCK_ITEMS.filter(i => i.expiry && i.expiry < today).length,
-                capitalAssets: MOCK_ITEMS.filter(i => i.type === 'Capital Asset').length
+                totalItems: stats.total_items,
+                totalStockValue: parseFloat(stats.total_stock_value || 0),
+                lowStock: stats.low_stock,
+                outOfStock: stats.out_of_stock,
+                expired: stats.expired,
+                capitalAssets: stats.capital_assets,
+                totalValue: parseFloat(stats.total_stock_value || 0),
             }
         };
     },
 
     getItemById: async (id) => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const item = MOCK_ITEMS.find(i => i.id === id);
-        return { data: item };
+        const item = await api.get(`/api/inventory/items/${id}/`);
+        return { data: mapItem(item) };
     },
 
     createItem: async (data) => {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const newItem = {
-            ...data,
-            id: MOCK_ITEMS.length + 1,
-            stock: data.stock || 0, // Initial stock
-            status: 'Active'
-        };
-        MOCK_ITEMS.push(newItem);
-        return { data: newItem };
+        const item = await api.post('/api/inventory/items/', mapItemToAPI(data));
+        return { data: mapItem(item) };
     },
 
     updateItem: async (id, data) => {
-        await new Promise(resolve => setTimeout(resolve, 600));
-        const index = MOCK_ITEMS.findIndex(i => i.id === id);
-        if (index !== -1) {
-            MOCK_ITEMS[index] = { ...MOCK_ITEMS[index], ...data };
-            return { data: MOCK_ITEMS[index] };
-        }
-        throw new Error("Item not found");
+        const item = await api.put(`/api/inventory/items/${id}/`, mapItemToAPI(data));
+        return { data: mapItem(item) };
+    },
+
+    deleteItem: async (id) => {
+        await api.delete(`/api/inventory/items/${id}/`);
+    },
+
+    // --- CATEGORIES ---
+
+    getCategories: async () => {
+        const data = await api.get('/api/inventory/categories/');
+        return Array.isArray(data) ? data : (data.results || []);
+    },
+
+    createCategory: async (data) => {
+        return api.post('/api/inventory/categories/', data);
     },
 
     // --- STOCK MOVEMENT & ADJUSTMENT ---
 
     getStockMovements: async (itemId) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        // Filter mock movements or generate random ones for demo
-        const movements = MOCK_MOVEMENTS.filter(m => !itemId || m.itemId === itemId);
-        return { data: movements };
+        const data = await api.get(`/api/inventory/items/${itemId}/movements/`);
+        return { data: Array.isArray(data) ? data : (data.results || []) };
     },
 
-    adjustStock: async (data) => {
-        // data: { itemId, adjustmentQty, type: 'Increase'|'Decrease', reason }
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        const item = MOCK_ITEMS.find(i => i.id === data.itemId);
-        if (!item) throw new Error("Item not found");
-
-        const qty = parseInt(data.adjustmentQty);
-        if (data.type === 'Decrease') {
-            item.stock -= qty;
-        } else {
-            item.stock += qty;
-        }
-
-        // Log movement
-        const newMove = {
-            id: MOCK_MOVEMENTS.length + 1,
-            date: new Date().toISOString().split('T')[0],
-            type: data.type === 'Decrease' ? 'OUT' : 'IN',
-            reference: 'Manual Adj',
-            itemId: item.id,
-            quantity: qty,
-            balance: item.stock,
-            user: 'Admin',
-            reason: data.reason
-        };
-        MOCK_MOVEMENTS.unshift(newMove);
-
-        return { data: item };
+    adjustStock: async (itemId, data) => {
+        // data: { adjustment_type: 'INCREASE'|'DECREASE', quantity, reason, post_to_gl }
+        const result = await api.post(`/api/inventory/items/${itemId}/adjust/`, data);
+        return { data: result };
     },
 
-    // --- SUPPLY ISSUE METHODS (Existing) ---
-
-    getIssues: async () => {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        return {
-            data: MOCK_ISSUES,
-            stats: {
-                totalIssues: MOCK_ISSUES.length,
-                pending: MOCK_ISSUES.filter(i => i.status === 'Pending').length,
-                totalValueIssued: MOCK_ISSUES.filter(i => i.status === 'Issued').reduce((sum, i) => sum + i.totalValue, 0)
-            }
+    // Legacy signature support: adjustStock({ itemId, type, adjustmentQty, reason })
+    adjustStockLegacy: async (data) => {
+        const payload = {
+            adjustment_type: data.type === 'Decrease' ? 'DECREASE' : 'INCREASE',
+            quantity: parseInt(data.adjustmentQty),
+            reason: data.reason || '',
         };
+        return inventoryService.adjustStock(data.itemId, payload);
+    },
+
+    getStats: async () => {
+        return api.get('/api/inventory/items/stats/');
+    },
+
+    // --- EXCEL UPLOAD/DOWNLOAD ---
+
+    downloadTemplate: async () => {
+        return api.get('/api/inventory/items/download_template/', { responseType: 'blob' });
+    },
+
+    uploadExcel: async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post('/api/inventory/items/upload/', formData);
+    },
+
+    // --- GOODS RECEIVED NOTES ---
+
+    getGRNs: async (params = {}) => {
+        const data = await api.get('/api/inventory/grns/', { params });
+        return Array.isArray(data) ? data : (data.results || []);
+    },
+
+    getGRN: async (id) => {
+        return api.get(`/api/inventory/grns/${id}/`);
+    },
+
+    createGRN: async (data) => {
+        return api.post('/api/inventory/grns/', data);
+    },
+
+    confirmGRN: async (id) => {
+        return api.post(`/api/inventory/grns/${id}/confirm/`);
+    },
+
+    postGRNToGL: async (id) => {
+        return api.post(`/api/inventory/grns/${id}/post_to_gl/`);
+    },
+
+    // --- SUPPLY ISSUES ---
+
+    getIssues: async (params = {}) => {
+        const data = await api.get('/api/inventory/issues/', { params });
+        const rawIssues = Array.isArray(data) ? data : (data.results || []);
+        const issues = rawIssues.map(issue => ({
+            ...issue,
+            id: issue.issue_number || issue.id,
+            date: issue.issue_date || issue.created_at?.split('T')[0],
+            requestedBy: issue.requested_by || '',
+            approvedBy: issue.approved_by_name || '',
+            totalItems: issue.item_count || issue.items?.length || 0,
+            totalValue: parseFloat(issue.total_value || 0),
+        }));
+
+        const stats = {
+            total: issues.length,
+            totalIssues: issues.length,
+            pending: issues.filter(i => i.status === 'PENDING').length,
+            approved: issues.filter(i => i.status === 'APPROVED').length,
+            issued: issues.filter(i => i.status === 'ISSUED').length,
+            totalValueIssued: issues.filter(i => i.status === 'ISSUED').reduce((sum, i) => sum + parseFloat(i.total_value || 0), 0),
+        };
+
+        return { data: issues, stats };
+    },
+
+    getIssue: async (id) => {
+        return api.get(`/api/inventory/issues/${id}/`);
     },
 
     createIssue: async (data) => {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const newIssue = {
-            ...data,
-            id: `ISS-2024-${Math.floor(Math.random() * 1000)}`,
-            status: 'Pending',
-            totalValue: data.items.reduce((sum, item) => sum + (item.quantity * item.cost), 0),
-            totalItems: data.items.length
+        // Map from frontend form shape to API shape
+        const payload = {
+            department: data.department,
+            requested_by: data.requestedBy,
+            issue_date: data.date,
+            notes: data.remarks || '',
+            items: (data.items || []).map(item => ({
+                item: item.itemId,
+                quantity_requested: item.quantity,
+                quantity_issued: 0,
+                unit_cost: item.cost,
+            })),
         };
-        MOCK_ISSUES.unshift(newIssue);
-        return { data: newIssue };
+        return api.post('/api/inventory/issues/', payload);
+    },
+
+    approveIssue: async (id) => {
+        return api.post(`/api/inventory/issues/${id}/approve/`);
+    },
+
+    processIssue: async (id, postToGL = false) => {
+        return api.post(`/api/inventory/issues/${id}/issue/`, { post_to_gl: postToGL });
     },
 
     updateIssueStatus: async (id, status) => {
-        await new Promise(resolve => setTimeout(resolve, 600));
-        const issue = MOCK_ISSUES.find(i => i.id === id);
-        if (!issue) throw new Error("Issue not found");
+        // Convenience wrapper mapping old status names to actions
+        if (status === 'Approved') return inventoryService.approveIssue(id);
+        if (status === 'Issued') return inventoryService.processIssue(id);
+        return api.patch(`/api/inventory/issues/${id}/`, { status });
+    },
 
-        if (status === 'Issued' && issue.status !== 'Issued') {
-            issue.items.forEach(issueItem => {
-                const inventoryItem = MOCK_ITEMS.find(i => i.id === issueItem.itemId);
-                if (inventoryItem) {
-                    inventoryItem.stock -= parseInt(issueItem.quantity);
-                    // Log movement
-                    MOCK_MOVEMENTS.unshift({
-                        id: MOCK_MOVEMENTS.length + 1,
-                        date: new Date().toISOString().split('T')[0],
-                        type: 'OUT',
-                        reference: issue.id,
-                        itemId: inventoryItem.id,
-                        quantity: parseInt(issueItem.quantity),
-                        balance: inventoryItem.stock,
-                        user: issue.requestedBy
-                    });
-                }
-            });
-        }
+    // --- STOCK TAKES ---
 
-        issue.status = status;
-        return { data: issue };
-    }
+    getStockTakes: async (params = {}) => {
+        const data = await api.get('/api/inventory/stock-takes/', { params });
+        return Array.isArray(data) ? data : (data.results || []);
+    },
+
+    getStockTake: async (id) => {
+        return api.get(`/api/inventory/stock-takes/${id}/`);
+    },
+
+    createStockTake: async (data) => {
+        return api.post('/api/inventory/stock-takes/', data);
+    },
+
+    reconcileStockTake: async (id, postToGL = false) => {
+        return api.post(`/api/inventory/stock-takes/${id}/reconcile/`, { post_to_gl: postToGL });
+    },
 };
