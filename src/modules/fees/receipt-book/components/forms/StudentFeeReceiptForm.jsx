@@ -3,7 +3,8 @@ import { studentManagementService } from '../../../../../services/studentManagem
 import { feesService } from '../../../../../services/feesService';
 import studentSettingsService from '../../../../../services/studentSettingsService';
 import { financeService } from '../../../../../services/financeService';
-import { feeCategories } from '../../data/mockReceiptData'; // Keep only needed mock data
+import FilterDropdown from '../../../../../components/ui/FilterDropdown';
+import { User, CreditCard } from 'lucide-react';
 
 const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
     const [students, setStudents] = useState([]);
@@ -190,26 +191,33 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
         onChange({ ...data, [field]: value, receiptType: 'Student Fee' });
     };
 
+    // Transform data for FilterDropdown
+    const studentOptions = students.map(item => ({
+        value: item.student,
+        label: `${item.student_name} - ${item.admission_number} (${item.class_name || 'N/A'})`,
+        icon: User
+    }));
+
+    const paymentMethodOptions = paymentMethods.map(method => ({
+        value: method.id || method,
+        label: method.name || method,
+        icon: CreditCard
+    }));
+
     return (
         <div className="row g-3">
             {/* Student Selector */}
-            {/* Student Selector */}
             <div className="col-md-12">
                 <label className="form-label">Student <span className="text-danger">*</span></label>
-                <select
-                    className="form-select"
-                    value={data.studentId || ''}
-                    onChange={(e) => handleStudentChange(e.target.value)}
-                    required
+                <FilterDropdown
+                    placeholder={loadingStudents ? "Loading Students..." : "Search and select student..."}
+                    value={data.studentId}
+                    options={studentOptions}
+                    onChange={handleStudentChange}
+                    searchable={true}
                     disabled={disabled || loadingStudents}
-                >
-                    <option value="">{loadingStudents ? 'Loading Students...' : 'Select Student...'}</option>
-                    {students.map(item => (
-                        <option key={item.id} value={item.student}>
-                            {item.student_name} - {item.admission_number} ({item.class_name || 'N/A'})
-                        </option>
-                    ))}
-                </select>
+                    className="w-100"
+                />
             </div>
 
             {/* Payer Name */}
@@ -222,13 +230,14 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     onChange={(e) => handleChange('payerName', e.target.value)}
                     placeholder="Parent/Guardian name"
                     required
+                    style={{ height: '40px' }}
                 />
             </div>
 
             {/* Student Balance (Replaces Fee Category) */}
             <div className="col-md-6">
                 <label className="form-label">Current Balance</label>
-                <div className={`form-control d-flex justify-content-between align-items-center ${studentBalance > 0 ? 'border-danger text-danger bg-danger-subtle' : studentBalance < 0 ? 'border-success text-success bg-success-subtle' : 'bg-light'}`}>
+                <div className={`form-control d-flex justify-content-between align-items-center ${studentBalance > 0 ? 'border-danger text-danger bg-danger-subtle' : studentBalance < 0 ? 'border-success text-success bg-success-subtle' : 'bg-light'}`} style={{ height: '40px' }}>
                     <span>
                         {checkingBalance ? (
                             <span><span className="spinner-border spinner-border-sm me-2" />Checking...</span>
@@ -254,6 +263,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     className="form-control bg-light"
                     value={data.term || currentTerm || ''}
                     readOnly
+                    style={{ height: '40px' }}
                 />
             </div>
 
@@ -265,6 +275,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     className="form-control bg-light"
                     value={data.year || currentYear || ''}
                     readOnly
+                    style={{ height: '40px' }}
                 />
             </div>
 
@@ -280,23 +291,21 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     min="0"
                     step="0.01"
                     required
+                    style={{ height: '40px' }}
                 />
             </div>
 
             {/* Payment Method */}
             <div className="col-md-6">
                 <label className="form-label">Payment Method <span className="text-danger">*</span></label>
-                <select
-                    className="form-select"
-                    value={data.paymentMethodId || ''}
-                    onChange={(e) => handleChange('paymentMethodId', e.target.value)}
-                    required
-                >
-                    <option value="">Select Payment Method...</option>
-                    {paymentMethods.map(method => (
-                        <option key={method.id || method} value={method.id || method}>{method.name || method}</option>
-                    ))}
-                </select>
+                <FilterDropdown
+                    placeholder="Select Payment Method..."
+                    value={data.paymentMethodId}
+                    options={paymentMethodOptions}
+                    onChange={(val) => handleChange('paymentMethodId', val)}
+                    disabled={disabled}
+                    className="w-100"
+                />
             </div>
 
             {/* Reference Number */}

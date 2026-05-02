@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../../dashboard/DashboardLayout';
-import { Building2, MapPinned, Settings as SettingsIcon, Shield, Sliders, Users, Lock, GraduationCap, DollarSign } from 'lucide-react';
+import { Building2, MapPinned, Settings as SettingsIcon, Shield, Sliders, Users, Lock, GraduationCap, DollarSign, CreditCard } from 'lucide-react';
 import InstitutionProfile from './components/InstitutionProfile';
 import CampusManagement from './components/CampusManagement';
 import AuditLogViewer from './components/AuditLogViewer';
@@ -10,6 +10,7 @@ import UserManagement from './components/UserManagement';
 import RoleManagement from './components/RoleManagement';
 import StudentRulesTab from '../students/settings/components/tabs/StudentRulesTab';
 import CurrencySettings from './components/CurrencySettings';
+import PaymentGatewaySettings from './components/PaymentGatewaySettings';
 
 const tabs = [
     { id: 'institution', label: 'Institution Profile', icon: Building2, desc: 'School details & branding' },
@@ -18,6 +19,7 @@ const tabs = [
     { id: 'roles', label: 'Roles & Permissions', icon: Lock, desc: 'Access control' },
     { id: 'configuration', label: 'Configuration', icon: Sliders, desc: 'System preferences' },
     { id: 'currency', label: 'Currency', icon: DollarSign, desc: 'Currency settings' },
+    { id: 'integrations', label: 'Integrations', icon: CreditCard, desc: 'Payment & SMS API keys' },
     { id: 'student-setup', label: 'Student Setup', icon: GraduationCap, desc: 'Student rules & config' },
     { id: 'audit', label: 'Audit Log', icon: Shield, desc: 'Activity history' },
 ];
@@ -41,6 +43,7 @@ const Settings = () => {
             case 'roles': return <RoleManagement />;
             case 'configuration': return <SystemConfig />;
             case 'currency': return <CurrencySettings />;
+            case 'integrations': return <PaymentGatewaySettings />;
             case 'student-setup': return <StudentRulesTab />;
             case 'audit': return <AuditLogViewer />;
             default: return null;

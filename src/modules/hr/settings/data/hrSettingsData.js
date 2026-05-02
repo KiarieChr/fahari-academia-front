@@ -1,10 +1,11 @@
 
 import {
-    Calendar, Clock, Award, Users, DollarSign, UserCog, Shield, Bell, Box, FileText
+    Calendar, Clock, Award, Users, DollarSign, UserCog, Shield, Bell, Box, FileText, Zap
 } from 'lucide-react';
 
 export const settingsCategories = [
     { id: 'leave', label: 'Leave Settings', icon: Calendar, description: 'Manage leave types, accruals, and holidays.' },
+    { id: 'attendance-policy', label: 'Attendance Policy', icon: Zap, description: 'Configure clocking methods, geofence, and employee profiles.' },
     { id: 'attendance', label: 'Attendance Rules', icon: Clock, description: 'Configure shifts, working hours, and grace periods.' },
     { id: 'performance', label: 'Performance', icon: Award, description: 'Setup review cycles, KPIs, and scoring models.' },
     { id: 'recruitment', label: 'Recruitment', icon: Users, description: 'Define hiring stages and interview panels.' },

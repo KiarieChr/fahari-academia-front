@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
+import Button from '../../../components/common/Button';
 import '../admission/admission.css';
 
 import {
@@ -13,7 +14,9 @@ import {
     BarChart,
     ChevronRight,
     BookOpen,
-    Home
+    Home,
+    Menu,
+    ArrowUpRight
 } from 'lucide-react';
 import AdmissionStats from './components/AdmissionStats';
 import NewApplicantForm from './components/NewApplicantForm';
@@ -28,6 +31,7 @@ const AdmissionBookDashboard = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [showNewAppModal, setShowNewAppModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [isNavExpanded, setIsNavExpanded] = useState(true);
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: FileText },
@@ -88,88 +92,89 @@ const AdmissionBookDashboard = () => {
                     </div>
 
                     {/* Right: action buttons */}
-                    <div className="flex items-center gap-2 flex-shrink-0 relative">
+                    <div className="flex items-center gap-3 flex-shrink-0 relative mt-3 md:mt-0">
                         {/* Tertiary — Export */}
-                        <button className="group inline-flex items-center gap-1.5 px-3.5 py-[7px] border border-gray-200 text-gray-500 bg-white text-xs font-medium rounded-lg hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 transition-all duration-150 active:scale-[0.97]">
-                            <Download size={13} className="transition-transform duration-150 group-hover:-translate-y-0.5" />
-                            Export
-                        </button>
+                        <Button variant="outline" icon={Download}>
+                            <span className="hidden sm:inline">Export</span>
+                        </Button>
 
                         {/* Secondary — Import */}
-                        <button
-                            onClick={() => setShowImportModal(true)}
-                            className="group inline-flex items-center gap-1.5 px-3.5 py-[7px]
-                                       border border-indigo-200/80 text-indigo-600 bg-indigo-50/60 text-xs font-medium
-                                       rounded-lg hover:bg-indigo-100/70 hover:border-indigo-300
-                                       transition-all duration-150 active:scale-[0.97]"
-                        >
-                            <Upload size={13} className="transition-transform duration-150 group-hover:-translate-y-0.5" />
-                            Import
-                        </button>
+                        <Button variant="secondary" icon={Upload} onClick={() => setShowImportModal(true)}>
+                            <span className="hidden sm:inline">Import</span>
+                        </Button>
 
                         {/* Divider */}
-                        <div className="w-px h-5 bg-gray-200 mx-0.5" />
+                        <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
 
                         {/* Primary CTA — New Application */}
-                        <button
+                        <Button 
+                            variant="primary" 
+                            icon={ArrowUpRight} 
+                            iconPosition="right" 
                             onClick={() => setShowNewAppModal(true)}
-                            className="group inline-flex items-center gap-1.5 px-4 py-[7px] bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all duration-150 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-1"
                         >
-                            <Plus size={14} className="transition-transform duration-150 group-hover:rotate-90" />
-                            New Application
-                        </button>
+                            New Applicant
+                        </Button>
                     </div>
                 </div>
 
                 {/* ── Vertical Tabs + Content ──────────────────────────────── */}
                 <div className="flex flex-col lg:flex-row gap-5 min-h-[560px]">
 
-                    {/* Sidebar Tab Navigation — horizontal scroll on mobile, vertical on lg+ */}
-                    <div className="lg:flex-shrink-0 lg:w-60 bg-white border border-gray-100 rounded-2xl
-                                    shadow-[0_1px_4px_rgba(0,0,0,0.06)] lg:self-start lg:sticky lg:top-4">
-                        {/* Top accent */}
-                        <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-indigo-400 to-indigo-600 rounded-t-2xl" />
+                    {/* Sidebar Tab Navigation — Collapsible */}
+                    <div className={`
+                        bg-white border-gray-100 rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] 
+                        lg:self-start lg:sticky lg:top-4 transition-all duration-300 ease-in-out overflow-hidden
+                        ${isNavExpanded 
+                            ? 'lg:flex-shrink-0 lg:w-60 opacity-100 border' 
+                            : 'w-0 h-0 lg:h-auto opacity-0 border-0 !p-0 m-0'
+                        }
+                    `}>
+                        <div className="w-full lg:w-60">
+                            {/* Top accent */}
+                            <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-indigo-400 to-indigo-600 rounded-t-2xl" />
 
-                        {/* Section label */}
-                        <div className="px-5 pt-5 pb-2">
-                            <span className="text-[0.65rem] font-bold uppercase tracking-widest text-gray-400">Navigation</span>
-                        </div>
+                            {/* Section label */}
+                            <div className="px-5 pt-5 pb-2">
+                                <span className="text-[0.65rem] font-bold uppercase tracking-widest text-gray-400">Navigation</span>
+                            </div>
 
-                        <div className="flex lg:flex-col gap-0.5 px-3 pb-3 lg:pb-5 overflow-x-auto lg:overflow-x-visible">
-                            {tabs.map((tab) => {
-                                const isActive = activeTab === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`
-                                            group relative flex items-center gap-2 lg:gap-3 whitespace-nowrap lg:whitespace-normal lg:w-full pl-3 lg:pl-5 pr-3 lg:pr-4 py-2 lg:py-3 rounded-xl text-[0.82rem] font-medium
-                                            text-left transition-all duration-200 select-none
-                                            ${isActive
-                                                ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm shadow-indigo-100/50'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/80'
-                                            }
-                                        `}
-                                    >
-                                        {/* Active left accent bar — hidden on mobile */}
-                                        <span className={`
-                                            hidden lg:block absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full
-                                            transition-all duration-200
-                                            ${isActive ? 'h-7 bg-indigo-500' : 'h-0 bg-transparent group-hover:h-4 group-hover:bg-gray-300'}
-                                        `} />
-                                        <span className={`
-                                            flex items-center justify-center w-7 h-7 lg:w-8 lg:h-8 rounded-lg transition-all duration-200
-                                            ${isActive
-                                                ? 'bg-indigo-100 text-indigo-600'
-                                                : 'bg-gray-100/70 text-gray-400 group-hover:bg-gray-100 group-hover:text-gray-600'
-                                            }
-                                        `}>
-                                            <tab.icon size={16} />
-                                        </span>
-                                        <span className="hidden sm:inline">{tab.label}</span>
-                                    </button>
-                                );
-                            })}
+                            <div className="flex lg:flex-col gap-0.5 px-3 pb-3 lg:pb-5 overflow-x-auto lg:overflow-x-visible">
+                                {tabs.map((tab) => {
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`
+                                                group relative flex items-center gap-2 lg:gap-3 whitespace-nowrap lg:whitespace-normal lg:w-full pl-3 lg:pl-5 pr-3 lg:pr-4 py-2 lg:py-3 rounded-xl text-[0.82rem] font-medium
+                                                text-left transition-all duration-200 select-none
+                                                ${isActive
+                                                    ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm shadow-indigo-100/50'
+                                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/80'
+                                                }
+                                            `}
+                                        >
+                                            {/* Active left accent bar — hidden on mobile */}
+                                            <span className={`
+                                                hidden lg:block absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full
+                                                transition-all duration-200
+                                                ${isActive ? 'h-7 bg-indigo-500' : 'h-0 bg-transparent group-hover:h-4 group-hover:bg-gray-300'}
+                                            `} />
+                                            <span className={`
+                                                flex items-center justify-center w-7 h-7 lg:w-8 lg:h-8 rounded-lg transition-all duration-200
+                                                ${isActive
+                                                    ? 'bg-indigo-100 text-indigo-600'
+                                                    : 'bg-gray-100/70 text-gray-400 group-hover:bg-gray-100 group-hover:text-gray-600'
+                                                }
+                                            `}>
+                                                <tab.icon size={16} />
+                                            </span>
+                                            <span className="hidden sm:inline">{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
 
@@ -177,10 +182,21 @@ const AdmissionBookDashboard = () => {
                     <div className="flex-1 min-w-0 flex flex-col
                                     bg-white border border-gray-100 rounded-2xl
                                     shadow-[0_1px_6px_rgba(0,0,0,0.04)]
-                                    overflow-hidden">
+                                    overflow-hidden transition-all duration-300">
                         {/* Panel header with active tab info */}
                         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 lg:py-4 border-b border-gray-100/80 bg-gray-50/40">
                             <div className="flex items-center gap-3">
+                                {/* Toggle Sidebar Button */}
+                                <button 
+                                    onClick={() => setIsNavExpanded(!isNavExpanded)}
+                                    className="p-1.5 md:p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all active:scale-95"
+                                    title={isNavExpanded ? "Collapse Menu" : "Expand Menu"}
+                                >
+                                    <Menu size={18} className={`transition-transform duration-300 ${!isNavExpanded ? 'rotate-180' : ''}`} />
+                                </button>
+                                
+                                <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
+
                                 {/* Active tab icon */}
                                 {(() => {
                                     const activeTabData = tabs.find(t => t.id === activeTab);
@@ -203,7 +219,7 @@ const AdmissionBookDashboard = () => {
                                 })()}
                             </div>
                             {/* Optional: breadcrumb dot indicator */}
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 hidden sm:flex">
                                 {tabs.map((tab) => (
                                     <span
                                         key={tab.id}
@@ -219,10 +235,10 @@ const AdmissionBookDashboard = () => {
                         </div>
 
                         {/* Panel body */}
-                        <div className="flex-1 p-6 overflow-auto">
+                        <div className="flex-1 overflow-auto">
                             <div
                                 key={activeTab}
-                                className="p-8 animate-in fade-in slide-in-from-bottom-1 duration-200"
+                                className="p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-1 duration-200"
                             >
                                 {activeTab === 'overview' && <AdmissionStats />}
                                 {activeTab === 'applications' && <ApplicationsTable />}

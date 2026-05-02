@@ -20,20 +20,59 @@ import {
     Sun,
     Moon,
     CalendarDays,
+    Compass,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { toast } from 'react-toastify';
 import { usePermissions } from '../auth/PermissionProvider';
+import SystemTour from '../components/common/SystemTour';
+import './dashboard.css';
 
 const DashboardLayout = ({ children, title }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [expandedItems, setExpandedItems] = React.useState({});
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const [isCompactMode, setIsCompactMode] = React.useState(false);
     const [isDarkMode, setIsDarkMode] = React.useState(false);
+    const [activeTheme, setActiveTheme] = React.useState(
+        () => localStorage.getItem('fahari-theme') || 'ocean'
+    );
     const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
     const [pageTitle, setPageTitle] = useState('Overview');
     const [currentUser, setCurrentUser] = useState(null);
+    const [isTourRunning, setIsTourRunning] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = React.useRef(null);
+
+    const TOUR_VERSION = 'v1';
+
+    const getTourStorageKey = (user) => {
+        const identity = user?.id || user?.email || user?.initials || 'anonymous';
+        return `system_tour_seen_${identity}_${TOUR_VERSION}`;
+    };
+
+    const startTour = () => {
+        setIsTourRunning(true);
+    };
+
+    const handleTourFinish = () => {
+        if (currentUser) {
+            localStorage.setItem(getTourStorageKey(currentUser), '1');
+        }
+        sessionStorage.removeItem('force_system_tour');
+        setIsTourRunning(false);
+    };
+
+    const openProfile = () => {
+        setIsUserMenuOpen(false);
+        navigate('/dashboard/users/account');
+    };
+
+    const openUserSettings = () => {
+        setIsUserMenuOpen(false);
+        navigate('/dashboard/settings');
+    };
 
     const { hasModuleAccess, isSuperuser } = usePermissions();
 
@@ -132,6 +171,21 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Settings', path: '/dashboard/procurement/settings' }
             ]
         },
+        {
+            icon: Compass,
+            label: 'Fleet Management',
+            path: '/dashboard/fleet',
+            module: 'fleet',
+            subItems: [
+                { label: 'Fleet Dashboard', path: '/dashboard/fleet' },
+                { label: 'Vehicles', path: '/dashboard/fleet?tab=vehicles' },
+                { label: 'Drivers', path: '/dashboard/fleet?tab=drivers' },
+                { label: 'Trips', path: '/dashboard/fleet?tab=trips' },
+                { label: 'Fuel & Mileage', path: '/dashboard/fleet?tab=fuel' },
+                { label: 'Maintenance', path: '/dashboard/fleet?tab=maintenance' },
+                { label: 'Expenses', path: '/dashboard/fleet?tab=expenses' },
+            ]
+        },
         { sectionLabel: 'PEOPLE' },
         {
             icon: Briefcase,
@@ -189,6 +243,7 @@ const DashboardLayout = ({ children, title }) => {
                 const data = await api.getCurrentUser();
                 const profile = data.success ? data.profile : data;
                 setCurrentUser({
+                    id:        profile.id || profile.user?.id || null,
                     firstName: profile.first_name || '',
                     lastName:  profile.last_name  || '',
                     email:     profile.email      || '',
@@ -204,6 +259,42 @@ const DashboardLayout = ({ children, title }) => {
             }
         };
         fetchCurrentUser();
+    }, []);
+
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const hasSeenTour = localStorage.getItem(getTourStorageKey(currentUser)) === '1';
+        const forceTour = sessionStorage.getItem('force_system_tour') === '1';
+
+        if (forceTour || !hasSeenTour) {
+            const timer = setTimeout(() => {
+                setIsTourRunning(true);
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (!userMenuRef.current?.contains(event.target)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') {
+                setIsUserMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleOutsideClick);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+            document.removeEventListener('keydown', handleEscape);
+        };
     }, []);
 
     // Auto-expand the parent whose child is currently active
@@ -285,6 +376,26 @@ const DashboardLayout = ({ children, title }) => {
         document.documentElement.classList.toggle('dark-mode');
     };
 
+    // ── Theme Switcher ──────────────────────────────────────────────────
+    const THEMES = [
+        { key: 'ocean',   color: '#3f51b5', label: 'Ocean Blue'    },
+        { key: 'emerald', color: '#059669', label: 'Emerald Green'  },
+        { key: 'purple',  color: '#7c3aed', label: 'Royal Purple'   },
+        { key: 'crimson', color: '#dc2626', label: 'Crimson Red'    },
+        { key: 'amber',   color: '#d97706', label: 'Amber Gold'     },
+    ];
+
+    const applyTheme = (themeKey) => {
+        document.documentElement.setAttribute('data-theme', themeKey);
+        localStorage.setItem('fahari-theme', themeKey);
+        setActiveTheme(themeKey);
+    };
+
+    // Apply persisted theme on mount
+    React.useEffect(() => {
+        document.documentElement.setAttribute('data-theme', activeTheme);
+    }, []);
+
     const handleLogout = async () => {
         try {
             await api.logout();
@@ -306,6 +417,7 @@ const DashboardLayout = ({ children, title }) => {
 
     return (
         <div className="dashboard-container">
+            <SystemTour run={isTourRunning} onFinish={handleTourFinish} />
             {/* Mobile Overlay */}
             {isSidebarOpen && (
                 <div
@@ -315,7 +427,7 @@ const DashboardLayout = ({ children, title }) => {
             )}
 
             {/* Sidebar */}
-            <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+            <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${isCompactMode ? 'compact' : ''}`}>
                 <div className="sidebar-header">
                     <div className="brand-text">
                         <GraduationCap size={28} />
@@ -339,7 +451,7 @@ const DashboardLayout = ({ children, title }) => {
                     />
                 </div>
 
-                <nav className="sidebar-nav">
+                <nav className="sidebar-nav" data-tour="sidebar-nav">
                     {navItems.filter(item => {
                         // Always show section labels and items without a module key
                         if (item.sectionLabel || !item.module) return true;
@@ -381,6 +493,7 @@ const DashboardLayout = ({ children, title }) => {
                                             role="button"
                                             tabIndex={0}
                                             onKeyPress={(e) => e.key === 'Enter' && toggleExpand(item.path)}
+                                            title={isCompactMode ? item.label : undefined}
                                         >
                                             <div className="nav-item-content">
                                                 <item.icon size={20} className="nav-icon" />
@@ -398,6 +511,7 @@ const DashboardLayout = ({ children, title }) => {
                                                     to={sub.path}
                                                     className={`nav-sub-item ${location.pathname === sub.path ? 'active' : ''}`}
                                                     onClick={handleNavClick}
+                                                    title={isCompactMode ? sub.label : undefined}
                                                 >
                                                     <span className="sub-item-dot" />
                                                     {sub.label}
@@ -410,6 +524,7 @@ const DashboardLayout = ({ children, title }) => {
                                         to={item.path}
                                         className={`nav-item ${isParentActive ? 'active' : ''}`}
                                         onClick={handleNavClick}
+                                        title={isCompactMode ? item.label : undefined}
                                     >
                                         <div className="nav-item-content">
                                             <item.icon size={20} className="nav-icon" />
@@ -423,6 +538,23 @@ const DashboardLayout = ({ children, title }) => {
                 </nav>
 
                 <div className="sidebar-footer">
+                    {/* ── Color Theme Picker ── */}
+                    <div className="theme-picker">
+                        <span className="theme-picker-label">Theme</span>
+                        <div className="theme-dot-row">
+                            {THEMES.map(t => (
+                                <button
+                                    key={t.key}
+                                    className={`theme-dot ${activeTheme === t.key ? 'active' : ''}`}
+                                    style={{ backgroundColor: t.color }}
+                                    onClick={() => applyTheme(t.key)}
+                                    title={t.label}
+                                    aria-label={`Switch to ${t.label} theme`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="theme-toggle">
                         <button
                             onClick={toggleDarkMode}
@@ -430,28 +562,42 @@ const DashboardLayout = ({ children, title }) => {
                             aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
                         >
                             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                            <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                            <span className="compact-hide">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
                         </button>
                     </div>
-                    <button onClick={handleLogout} className="logout-btn">
-                        <LogOut size={18} className="logout-icon" />
-                        <span>Logout</span>
-                    </button>
+                    
+                    <div className="flex items-center gap-2 mb-2 w-full">
+                        <button onClick={handleLogout} className="logout-btn flex-1">
+                            <LogOut size={18} className="logout-icon" />
+                            <span className="compact-hide">Logout</span>
+                        </button>
+                        
+                        {windowWidth >= 768 && (
+                            <button 
+                                onClick={() => setIsCompactMode(!isCompactMode)} 
+                                className="sidebar-compact-toggle flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex-shrink-0"
+                                title={isCompactMode ? "Expand Sidebar" : "Compact Sidebar"}
+                            >
+                                <ChevronRight size={18} className={`transition-transform duration-300 ${isCompactMode ? '' : 'rotate-180'}`} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="main-content">
+            <main className={`main-content ${isCompactMode ? 'compact' : ''}`}>
                 <header className="top-header">
                     <div className="header-left">
                         <button
                             className="menu-toggle-btn"
                             onClick={toggleSidebar}
                             aria-label="Toggle sidebar"
+                            data-tour="menu-toggle"
                         >
                             <Menu size={24} />
                         </button>
-                        <div className="header-title">
+                        <div className="header-title" data-tour="header-title">
                             <h1>{title || pageTitle}</h1>
                             {windowWidth >= 1024 && (
                                 <span className="header-subtitle">
@@ -463,10 +609,19 @@ const DashboardLayout = ({ children, title }) => {
 
                     <div className="header-right">
                         <div className="header-actions">
+                            <button
+                                className="header-action-btn tour-trigger-btn"
+                                aria-label="Start system tour"
+                                title="Start system tour"
+                                onClick={startTour}
+                            >
+                                <Compass size={18} />
+                                <span className="tour-trigger-text">Tour</span>
+                            </button>
                             <button className="header-action-btn" aria-label="Search">
                                 <Search size={20} />
                             </button>
-                            <button className="header-action-btn notification-btn" aria-label="Notifications">
+                            <button className="header-action-btn notification-btn" aria-label="Notifications" data-tour="notifications">
                                 <Bell size={20} />
                                 <span className="notification-badge">3</span>
                             </button>
@@ -474,12 +629,21 @@ const DashboardLayout = ({ children, title }) => {
                                 onClick={toggleDarkMode}
                                 className="header-action-btn theme-btn"
                                 aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                                data-tour="theme-toggle"
                             >
                                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                             </button>
                         </div>
 
-                        <div className="user-profile">
+                        <div className="user-profile-wrap" ref={userMenuRef}>
+                        <button
+                            type="button"
+                            className="user-profile"
+                            data-tour="user-profile"
+                            onClick={() => setIsUserMenuOpen(prev => !prev)}
+                            aria-haspopup="menu"
+                            aria-expanded={isUserMenuOpen}
+                        >
                             {currentUser?.avatar ? (
                                 <img
                                     src={currentUser.avatar}
@@ -501,13 +665,26 @@ const DashboardLayout = ({ children, title }) => {
                                 </span>
                             </div>
                             {windowWidth >= 640 && (
-                                <ChevronDown size={16} className="user-dropdown" />
+                                <ChevronDown size={16} className={`user-dropdown ${isUserMenuOpen ? 'open' : ''}`} />
                             )}
+                        </button>
+                        {isUserMenuOpen && (
+                            <div className="user-menu" role="menu" aria-label="User menu">
+                                <button type="button" className="user-menu-item" role="menuitem" onClick={openProfile}>
+                                    <UserCog size={16} />
+                                    <span>Profile (My Account)</span>
+                                </button>
+                                <button type="button" className="user-menu-item" role="menuitem" onClick={openUserSettings}>
+                                    <Settings size={16} />
+                                    <span>User Settings</span>
+                                </button>
+                            </div>
+                        )}
                         </div>
                     </div>
                 </header>
 
-                <div className="content-wrapper">
+                <div className="content-wrapper" data-tour="content-area">
                     <div className="content-container h-full">
                         {children}
                     </div>

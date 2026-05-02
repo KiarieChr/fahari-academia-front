@@ -38,14 +38,17 @@ export const RecentActivity = ({ activities }) => {
     );
 };
 
+import { useNavigate } from 'react-router-dom';
+
 export const QuickActions = () => {
+    const navigate = useNavigate();
     const actions = [
-        { label: 'Add Student', icon: UserPlus, color: '#e3f2fd', textColor: '#1976d2' },
-        { label: 'Generate Report', icon: FileText, color: '#e8f5e9', textColor: '#2e7d32' },
-        { label: 'Record Payment', icon: CreditCard, color: '#fff3e0', textColor: '#f57c00' },
-        { label: 'Take Attendance', icon: UserCheck, color: '#ffebee', textColor: '#d32f2f' },
-        { label: 'Schedule Exam', icon: Calendar, color: '#f3e5f5', textColor: '#7b1fa2' },
-        { label: 'Export Data', icon: Download, color: '#efebe9', textColor: '#5d4037' },
+        { label: 'Add Student', icon: UserPlus, color: '#e3f2fd', textColor: '#1976d2', path: '/dashboard/students/admission' },
+        { label: 'Generate Report', icon: FileText, color: '#e8f5e9', textColor: '#2e7d32', path: '/dashboard/academics/reports' },
+        { label: 'Record Payment', icon: CreditCard, color: '#fff3e0', textColor: '#f57c00', path: '/dashboard/fees/receipts' },
+        { label: 'Take Attendance', icon: UserCheck, color: '#ffebee', textColor: '#d32f2f', path: '/dashboard/hr/staff-attendance' },
+        { label: 'Schedule Exam', icon: Calendar, color: '#f3e5f5', textColor: '#7b1fa2', path: '/dashboard/academics' },
+        { label: 'Export Data', icon: Download, color: '#efebe9', textColor: '#5d4037', path: '/dashboard/settings' },
     ];
 
     return (
@@ -55,6 +58,7 @@ export const QuickActions = () => {
                 {actions.map((action, index) => (
                     <div key={index}
                         className="action-card"
+                        onClick={() => action.path && navigate(action.path)}
                         style={{
                             background: action.color,
                             borderRadius: '12px',

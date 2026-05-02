@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL;
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
 
 const handleResponse = async (response, options = {}) => {
     const contentType = response.headers.get("content-type");
@@ -13,20 +14,23 @@ const handleResponse = async (response, options = {}) => {
             const error = new Error(data.detail || data.message || response.statusText || "Something went wrong");
             error.data = data;
             error.status = response.status;
+            error.code = data.code;
             throw error;
         }
         return data;
     }
     // Handle non-JSON responses
     if (!response.ok) {
-        throw new Error(response.statusText || "Network response was not ok");
+        const error = new Error(response.statusText || "Network response was not ok");
+        error.status = response.status;
+        throw error;
     }
     return response.text();
 };
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_KEY);
     return token ? { 'Authorization': `Token ${token}` } : {};
 };
 
@@ -43,6 +47,7 @@ export const api = {
                     ...getAuthHeaders(),
                     ...(options.headers || {})
                 },
+                credentials: 'include',
                 cache: 'no-store',
             });
             return handleResponse(response, options);
@@ -69,6 +74,7 @@ export const api = {
             const response = await fetch(`${API_URL}${url}`, {
                 method: 'POST',
                 headers,
+                credentials: 'include',
                 body: isFormData ? data : JSON.stringify(data),
             });
             return handleResponse(response, options);
@@ -95,6 +101,7 @@ export const api = {
             const response = await fetch(`${API_URL}${url}`, {
                 method: 'PUT',
                 headers,
+                credentials: 'include',
                 body: isFormData ? data : JSON.stringify(data),
             });
             return handleResponse(response, options);
@@ -121,6 +128,7 @@ export const api = {
             const response = await fetch(`${API_URL}${url}`, {
                 method: 'PATCH',
                 headers,
+                credentials: 'include',
                 body: isFormData ? data : JSON.stringify(data),
             });
             return handleResponse(response, options);
@@ -138,6 +146,7 @@ export const api = {
                     ...getAuthHeaders(),
                     ...(options.headers || {})
                 },
+                credentials: 'include',
             });
             return handleResponse(response, options);
         } catch (error) {
@@ -153,6 +162,7 @@ export const api = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify(credentials),
             });
             return handleResponse(response);
@@ -168,9 +178,9 @@ export const api = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // You might need to pass the auth token here if the user is considered "logged in" but restricted
-                    // 'Authorization': `Bearer ${token}` 
+                    ...getAuthHeaders(),
                 },
+                credentials: 'include',
                 body: JSON.stringify(data),
             });
             return handleResponse(response);
@@ -183,7 +193,8 @@ export const api = {
         try {
             const response = await fetch(`${API_URL}/api/auth/logout/`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                credentials: 'include',
             });
             return handleResponse(response);
         } catch (error) {
@@ -199,6 +210,7 @@ export const api = {
                     'Content-Type': 'application/json',
                     ...getAuthHeaders(),
                 },
+                credentials: 'include',
             });
             return handleResponse(response);
         } catch (error) {
@@ -211,6 +223,7 @@ export const api = {
         const response = await fetch(`${API_URL}/api/auth/forgot-password/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email }),
         });
         return handleResponse(response);
@@ -220,6 +233,7 @@ export const api = {
         const response = await fetch(`${API_URL}/api/auth/verify-otp/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email, code }),
         });
         return handleResponse(response);
@@ -229,6 +243,7 @@ export const api = {
         const response = await fetch(`${API_URL}/api/auth/reset-password/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email, code, password, confirm_password }),
         });
         return handleResponse(response);

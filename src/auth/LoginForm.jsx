@@ -6,6 +6,9 @@ import { api } from '../services/api';
 import { toast } from 'react-toastify';
 import { getUserRole, getDashboardPath } from './RoleBasedRoute';
 
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'fahari-token';
+const USER_KEY = import.meta.env.VITE_USER_KEY || 'fahari-user';
+
 
 
 const REGISTRATION_ENABLED = false; // Set to true to enable registration
@@ -73,10 +76,16 @@ const LoginForm = () => {
         const authToken = response.token || response.access || response.key || response.auth_token;
 
         if (authToken) {
-          localStorage.setItem('token', authToken);
+          localStorage.setItem(TOKEN_KEY, authToken);
+          if (response.user) {
+              localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+          }
+          // Small delay to ensure localStorage is synced before checking auth
+          await new Promise(resolve => setTimeout(resolve, 100));
           window.dispatchEvent(new Event('auth-change'));
         } else {
           console.warn("No token found in login response", response);
+          throw new Error("No authentication token received from server");
         }
 
         // Check if first time login (adjust property name based on backend)
@@ -377,6 +386,10 @@ const LoginForm = () => {
         >
           {isLoading ? <Loader2 className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> : (activeTab === 'login' ? 'Sign In' : 'Create Account')}
         </motion.button>
+
+        <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.85rem', color: '#9fa8da' }}>
+          Powered by <a href="https://royalsoftwares.co.ke" target="_blank" rel="noopener noreferrer" style={{ color: '#3f51b5', textDecoration: 'none', fontWeight: 600 }}>Royal Software Solutions</a>
+        </div>
       </motion.form>
     </div>
   );

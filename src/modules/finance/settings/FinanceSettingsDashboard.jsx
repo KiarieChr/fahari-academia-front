@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
-import { Settings, Wallet, CreditCard, FileText, Receipt, DollarSign, Briefcase, Bell, Calendar } from 'lucide-react';
+import { Settings, Wallet, CreditCard, FileText, Receipt, DollarSign, Briefcase, Bell, Calendar, Database, CheckCircle2, AlertTriangle, Loader2, ChevronRight, BookOpen } from 'lucide-react';
 import CashbookSettings from './components/CashbookSettings';
 import FiscalPeriodSettings from './components/FiscalPeriodSettings';
 import PaymentMethodSettings from './components/PaymentMethodSettings';
@@ -8,8 +8,8 @@ import DocumentNumberingSettings from './components/DocumentNumberingSettings';
 import ReceiptFormatSettings from './components/ReceiptFormatSettings';
 import OtherSettings from './components/OtherSettings';
 import { financeService } from '../../../services/financeService';
+import { api } from '../../../services/api';
 import './FinanceSettings.css';
-
 
 import { toast } from 'react-toastify';
 
@@ -101,7 +101,7 @@ const FinanceSettingsDashboard = () => {
                 });
             } catch (error) {
                 console.error("Failed to load finance settings", error);
-                // Fallback to mock data if API fails (optional, but good for dev)
+                toast.error('Failed to load finance settings. Check your connection or token.');
             } finally {
                 setLoading(false);
             }
@@ -128,7 +128,8 @@ const FinanceSettingsDashboard = () => {
         { id: 'receipts', label: 'Receipt Format', icon: Receipt, description: 'Configure receipt appearance' },
         { id: 'other', label: 'Account Mapping', icon: DollarSign, description: 'Account Mapping,Voucher, invoice, imprest settings' },
         { id: 'general', label: 'General Settings', icon: Settings, description: 'Currency, fiscal year, etc.' },
-        { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Alert settings' }
+        { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Alert settings' },
+        { id: 'seeding', label: 'Database Seeding', icon: Database, description: 'Seed COA & student accounts' },
     ];
 
     const renderContent = () => {
@@ -151,6 +152,8 @@ const FinanceSettingsDashboard = () => {
                 return <GeneralSettingsPanel settings={settingsData.settings} onSave={handleSaveSettings} />;
             case 'notifications':
                 return <NotificationSettingsPanel settings={settingsData.settings} onSave={handleSaveSettings} />;
+            case 'seeding':
+                return <SeedingPanel />;
             default:
                 return <CashbookSettings cashbooks={settingsData.cashbooks} accounts={settingsData.accounts} />;
         }
@@ -197,6 +200,284 @@ const FinanceSettingsDashboard = () => {
                 </div>
             </div>
         </DashboardLayout>
+    );
+};
+
+// ==========================================================================
+// SeedingPanel — triggers finance seed management commands via the API
+// ==========================================================================
+const SeedingPanel = () => {
+    const SEEDS = [
+        {
+            key: 'seed_coa',
+            label: 'Seed Chart of Accounts',
+            icon: BookOpen,
+            color: '#3f51b5',
+            badge: 'Step 1 — Run First',
+            badgeColor: '#3f51b5',
+            description:
+                'Seeds the full standard Chart of Accounts required for the Finance module: ' +
+                'Assets (Cash, Receivables, Fixed Assets), Liabilities (Payables, Loans), ' +
+                'Equity (Capital, Retained Earnings), Income (Tuition Fees, Other Revenue) ' +
+                'and Expenses (Salaries, Utilities, Depreciation). ' +
+                'Safe to re-run — uses update_or_create so existing accounts are not duplicated.',
+        },
+        {
+            key: 'seed_student_accounts',
+            label: 'Seed Student Fee Accounts',
+            icon: Database,
+            color: '#059669',
+            badge: 'Step 2 — Run After COA',
+            badgeColor: '#059669',
+            description:
+                'Seeds student-related sub-accounts under the COA: fee vote heads ' +
+                '(Tuition, Boarding, Transport, Library, Lab … 20 items), ' +
+                'Student Receivables, Student Prepaid Fees and Caution Deposits. ' +
+                'These accounts appear as options in Fee Structures. ' +
+                'Requires COA to be seeded first.',
+        },
+    ];
+
+    const [states, setStates] = useState(
+        Object.fromEntries(SEEDS.map(s => [s.key, { loading: false, result: null }]))
+    );
+
+    const runSeed = async (commandKey) => {
+        setStates(prev => ({ ...prev, [commandKey]: { loading: true, result: null } }));
+        try {
+            const result = await api.post('/api/system/run-command/', { command: commandKey });
+            setStates(prev => ({ ...prev, [commandKey]: { loading: false, result } }));
+            if (result.status === 'success') {
+                toast.success(`✅ ${commandKey} completed successfully`);
+            } else {
+                toast.error(`❌ ${commandKey} failed`);
+            }
+        } catch (err) {
+            const errMsg = err?.response?.data?.error || err?.message || 'Unknown error';
+            setStates(prev => ({
+                ...prev,
+                [commandKey]: { loading: false, result: { status: 'error', error: errMsg } }
+            }));
+            toast.error(`❌ ${commandKey} failed: ${errMsg}`);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div
+                style={{
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                    borderRadius: 14,
+                    padding: '1.5rem 1.75rem',
+                    border: '1px solid rgba(99,102,241,0.25)',
+                    marginBottom: '1.5rem',
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <div style={{
+                        background: 'rgba(99,102,241,0.15)',
+                        borderRadius: 10,
+                        padding: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <Database size={22} color="#818cf8" />
+                    </div>
+                    <div>
+                        <h5 style={{ color: '#f1f5f9', fontWeight: 700, margin: 0 }}>Database Seeding</h5>
+                        <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: 0 }}>
+                            One-click data seeding for the Finance module. Safe to run on fresh or existing databases.
+                        </p>
+                    </div>
+                </div>
+                <div style={{
+                    background: 'rgba(245,158,11,0.1)',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                    borderRadius: 8,
+                    padding: '0.65rem 1rem',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 8,
+                    marginTop: 12,
+                }}>
+                    <AlertTriangle size={16} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <p style={{ color: '#fbbf24', fontSize: '0.8rem', margin: 0, lineHeight: 1.5 }}>
+                        <strong>Order matters:</strong> Seed the Chart of Accounts first, then Seed Student Accounts.
+                        Running Student Accounts without COA will fail because the parent accounts won't exist.
+                    </p>
+                </div>
+            </div>
+
+            {/* Seed Cards */}
+            {SEEDS.map((seed) => {
+                const state = states[seed.key];
+                const Icon = seed.icon;
+                const isSuccess = state.result?.status === 'success';
+                const isError = state.result?.status === 'error';
+
+                return (
+                    <div
+                        key={seed.key}
+                        style={{
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: 14,
+                            overflow: 'hidden',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                        }}
+                    >
+                        {/* Card header */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            justifyContent: 'space-between',
+                            padding: '1.25rem 1.5rem',
+                            gap: 16,
+                            flexWrap: 'wrap',
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 0 }}>
+                                <div style={{
+                                    background: `${seed.color}18`,
+                                    borderRadius: 10,
+                                    padding: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                }}>
+                                    <Icon size={20} color={seed.color} />
+                                </div>
+                                <div style={{ minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                                        <h6 style={{ fontWeight: 700, color: '#1e293b', margin: 0, fontSize: '0.95rem' }}>
+                                            {seed.label}
+                                        </h6>
+                                        <span style={{
+                                            background: `${seed.badgeColor}18`,
+                                            color: seed.badgeColor,
+                                            fontSize: '0.7rem',
+                                            fontWeight: 700,
+                                            padding: '2px 8px',
+                                            borderRadius: 999,
+                                            border: `1px solid ${seed.badgeColor}30`,
+                                            letterSpacing: '0.05em',
+                                            textTransform: 'uppercase',
+                                            whiteSpace: 'nowrap',
+                                        }}>
+                                            {seed.badge}
+                                        </span>
+                                    </div>
+                                    <p style={{ color: '#64748b', fontSize: '0.82rem', margin: 0, lineHeight: 1.6 }}>
+                                        {seed.description}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Action button */}
+                            <button
+                                onClick={() => runSeed(seed.key)}
+                                disabled={state.loading}
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    padding: '0.6rem 1.25rem',
+                                    background: state.loading
+                                        ? '#f1f5f9'
+                                        : isSuccess
+                                            ? '#ecfdf5'
+                                            : isError
+                                                ? '#fef2f2'
+                                                : `linear-gradient(135deg, ${seed.color} 0%, ${seed.color}cc 100%)`,
+                                    color: state.loading
+                                        ? '#94a3b8'
+                                        : isSuccess
+                                            ? '#059669'
+                                            : isError
+                                                ? '#dc2626'
+                                                : '#ffffff',
+                                    border: `1px solid ${
+                                        state.loading ? '#e2e8f0' :
+                                        isSuccess ? '#a7f3d0' :
+                                        isError ? '#fecaca' :
+                                        seed.color
+                                    }`,
+                                    borderRadius: 10,
+                                    fontWeight: 600,
+                                    fontSize: '0.85rem',
+                                    cursor: state.loading ? 'not-allowed' : 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0,
+                                    transition: 'all 0.2s',
+                                    boxShadow: (!state.loading && !isSuccess && !isError)
+                                        ? `0 4px 12px ${seed.color}40`
+                                        : 'none',
+                                }}
+                            >
+                                {state.loading ? (
+                                    <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Running...</>
+                                ) : isSuccess ? (
+                                    <><CheckCircle2 size={15} /> Done — Run Again</>                  
+                                ) : isError ? (
+                                    <><AlertTriangle size={15} /> Failed — Retry</>
+                                ) : (
+                                    <><ChevronRight size={15} /> Run Seed</>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Output terminal */}
+                        {state.result && (
+                            <div style={{
+                                borderTop: `1px solid ${
+                                    isSuccess ? '#d1fae5' : isError ? '#fee2e2' : '#e2e8f0'
+                                }`,
+                                background: isSuccess ? '#f0fdf4' : isError ? '#fef2f2' : '#f8fafc',
+                                padding: '1rem 1.5rem',
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    marginBottom: 8,
+                                    color: isSuccess ? '#059669' : '#dc2626',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.06em',
+                                }}>
+                                    {isSuccess
+                                        ? <><CheckCircle2 size={13} /> Output</>  
+                                        : <><AlertTriangle size={13} /> Error</>}
+                                </div>
+                                <pre style={{
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.78rem',
+                                    color: isSuccess ? '#166534' : '#991b1b',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                    margin: 0,
+                                    maxHeight: 220,
+                                    overflowY: 'auto',
+                                    lineHeight: 1.7,
+                                }}>
+                                    {isError
+                                        ? (state.result.error || 'An unknown error occurred.')
+                                        : (state.result.output || 'Command completed with no output.')}
+                                </pre>
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+
+            {/* Spin keyframes */}
+            <style>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            `}</style>
+        </div>
     );
 };
 

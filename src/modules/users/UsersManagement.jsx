@@ -36,40 +36,112 @@ const UsersManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
+    const [stats, setStats] = useState(null);
+    const [roles, setRoles] = useState([]);
+    
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [perPage, setPerPage] = useState(10);
+    
+    // Modals
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+    const [roleModalUser, setRoleModalUser] = useState(null);
+    const [selectedRoleIds, setSelectedRoleIds] = useState([]);
+    const [savingRoles, setSavingRoles] = useState(false);
+    
     const [activeActionDropdown, setActiveActionDropdown] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // Fetch users from API
+    // Initial data fetch
     useEffect(() => {
-        fetchUsers();
+        fetchStats();
+        fetchRoles();
     }, []);
 
-    const fetchUsers = async () => {
+    // Debounced search effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (currentPage === 1) fetchUsers(1);
+            else setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Filter effect
+    useEffect(() => {
+        if (currentPage === 1) fetchUsers(1);
+        else setCurrentPage(1);
+    }, [roleFilter, statusFilter]);
+
+    // Page change effect
+    useEffect(() => {
+        fetchUsers(currentPage);
+    }, [currentPage]);
+
+    const fetchStats = async () => {
+        try {
+            const data = await userService.getDashboardStats();
+            setStats(data);
+        } catch (err) {
+            console.error('Failed to fetch user stats:', err);
+        }
+    };
+
+    const fetchRoles = async () => {
+        try {
+            const data = await userService.getRoles();
+            setRoles(data.results || data || []);
+        } catch (err) {
+            console.error('Failed to fetch roles:', err);
+        }
+    };
+
+    const fetchUsers = async (page = currentPage) => {
         try {
             setLoading(true);
             setError(null);
-            const data = await api.get('/api/users/');
+            
+            const params = {
+                page: page,
+                search: searchTerm,
+                per_page: perPage
+            };
+            
+            if (roleFilter !== "All") params.role = roleFilter;
+            if (statusFilter !== "All") params.status = statusFilter;
+
+            const data = await userService.getUsers(params);
             
             if (data) {
+                // Handle paginated response
                 const usersList = data.results || (Array.isArray(data) ? data : []);
+                const pagination = data.pagination || {};
+                
                 const mappedUsers = usersList.map(u => ({
                     id: u.id,
-                    name: `${u.first_name} ${u.last_name}`.trim() || u.username,
+                    name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username,
                     email: u.email,
                     phone: u.phone || "N/A",
                     role: u.groups?.[0]?.name || u.role || "User",
+                    groups: u.groups || [],
                     status: u.is_active ? 'Active' : 'Inactive',
                     lastLogin: u.last_login ? new Date(u.last_login).toLocaleString() : "Never",
-                    avatar: `${u.first_name?.[0] || u.username?.[0]?.toUpperCase()}${u.last_name?.[0] || u.username?.[1]?.toUpperCase()}`.toUpperCase()
+                    avatar: `${u.first_name?.[0] || u.username?.[0]?.toUpperCase() || 'U'}${u.last_name?.[0] || u.username?.[1]?.toUpperCase() || ''}`.toUpperCase()
                 }));
+                
                 setUsers(mappedUsers);
+                setTotalPages(pagination.total_pages || 1);
+                setTotalCount(pagination.total_count || mappedUsers.length);
             } else {
                 setUsers([]);
+                setTotalCount(0);
+                setTotalPages(1);
             }
         } catch (err) {
             console.error('Failed to fetch users:', err);
-            setError('Failed to load users');
+            setError('Failed to load users from server');
             setUsers([]);
         } finally {
             setLoading(false);
@@ -120,12 +192,12 @@ const UsersManagement = () => {
         try {
             setSubmitting(true);
             await api.delete(`/api/users/${userId}/`);
-            alert('User deleted successfully');
+            toast.success('User deleted successfully');
             fetchUsers();
             setActiveActionDropdown(null);
         } catch (error) {
             console.error('Failed to delete user:', error);
-            alert(error.data?.message || error.message || 'Failed to delete user');
+            toast.error(error.data?.message || error.message || 'Failed to delete user');
         } finally {
             setSubmitting(false);
         }
@@ -137,23 +209,20 @@ const UsersManagement = () => {
             await api.post(`/api/users/${userId}/quick_actions/`, { action: 'toggle_active' });
             fetchUsers();
             setActiveActionDropdown(null);
-            alert(`User status changed to ${newStatus}`);
+            toast.success(`User status changed successfully`);
         } catch (error) {
             console.error('Failed to change user status:', error);
-            alert(error.data?.message || error.message || 'Failed to change user status');
+            toast.error(error.data?.message || error.message || 'Failed to change user status');
         } finally {
             setSubmitting(false);
         }
     };
 
-    // Filter Logic
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === "All" || user.role === roleFilter;
-        const matchesStatus = statusFilter === "All" || user.status === statusFilter;
-        return matchesSearch && matchesRole && matchesStatus;
-    });
+    // Server-side filtered count instead of local subset
+    const filteredUsersCount = totalCount;
+    
+    // We already have the correct users in state from fetchUsers
+    const displayUsers = users;
 
     return (
         <DashboardLayout title="Users Management">
@@ -166,7 +235,7 @@ const UsersManagement = () => {
                 ) : error ? (
                     <div className="error-container" style={{ background: '#fee2e2', color: '#991b1b', padding: '2rem', borderRadius: '8px', textAlign: 'center' }}>
                         <p>{error}</p>
-                        <button onClick={fetchUsers} className="btn btn-primary" style={{ marginTop: '1rem' }}>Retry</button>
+                        <button onClick={() => fetchUsers(currentPage)} className="btn btn-primary" style={{ marginTop: '1rem' }}>Retry</button>
                     </div>
                 ) : (
                     <>
@@ -181,12 +250,44 @@ const UsersManagement = () => {
                     </button>
                 </div>
 
-                {/* Stats Cards - Reusing dashboard.css class 'stats-grid' if possible or defining local */}
+                {/* Stats Cards */}
                 <div className="stats-grid" style={{ marginTop: '2rem' }}>
-                    <StatCard title="Total Users" value={totalUsers} icon={Users} color="#3f51b5" iconColor="#3f51b5" trend={12} trendLabel="vs last month" />
-                    <StatCard title="Active Users" value={activeUsers} icon={CheckCircle} color="#4caf50" iconColor="#4caf50" trend={8} trendLabel="active now" />
-                    <StatCard title="Inactive Users" value={inactiveUsers} icon={XCircle} color="#9e9e9e" iconColor="#9e9e9e" trend={-2} trendLabel="decreasing" />
-                    <StatCard title="Suspended" value={suspendedUsers} icon={AlertOctagon} color="#f44336" iconColor="#f44336" trend={0} trendLabel="no change" />
+                    <StatCard 
+                        title="Total Users" 
+                        value={stats?.total_users ?? '...'} 
+                        icon={Users} 
+                        color="#3f51b5" 
+                        iconColor="#3f51b5" 
+                        trend={12} 
+                        trendLabel="vs last month" 
+                    />
+                    <StatCard 
+                        title="Active Users" 
+                        value={stats?.active_users ?? '...'} 
+                        icon={CheckCircle} 
+                        color="#4caf50" 
+                        iconColor="#4caf50" 
+                        trend={8} 
+                        trendLabel="active now" 
+                    />
+                    <StatCard 
+                        title="Inactive Users" 
+                        value={stats?.inactive_users ?? '...'} 
+                        icon={XCircle} 
+                        color="#9e9e9e" 
+                        iconColor="#9e9e9e" 
+                        trend={-2} 
+                        trendLabel="decreasing" 
+                    />
+                    <StatCard 
+                        title="Students" 
+                        value={stats?.students ?? '...'} 
+                        icon={Shield} 
+                        color="#f44336" 
+                        iconColor="#f44336" 
+                        trend={0} 
+                        trendLabel="enrolled" 
+                    />
                 </div>
 
                 {/* Filters */}
@@ -254,7 +355,7 @@ const UsersManagement = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                                {displayUsers.length > 0 ? displayUsers.map((user) => (
                                     <tr key={user.id}>
                                         <td>
                                             <div className="user-cell">
@@ -278,9 +379,19 @@ const UsersManagement = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className={`badge badge-role-${user.role.toLowerCase()}`}>
-                                                {user.role}
-                                            </span>
+                                            <div className="role-badges-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                {user.groups && user.groups.length > 0 ? (
+                                                    user.groups.map(g => (
+                                                        <span key={g.id} className="badge badge-role-generic" style={{ background: '#f0f4ff', color: '#3f51b5', border: '1px solid #d0d7ff' }}>
+                                                            {g.name}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className={`badge badge-role-${user.role.toLowerCase()}`}>
+                                                        {user.role}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td>
                                             <span className={`badge badge-status-${user.status.toLowerCase()}`}>
@@ -305,6 +416,9 @@ const UsersManagement = () => {
                                                     <div className="action-dropdown-menu">
                                                         <button className="dropdown-item">
                                                             <Eye size={16} /> View Details
+                                                        </button>
+                                                        <button className="dropdown-item" onClick={() => openRoleModal(user)}>
+                                                            <Shield size={16} /> Assign Roles
                                                         </button>
                                                         <button className="dropdown-item">
                                                             <Edit size={16} /> Edit User
@@ -353,10 +467,51 @@ const UsersManagement = () => {
                         </table>
                     </div>
                     <div className="table-footer">
-                        <span>Showing {filteredUsers.length} of {users.length} users</span>
+                        <span>Showing {displayUsers.length} users on page {currentPage} of {totalPages} (Total: {totalCount})</span>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button className="pagination-btn" disabled>Previous</button>
-                            <button className="pagination-btn" disabled>Next</button>
+                            <button 
+                                className="pagination-btn" 
+                                disabled={currentPage <= 1 || loading}
+                                onClick={() => setCurrentPage(prev => prev - 1)}
+                            >
+                                Previous
+                            </button>
+                            <div className="pagination-pages" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                                    // Simple windowed pagination
+                                    let pageNum;
+                                    if (totalPages <= 5) pageNum = i + 1;
+                                    else if (currentPage <= 3) pageNum = i + 1;
+                                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                    else pageNum = currentPage - 2 + i;
+                                    
+                                    return (
+                                        <button 
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`pagination-page-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                            style={{
+                                                padding: '0.5rem 0.8rem',
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border-color)',
+                                                background: currentPage === pageNum ? 'var(--primary-color)' : 'transparent',
+                                                color: currentPage === pageNum ? 'white' : 'var(--text-main)',
+                                                fontWeight: currentPage === pageNum ? 'bold' : 'normal',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <button 
+                                className="pagination-btn" 
+                                disabled={currentPage >= totalPages || loading}
+                                onClick={() => setCurrentPage(prev => prev + 1)}
+                            >
+                                Next
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -364,6 +519,49 @@ const UsersManagement = () => {
                 {/* Add User Modal */}
                 {isAddUserOpen && (
                     <AddUserDialog onClose={() => setIsAddUserOpen(false)} onSubmit={handleAddUser} />
+                )}
+
+                {/* Assign Roles Modal */}
+                {roleModalUser && (
+                    <Modal isOpen={true} onClose={() => setRoleModalUser(null)}
+                        title={`Assign Roles — ${roleModalUser.name}`}
+                        subtitle="Manage user permissions by assigning security roles"
+                        icon={Shield} size="md" accentColor="bg-indigo-500"
+                        footer={
+                            <>
+                                <Modal.CancelButton onClick={() => setRoleModalUser(null)} />
+                                <Modal.SubmitButton onClick={handleSaveRoles} loading={savingRoles} label="Save Roles" />
+                            </>
+                        }
+                    >
+                        <div className="space-y-2">
+                            {roles.length === 0 ? (
+                                <div className="text-center py-8 text-gray-400 text-sm">
+                                    <Shield size={32} className="mx-auto mb-2 opacity-40" />
+                                    No roles found in the system.
+                                </div>
+                            ) : roles.map(role => {
+                                const isSelected = selectedRoleIds.includes(role.id);
+                                return (
+                                    <button key={role.id} onClick={() => toggleRoleSelection(role.id)}
+                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all text-left ${isSelected
+                                            ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-500/20 shadow-sm'
+                                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                        }`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                                {isSelected ? <Check size={16} /> : <Shield size={14} />}
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-semibold ${isSelected ? 'text-indigo-900' : 'text-gray-800'}`}>{role.name}</p>
+                                                <p className="text-xs text-gray-400">{role.permissions?.length || 0} permissions · {role.user_count || 0} members</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </Modal>
                 )}
                     </>
                 )}
@@ -497,9 +695,9 @@ const AddUserDialog = ({ onClose, onSubmit }) => {
     };
 
     const inputClass = (field) =>
-        `w-full px-4 py-2.5 bg-white border rounded-xl outline-none transition-all text-sm ${errors[field]
-            ? 'border-red-300 focus:ring-4 focus:ring-red-500/10 focus:border-red-500'
-            : 'border-gray-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500'
+        `w-full px-5 py-4 bg-gray-50/50 hover:bg-gray-50 focus:bg-white border-2 rounded-2xl outline-none transition-all text-[15px] font-semibold text-gray-900 placeholder:text-gray-300 ${errors[field]
+            ? 'border-red-100 focus:border-red-500 focus:ring-4 focus:ring-red-500/5 shadow-sm'
+            : 'border-gray-50 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 shadow-sm hover:border-gray-200'
         }`;
 
     const userTypes = [
@@ -511,240 +709,236 @@ const AddUserDialog = ({ onClose, onSubmit }) => {
     return (
         <Modal isOpen={true} onClose={onClose}
             title="Create New User"
-            subtitle="Add a new user account to the system"
-            icon={UserPlus} size="lg" accentColor="bg-indigo-500"
+            subtitle="Securely provision a new account into the school's identity system"
+            icon={UserPlus} size="lg" accentColor="bg-indigo-600"
             footer={
-                <>
+                <div className="px-4 w-full flex justify-end gap-3">
                     <Modal.CancelButton onClick={onClose} />
-                    <Modal.SubmitButton onClick={handleSubmit} loading={isSubmitting} label="Create User" />
-                </>
+                    <Modal.SubmitButton onClick={handleSubmit} loading={isSubmitting} label="Initialize Account" />
+                </div>
             }
         >
-            <div className="space-y-6">
-                {/* ─── Link from HR Employee ─── */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Link2 size={16} className="text-blue-600" />
-                        <span className="text-sm font-semibold text-blue-800">Link to HR Employee</span>
-                        <span className="text-[10px] font-medium bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Optional</span>
-                    </div>
-                    <p className="text-xs text-blue-500 mb-3">Select an existing employee to auto-fill details and link their account</p>
-
-                    {selectedEmployee ? (
-                        <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-blue-200 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-sm font-bold text-blue-600">
-                                    {(selectedEmployee.first_name?.[0] || '')}{(selectedEmployee.last_name?.[0] || '')}
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-900">
-                                        {selectedEmployee.full_name || `${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        {selectedEmployee.employee_no} · {selectedEmployee.email || selectedEmployee.official_email}
-                                    </p>
+            <div className="px-4 py-2 space-y-12">
+                {/* ─── Identity Receipt Header ─── */}
+                <div className="relative overflow-hidden bg-white rounded-[24px] p-8 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-full -mr-16 -mt-16 blur-3xl" />
+                    <div className="relative flex flex-col sm:flex-row justify-between items-center gap-6">
+                        <div className="flex gap-6 items-center">
+                            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-indigo-200">
+                                {formData.first_name?.[0] || '?'}{formData.last_name?.[0] || ''}
+                            </div>
+                            <div className="text-center sm:text-left">
+                                <h4 className="text-2xl font-black text-gray-900 tracking-tight mb-1">
+                                    {formData.first_name || 'New'} {formData.last_name || 'User'}
+                                </h4>
+                                <div className="flex items-center justify-center sm:justify-start gap-2 text-base font-medium text-gray-400">
+                                    <Mail size={16} className="text-indigo-400" /> {formData.email || 'pending.email@school.com'}
                                 </div>
                             </div>
-                            <button onClick={clearEmployee} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors group">
-                                <X size={16} className="text-gray-400 group-hover:text-red-500" />
-                            </button>
                         </div>
-                    ) : (
-                        <div className="relative">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-sm"
-                                placeholder="Search employees by name, ID, or email..."
-                                value={employeeSearch}
-                                onChange={(e) => handleEmployeeSearch(e.target.value)}
-                            />
-                            {employeeSearch.length >= 2 && (
-                                <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-52 overflow-y-auto">
-                                    {employeeLoading ? (
-                                        <div className="px-4 py-4 text-sm text-gray-400 text-center">
-                                            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                                            Searching employees...
-                                        </div>
-                                    ) : unlinkedEmployees.length === 0 ? (
-                                        <div className="px-4 py-4 text-sm text-gray-400 text-center">
-                                            <Briefcase size={20} className="mx-auto mb-1 opacity-40" />
-                                            No unlinked employees found
-                                        </div>
-                                    ) : unlinkedEmployees.map(emp => (
-                                        <button key={emp.id} onClick={() => selectEmployee(emp)}
-                                            className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0">
-                                            <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500">
-                                                {(emp.first_name?.[0] || '')}{(emp.last_name?.[0] || '')}
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium text-gray-900 truncate">
-                                                    {emp.full_name || `${emp.first_name} ${emp.last_name}`}
-                                                </p>
-                                                <p className="text-xs text-gray-500 truncate">
-                                                    {emp.employee_no} · {emp.email || emp.official_email}
-                                                </p>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                        <div className="flex flex-col items-center sm:items-end gap-3">
+                            <div className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest border transition-all ${formData.password ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                {formData.password ? 'Ready for Sync' : 'Configuration Draft'}
+                            </div>
+                            <span className="text-[11px] font-bold text-gray-300 tracking-[0.2em] uppercase">
+                                {selectedEmployee ? 'System Linked' : 'Direct Provision'}
+                            </span>
                         </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* ─── Personal Information ─── */}
-                <div>
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <User size={14} /> Personal Information
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-400">*</span></label>
+                {/* ─── Employee Synchronization ─── */}
+                <div className="space-y-5 px-1">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <Link2 size={16} />
+                        </div>
+                        <h5 className="text-[13px] font-black text-gray-400 uppercase tracking-[0.15em]">Employee Synchronization</h5>
+                    </div>
+                    
+                    <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100 transition-all">
+                        {selectedEmployee ? (
+                            <div className="flex items-center justify-between bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">
+                                        {selectedEmployee.first_name?.[0]}{selectedEmployee.last_name?.[0]}
+                                    </div>
+                                    <div>
+                                        <p className="text-base font-bold text-gray-900">{selectedEmployee.full_name}</p>
+                                        <p className="text-sm text-gray-400 font-medium">{selectedEmployee.employee_no} · {selectedEmployee.designation || 'Staff Member'}</p>
+                                    </div>
+                                </div>
+                                <button onClick={clearEmployee} className="p-2.5 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-lg transition-all">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative group">
+                                <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-indigo-500 transition-colors" />
+                                <input
+                                    className="w-full pl-12 pr-5 py-4 bg-white border-2 border-gray-50 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 rounded-2xl outline-none text-[15px] font-semibold text-gray-900 transition-all shadow-sm placeholder:text-gray-300"
+                                    placeholder="Search HR database to link an existing employee..."
+                                    value={employeeSearch}
+                                    onChange={(e) => handleEmployeeSearch(e.target.value)}
+                                />
+                                {employeeSearch.length >= 2 && (
+                                    <div className="absolute z-20 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                        {employeeLoading ? (
+                                            <div className="p-10 text-center"><div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" /></div>
+                                        ) : unlinkedEmployees.length === 0 ? (
+                                            <div className="p-10 text-center text-gray-400 text-base font-medium">No results found in HR registry</div>
+                                        ) : unlinkedEmployees.map(emp => (
+                                            <button key={emp.id} onClick={() => selectEmployee(emp)}
+                                                className="w-full text-left px-7 py-5 hover:bg-indigo-50/50 flex items-center gap-5 border-b border-gray-50 last:border-0 transition-all">
+                                                <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center font-bold text-gray-400 group-hover:bg-white transition-colors">{emp.first_name?.[0]}{emp.last_name?.[0]}</div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-base font-bold text-gray-900 truncate">{emp.full_name}</p>
+                                                    <p className="text-sm text-gray-400 truncate">{emp.employee_no} · {emp.official_email || emp.email}</p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ─── Profile Identity ─── */}
+                <div className="space-y-7 px-1">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <User size={16} />
+                        </div>
+                        <h5 className="text-[13px] font-black text-gray-400 uppercase tracking-[0.15em]">Primary Identity</h5>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-7">
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">Legal First Name</label>
                             <input className={inputClass('first_name')} value={formData.first_name}
                                 onChange={e => { setFormData(p => ({ ...p, first_name: e.target.value })); setErrors(p => ({ ...p, first_name: undefined })); }}
-                                placeholder="Jane" />
-                            {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name}</p>}
+                                placeholder="Timothy" />
+                            {errors.first_name && <p className="text-xs text-red-500 font-bold ml-1">{errors.first_name}</p>}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-400">*</span></label>
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">Legal Last Name</label>
                             <input className={inputClass('last_name')} value={formData.last_name}
                                 onChange={e => { setFormData(p => ({ ...p, last_name: e.target.value })); setErrors(p => ({ ...p, last_name: undefined })); }}
-                                placeholder="Doe" />
-                            {errors.last_name && <p className="text-xs text-red-500 mt-1">{errors.last_name}</p>}
+                                placeholder="Smith" />
+                            {errors.last_name && <p className="text-xs text-red-500 font-bold ml-1">{errors.last_name}</p>}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-400">*</span></label>
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">Official Email Address</label>
                             <div className="relative">
-                                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input type="email" className={`${inputClass('email')} pl-9`} value={formData.email}
+                                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                                <input type="email" className={`${inputClass('email')} pl-12`} value={formData.email}
                                     onChange={e => { setFormData(p => ({ ...p, email: e.target.value })); setErrors(p => ({ ...p, email: undefined })); }}
-                                    placeholder="jane@school.com" />
+                                    placeholder="tim@school.com" />
                             </div>
-                            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                            {errors.email && <p className="text-xs text-red-500 font-bold ml-1">{errors.email}</p>}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Username <span className="text-gray-400 text-xs font-normal">(auto-generated if empty)</span></label>
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">System Username</label>
                             <input className={inputClass('username')} value={formData.username}
                                 onChange={e => setFormData(p => ({ ...p, username: e.target.value }))}
-                                placeholder={formData.email ? formData.email.split('@')[0] : 'janedoe'} />
+                                placeholder={formData.email ? formData.email.split('@')[0] : 'tim.smith'} />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">Gender Identity</label>
                             <select className={inputClass('gender')} value={formData.gender}
                                 onChange={e => setFormData(p => ({ ...p, gender: e.target.value }))}>
-                                <option value="">Select gender...</option>
+                                <option value="">Undisclosed</option>
                                 <option value="M">Male</option>
                                 <option value="F">Female</option>
+                                <option value="O">Other</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">Mobile Contact</label>
                             <div className="relative">
-                                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input className={`${inputClass('phone')} pl-9`} value={formData.phone}
+                                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                                <input className={`${inputClass('phone')} pl-12`} value={formData.phone}
                                     onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
-                                    placeholder="+254 700 000 000" />
+                                    placeholder="+254 7..." />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* ─── Security ─── */}
-                <div>
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <Lock size={14} /> Security
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Password <span className="text-red-400">*</span></label>
+                {/* ─── Security Configuration ─── */}
+                <div className="space-y-7 px-1">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <Lock size={16} />
+                        </div>
+                        <h5 className="text-[13px] font-black text-gray-400 uppercase tracking-[0.15em]">Security Protocol</h5>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-7">
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">Provision Password</label>
                             <div className="relative">
-                                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                                 <input type={showPassword ? 'text' : 'password'}
-                                    className={`${inputClass('password')} pl-9 pr-10`} value={formData.password}
+                                    className={`${inputClass('password')} pl-12 pr-14`} value={formData.password}
                                     onChange={e => { setFormData(p => ({ ...p, password: e.target.value })); setErrors(p => ({ ...p, password: undefined })); }}
                                     placeholder="••••••••" />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-indigo-600 transition-colors">
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
-                            {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+                            {errors.password && <p className="text-xs text-red-500 font-bold ml-1">{errors.password}</p>}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password <span className="text-red-400">*</span></label>
+                        <div className="space-y-2.5">
+                            <label className="text-[12px] font-black text-gray-500 uppercase tracking-widest ml-1">Verification Password</label>
                             <div className="relative">
-                                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                                 <input type={showConfirmPassword ? 'text' : 'password'}
-                                    className={`${inputClass('confirm_password')} pl-9 pr-10`} value={formData.confirm_password}
+                                    className={`${inputClass('confirm_password')} pl-12 pr-14`} value={formData.confirm_password}
                                     onChange={e => { setFormData(p => ({ ...p, confirm_password: e.target.value })); setErrors(p => ({ ...p, confirm_password: undefined })); }}
                                     placeholder="••••••••" />
                                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-indigo-600 transition-colors">
+                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
-                            {errors.confirm_password && <p className="text-xs text-red-500 mt-1">{errors.confirm_password}</p>}
+                            {errors.confirm_password && <p className="text-xs text-red-500 font-bold ml-1">{errors.confirm_password}</p>}
                         </div>
                     </div>
-                    {formData.password && formData.password.length > 0 && (
-                        <div className="mt-2 flex items-center gap-2">
-                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full transition-all ${formData.password.length >= 12 ? 'w-full bg-green-500'
-                                    : formData.password.length >= 8 ? 'w-2/3 bg-yellow-500'
-                                    : 'w-1/3 bg-red-500'}`} />
-                            </div>
-                            <span className={`text-xs font-medium ${formData.password.length >= 12 ? 'text-green-600'
-                                : formData.password.length >= 8 ? 'text-yellow-600'
-                                : 'text-red-600'}`}>
-                                {formData.password.length >= 12 ? 'Strong' : formData.password.length >= 8 ? 'Good' : 'Weak'}
-                            </span>
-                        </div>
-                    )}
-                    {/* Server-side validation errors */}
-                    {(serverErrors.password || serverErrors.non_field_errors) && (
-                        <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                            <div className="flex items-start gap-2">
-                                <AlertOctagon size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
-                                <div className="space-y-1">
-                                    {serverErrors.password && (
-                                        (Array.isArray(serverErrors.password) ? serverErrors.password : [serverErrors.password]).map((msg, i) => (
-                                            <p key={i} className="text-xs text-red-600">{msg}</p>
-                                        ))
-                                    )}
-                                    {serverErrors.non_field_errors && (
-                                        (Array.isArray(serverErrors.non_field_errors) ? serverErrors.non_field_errors : [serverErrors.non_field_errors]).map((msg, i) => (
-                                            <p key={`nf-${i}`} className="text-xs text-red-600">{msg}</p>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
-                {/* ─── User Type ─── */}
-                <div>
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <Shield size={14} /> User Type
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* ─── Classification ─── */}
+                <div className="space-y-7 px-1">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <Shield size={16} />
+                        </div>
+                        <h5 className="text-[13px] font-black text-gray-400 uppercase tracking-[0.15em]">Account Classification</h5>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
                         {userTypes.map(type => {
                             const active = formData[type.key];
                             return (
                                 <button key={type.key} type="button"
                                     onClick={() => setFormData(p => ({ ...p, [type.key]: !p[type.key] }))}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${active
-                                        ? 'border-indigo-400 bg-indigo-50 shadow-sm shadow-indigo-100'
-                                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                                    className={`group flex flex-col gap-5 p-6 rounded-2xl border-2 transition-all text-left ${active
+                                        ? 'border-indigo-600 bg-indigo-50/30 shadow-[0_15px_45px_rgba(79,70,229,0.12)]'
+                                        : 'border-gray-50 bg-white hover:border-gray-200'
                                     }`}>
-                                    <span className="text-lg">{type.icon}</span>
-                                    <div>
-                                        <p className={`text-sm font-semibold ${active ? 'text-indigo-700' : 'text-gray-700'}`}>{type.label}</p>
+                                    <div className="flex justify-between items-center w-full">
+                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl transition-all ${active ? 'bg-indigo-600 shadow-lg shadow-indigo-100' : 'bg-gray-50 group-hover:bg-gray-100'}`}>
+                                            {type.icon}
+                                        </div>
+                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${active ? 'bg-indigo-600 text-white scale-110' : 'bg-gray-100 text-gray-300'}`}>
+                                            <CheckCircle size={16} />
+                                        </div>
                                     </div>
-                                    <div className={`ml-auto w-5 h-5 rounded-md flex items-center justify-center ${active
-                                        ? 'bg-indigo-600'
-                                        : 'border border-gray-300'}`}>
-                                        {active && <CheckCircle size={14} className="text-white" />}
+                                    <div>
+                                        <p className={`text-base font-black tracking-tight ${active ? 'text-indigo-900' : 'text-gray-900'}`}>{type.label}</p>
+                                        <p className="text-xs font-medium text-gray-400 mt-1">Grants {type.label.split(' ')[0]} access level</p>
                                     </div>
                                 </button>
                             );

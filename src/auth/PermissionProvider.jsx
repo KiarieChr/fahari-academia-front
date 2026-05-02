@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
+
 const PermissionContext = createContext({
     permissions: [],
     user: null,
@@ -28,6 +30,7 @@ const MODULE_PERMISSIONS = {
     fees: ['fees.view_feestructure', 'fees.view_feetemplate', 'payments.view_receipt', 'invoicing.view_invoice'],
     finance: ['finance.view_account', 'finance.view_transaction', 'journals.view_journal', 'budgets.view_budget'],
     procurement: ['inventory.view_item', 'inventory.view_purchaseorder', 'inventory.view_supplier'],
+    fleet: ['fleet.view_vehicle', 'fleet.view_triplog', 'fleet.view_fuellog', 'fleet.view_maintenancerecord'],
 
     // People
     hr: ['recruitment.view_jobrequisition', 'recruitment.view_jobapplication', 'accounts.view_employeeprofile'],
@@ -44,7 +47,7 @@ export const PermissionProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const fetchPermissions = useCallback(async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem(TOKEN_KEY);
         if (!token) {
             setPermissions([]);
             setUser(null);
@@ -72,7 +75,7 @@ export const PermissionProvider = ({ children }) => {
     // Listen for login/logout — re-fetch when token changes
     useEffect(() => {
         const onStorage = (e) => {
-            if (e.key === 'token') fetchPermissions();
+            if (e.key === TOKEN_KEY) fetchPermissions();
         };
         const onAuthChange = () => fetchPermissions();
         window.addEventListener('storage', onStorage);

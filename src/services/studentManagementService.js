@@ -103,7 +103,7 @@ export const studentManagementService = {
 
     // === Guardian Email Check ===
     checkGuardianEmail: async (email) => {
-        const response = await api.get('/api/accounts/check-guardian-email/', { params: { email } });
+        const response = await api.get('/api/check-guardian-email/', { params: { email } });
         return response;
     },
 };

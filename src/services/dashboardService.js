@@ -1,10 +1,11 @@
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.100.27:8000';
+const API_URL = import.meta.env.VITE_API_URL;
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
 
 export const dashboardService = {
     getStats: async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem(TOKEN_KEY);
             const response = await fetch(`${API_URL}/api/dashboard/stats/`, {
                 method: 'GET',
                 headers: {
@@ -26,7 +27,7 @@ export const dashboardService = {
 
     getSimpleStats: async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem(TOKEN_KEY);
             const response = await fetch(`${API_URL}/api/dashboard/debug/`, {
                 method: 'GET',
                 headers: {

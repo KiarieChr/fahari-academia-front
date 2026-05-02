@@ -2,6 +2,8 @@
 // Features: Auto-logout, session expiry detection, retry, caching
 
 const API_URL = import.meta.env.VITE_API_URL;
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
+const USER_KEY = import.meta.env.VITE_USER_KEY || 'academia-user';
 
 // Session Management State
 let sessionExpiredCallback = null;
@@ -53,7 +55,7 @@ export const updateLastActivity = () => {
 
     // Set warning timer
     warningTimer = setTimeout(() => {
-        if (localStorage.getItem('token') && sessionExpiredCallback) {
+        if (localStorage.getItem(TOKEN_KEY) && sessionExpiredCallback) {
             sessionWarningShown = true;
             sessionExpiredCallback('warning');
         }
@@ -61,7 +63,7 @@ export const updateLastActivity = () => {
 
     // Set expiry timer
     inactivityTimer = setTimeout(() => {
-        if (localStorage.getItem('token')) {
+        if (localStorage.getItem(TOKEN_KEY)) {
             handleSessionExpired('inactivity');
         }
     }, SESSION_CONFIG.inactivityTimeout);
@@ -78,8 +80,8 @@ export const getSessionTimeRemaining = () => {
 };
 
 const handleSessionExpired = (reason = 'expired') => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
 
     if (sessionExpiredCallback) {
         sessionExpiredCallback(reason);
@@ -202,7 +204,7 @@ const handleResponse = async (response, options = {}) => {
 // ====================================
 
 const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_KEY);
     return token ? { 'Authorization': `Token ${token}` } : {};
 };
 
@@ -387,8 +389,8 @@ export const api = {
             const data = await handleResponse(response, { skipAuthCheck: true });
 
             // Start session tracking after successful login
-            if (data.token) {
-                localStorage.setItem('token', data.token);
+            if (data.token || data.key) {
+                localStorage.setItem(TOKEN_KEY, data.token || data.key);
                 updateLastActivity();
             }
 
@@ -429,8 +431,8 @@ export const api = {
             });
 
             // Clear local storage regardless of response
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
             clearCache();
 
             return handleResponse(response).catch(() => ({ success: true }));
@@ -732,7 +734,7 @@ if (typeof window !== 'undefined') {
     });
 
     // Start session tracking if already logged in
-    if (localStorage.getItem('token')) {
+    if (localStorage.getItem(TOKEN_KEY)) {
         updateLastActivity();
     }
 }

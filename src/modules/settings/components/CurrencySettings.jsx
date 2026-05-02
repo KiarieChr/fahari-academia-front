@@ -33,7 +33,7 @@ const CurrencySettings = () => {
         setLoading(true);
         try {
             // Try to load from finance settings
-            const data = await api.get('/finance/api/settings/');
+            const data = await api.get('/api/finance/settings/');
             const settings = Array.isArray(data) ? data[0] : (data.results?.[0] || data);
             if (settings) {
                 setDefaultCurrency(settings.currency_code || 'KES');
@@ -74,7 +74,7 @@ const CurrencySettings = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.patch('/finance/api/settings/1/', {
+            await api.post('/api/finance/settings/', {
                 currency_code: defaultCurrency,
                 enabled_currencies: enabledCurrencies,
             });
@@ -83,7 +83,7 @@ const CurrencySettings = () => {
         } catch {
             // Try creating if doesn't exist
             try {
-                await api.post('/finance/api/settings/', {
+                await api.post('/api/finance/settings/', {
                     currency_code: defaultCurrency,
                     enabled_currencies: enabledCurrencies,
                 });

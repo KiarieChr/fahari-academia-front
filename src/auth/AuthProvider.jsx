@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
 
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
+const USER_KEY = import.meta.env.VITE_USER_KEY || 'academia-user';
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -11,20 +14,28 @@ export const AuthProvider = ({ children }) => {
     // Function to check authentication status
     const checkAuth = async () => {
         try {
-            // Ensure CSRF token is set
-            await api.get("/api/csrf/");
+            // Check if user has a valid token in localStorage
+            const token = localStorage.getItem(TOKEN_KEY);
+            if (!token) {
+                setIsAuthenticated(false);
+                setUser(null);
+                return false;
+            }
+
+            // Verify the token is still valid with the backend
             const data = await api.get("/api/auth/me/");
             setIsAuthenticated(true);
-            setUser(data); // api.get returns parsed JSON directly
+            setUser(data);
             return true;
         } catch (error) {
             if (error.status === 401 || error.status === 403) {
-                // Determine if this is a session expiry or just not logged in
-                console.log("User not currently authenticated via session.");
-            } else if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
-                console.error("Auth check failed due to Network Error. Check if backend is running on port 8000.");
+                // Token is invalid or expired — clear it
+                localStorage.removeItem(TOKEN_KEY);
+                console.log("Token invalid/expired (401/403). Cleared from storage.");
+            } else if (error.message?.includes("Network") || error.code === "ERR_NETWORK") {
+                console.error("Network error during auth check. Backend may be offline.");
             } else {
-                console.error("Auth check failed unexpectedly:", error);
+                console.error("Auth check failed:", error.message || error);
             }
             setIsAuthenticated(false);
             setUser(null);
@@ -74,10 +85,10 @@ export const AuthProvider = ({ children }) => {
                     setIsAuthenticated(true);
                     if (data.user) {
                         setUser(data.user);
-                        localStorage.setItem('user', JSON.stringify(data.user));
+                        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
                     }
                     if (data.token) {
-                        localStorage.setItem('token', data.token);
+                        localStorage.setItem(TOKEN_KEY, data.token);
                     }
                     return { success: true, requiresSetup: false, user: data.user };
                 }
@@ -102,8 +113,8 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setIsAuthenticated(false);
             setUser(null);
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
+            localStorage.removeItem(USER_KEY);
+            localStorage.removeItem(TOKEN_KEY);
         }
     };
 

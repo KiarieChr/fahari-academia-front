@@ -1,37 +1,100 @@
-import React from 'react';
-import { mockStudents, nonFeeCategories, paymentMethods } from '../../data/mockReceiptData';
+import React, { useState, useEffect } from 'react';
+import { studentManagementService } from '../../../../../services/studentManagementService';
+import { financeService } from '../../../../../services/financeService';
+import FilterDropdown from '../../../../../components/ui/FilterDropdown';
+import { User, Landmark, CreditCard } from 'lucide-react';
 
-const StudentNonFeeReceiptForm = ({ data, onChange }) => {
+const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
+    const [students, setStudents] = useState([]);
+    const [paymentMethods, setPaymentMethods] = useState([]);
+    const [incomeAccounts, setIncomeAccounts] = useState([]);
+    const [isLoadingData, setIsLoadingData] = useState(false);
+
+    useEffect(() => {
+        const fetchFormData = async () => {
+            setIsLoadingData(true);
+            try {
+                const [studentsRes, paymentMethodsRes, accountsRes] = await Promise.all([
+                    studentManagementService.getAdmissions({ page_size: 1000, status: 'Active' }),
+                    financeService.getPaymentMethods(),
+                    financeService.getAccounts()
+                ]);
+
+                // Handle both paginated and direct array responses
+                setStudents(studentsRes.results || studentsRes || []);
+                setPaymentMethods(paymentMethodsRes.results || paymentMethodsRes || []);
+                
+                // Filter for income accounts
+                const accounts = accountsRes.results || accountsRes || [];
+                setIncomeAccounts(accounts.filter(acc => 
+                    acc.account_type?.toLowerCase().includes('income') || 
+                    acc.type?.toLowerCase().includes('income') ||
+                    acc.category?.toLowerCase().includes('income')
+                ));
+
+            } catch (error) {
+                console.error('Error fetching form data:', error);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        fetchFormData();
+    }, []);
+
     const handleChange = (field, value) => {
         onChange({ ...data, [field]: value, receiptType: 'Student Non-Fee' });
     };
+
+    const handleStudentChange = (studentId) => {
+        const student = students.find(s => String(s.id) === String(studentId));
+        if (student) {
+            onChange({
+                ...data,
+                studentId: student.id,
+                studentName: student.name,
+                admissionNo: student.admission_number || student.admissionNo,
+                payerName: `Parent of ${student.name}`,
+                receiptType: 'Student Non-Fee'
+            });
+        } else {
+            handleChange('studentId', studentId);
+        }
+    };
+
+    // Transform data for FilterDropdown
+    const studentOptions = students.map(s => ({
+        value: s.id,
+        label: `${s.name} - ${s.admission_number || s.admissionNo} (${s.class_name || s.class || 'N/A'})`,
+        icon: User
+    }));
+
+    const accountOptions = incomeAccounts.map(acc => ({
+        value: acc.id,
+        label: `${acc.code} - ${acc.name}`,
+        icon: Landmark
+    }));
+
+    const paymentMethodOptions = paymentMethods.map(m => ({
+        value: m.id,
+        label: m.name,
+        icon: CreditCard
+    }));
 
     return (
         <div className="row g-3">
             {/* Student Selector */}
             <div className="col-md-12">
                 <label className="form-label">Student <span className="text-danger">*</span></label>
-                <select
-                    className="form-select"
-                    value={data.studentId || ''}
-                    onChange={(e) => {
-                        const student = mockStudents.find(s => s.id === e.target.value);
-                        handleChange('studentId', e.target.value);
-                        if (student) {
-                            handleChange('studentName', student.name);
-                            handleChange('admissionNo', student.admissionNo);
-                            handleChange('payerName', `Parent of ${student.name}`);
-                        }
-                    }}
-                    required
-                >
-                    <option value="">Select Student...</option>
-                    {mockStudents.map(student => (
-                        <option key={student.id} value={student.id}>
-                            {student.name} - {student.admissionNo} ({student.class})
-                        </option>
-                    ))}
-                </select>
+                <FilterDropdown
+                    placeholder={isLoadingData ? "Loading students..." : "Search and select student..."}
+                    value={data.studentId}
+                    options={studentOptions}
+                    onChange={handleStudentChange}
+                    searchable={true}
+                    disabled={disabled || isLoadingData}
+                    className="w-100"
+                />
             </div>
 
             {/* Payer Name */}
@@ -44,25 +107,31 @@ const StudentNonFeeReceiptForm = ({ data, onChange }) => {
                     onChange={(e) => handleChange('payerName', e.target.value)}
                     placeholder="Parent/Guardian name"
                     required
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
-            {/* Non-Fee Category */}
+            {/* Income Account / Non-Fee Category */}
             <div className="col-md-6">
-                <label className="form-label">Non-Fee Category <span className="text-danger">*</span></label>
-                <select
-                    className="form-select"
-                    value={data.nonFeeCategory || ''}
-                    onChange={(e) => handleChange('nonFeeCategory', e.target.value)}
-                    required
-                >
-                    <option value="">Select Category...</option>
-                    {nonFeeCategories.map(cat => (
-                        <option key={cat.id} value={cat.name}>
-                            {cat.name}
-                        </option>
-                    ))}
-                </select>
+                <label className="form-label">Income Category <span className="text-danger">*</span></label>
+                <FilterDropdown
+                    placeholder="Select income category..."
+                    value={data.incomeAccountId}
+                    options={accountOptions}
+                    onChange={(val) => {
+                        const account = incomeAccounts.find(acc => String(acc.id) === String(val));
+                        onChange({
+                            ...data,
+                            incomeAccountId: val,
+                            nonFeeCategory: account ? account.name : '',
+                            receiptType: 'Student Non-Fee'
+                        });
+                    }}
+                    searchable={true}
+                    disabled={disabled || isLoadingData}
+                    className="w-100"
+                />
             </div>
 
             {/* Description */}
@@ -75,6 +144,8 @@ const StudentNonFeeReceiptForm = ({ data, onChange }) => {
                     onChange={(e) => handleChange('description', e.target.value)}
                     placeholder="e.g., Full uniform set, Science trip to Nairobi, etc."
                     required
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
@@ -90,29 +161,36 @@ const StudentNonFeeReceiptForm = ({ data, onChange }) => {
                     min="0"
                     step="0.01"
                     required
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
             {/* Payment Method */}
             <div className="col-md-4">
                 <label className="form-label">Payment Method <span className="text-danger">*</span></label>
-                <select
-                    className="form-select"
-                    value={data.paymentMethod || ''}
-                    onChange={(e) => handleChange('paymentMethod', e.target.value)}
-                    required
-                >
-                    <option value="">Select Method...</option>
-                    {paymentMethods.map(method => (
-                        <option key={method} value={method}>{method}</option>
-                    ))}
-                </select>
+                <FilterDropdown
+                    placeholder="Select payment method..."
+                    value={data.paymentMethodId}
+                    options={paymentMethodOptions}
+                    onChange={(val) => {
+                        const method = paymentMethods.find(m => String(m.id) === String(val));
+                        onChange({
+                            ...data,
+                            paymentMethodId: val,
+                            paymentMethod: method ? method.name : '',
+                            receiptType: 'Student Non-Fee'
+                        });
+                    }}
+                    disabled={disabled || isLoadingData}
+                    className="w-100"
+                />
             </div>
 
             {/* Reference Number */}
             <div className="col-md-4">
                 <label className="form-label">
-                    Reference {data.paymentMethod && data.paymentMethod !== 'Cash' && <span className="text-danger">*</span>}
+                    Reference <span className="text-muted small">(Optional for Cash)</span>
                 </label>
                 <input
                     type="text"
@@ -120,7 +198,8 @@ const StudentNonFeeReceiptForm = ({ data, onChange }) => {
                     value={data.reference || ''}
                     onChange={(e) => handleChange('reference', e.target.value)}
                     placeholder="Reference number"
-                    required={data.paymentMethod && data.paymentMethod !== 'Cash'}
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
@@ -133,6 +212,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange }) => {
                     value={data.notes || ''}
                     onChange={(e) => handleChange('notes', e.target.value)}
                     placeholder="Additional notes..."
+                    disabled={disabled}
                 ></textarea>
             </div>
         </div>

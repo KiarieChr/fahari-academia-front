@@ -12,6 +12,7 @@ import FeeCollectionChart from './components/FeeCollectionChart';
 import PerformanceChart from './components/PerformanceChart';
 import EnrollmentChart from './components/EnrollmentChart';
 import SmartInsightsWidget from './components/SmartInsightsWidget';
+import ClockInOutWidget from '../modules/hr/attendance/components/ClockInOutWidget';
 import { RecentActivity, QuickActions, UpcomingEvents, ResourceUsage } from './components/DashboardWidgets';
 import DashboardLayout from './DashboardLayout';
 import './dashboard.css';
@@ -103,6 +104,16 @@ const DashboardHome = () => {
                         variants={containerVariants}
                         className="dashboard-content"
                     >
+                        <div className="mb-4" data-tour="dashboard-clock-widget">
+                            <div className="chart-container-compact" style={{ minHeight: '260px' }}>
+                                <div className="chart-header-compact">
+                                    <h3>My Attendance Clock</h3>
+                                    <p>Clock in or out directly from your dashboard.</p>
+                                </div>
+                                <ClockInOutWidget compact={true} />
+                            </div>
+                        </div>
+
                         {/* Compact Stats Grid - More stats in less space */}
                         <div className="stats-grid-dense p-5">
                             {/* Primary Stats - First 4 important ones */}

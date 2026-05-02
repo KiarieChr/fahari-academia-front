@@ -27,6 +27,7 @@ const NewApplicantForm = ({ onClose }) => {
         firstName: '', lastName: '', gender: 'Male', dob: '',
         class: '', curriculum: '', intake: '', campus: '',
         prevSchool: '', score: '', isTransfer: false,
+        passportPhoto: null,
         guardianName: '', phone: '', email: '',
         guardian2Name: '', guardian2Phone: '', guardian2Email: '',
         source: 'Walk-in', remarks: ''
@@ -34,6 +35,70 @@ const NewApplicantForm = ({ onClose }) => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const applyIntakeDefaults = (intakeId) => {
+        const intake = options.intakes.find(i => Number(i.id) === Number(intakeId));
+        if (!intake?.entry_grade) {
+            return;
+        }
+
+        const entryGrade = options.classes.find(c => Number(c.id) === Number(intake.entry_grade));
+        if (!entryGrade) {
+            return;
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            class: String(entryGrade.id),
+            curriculum: entryGrade.curriculum ? String(entryGrade.curriculum) : ''
+        }));
+    };
+
+    const handleIntakeChange = (e) => {
+        const intakeValue = e.target.value;
+        setFormData(prev => ({ ...prev, intake: intakeValue }));
+
+        if (!formData.isTransfer) {
+            applyIntakeDefaults(intakeValue);
+        }
+    };
+
+    const handleTransferToggle = () => {
+        setFormData(prev => {
+            const nextTransfer = !prev.isTransfer;
+            const next = { ...prev, isTransfer: nextTransfer };
+
+            // When switching back to non-transfer, lock back to intake defaults.
+            if (!nextTransfer && next.intake) {
+                const intake = options.intakes.find(i => Number(i.id) === Number(next.intake));
+                const entryGrade = intake?.entry_grade
+                    ? options.classes.find(c => Number(c.id) === Number(intake.entry_grade))
+                    : null;
+                if (entryGrade) {
+                    next.class = String(entryGrade.id);
+                    next.curriculum = entryGrade.curriculum ? String(entryGrade.curriculum) : '';
+                }
+            }
+            return next;
+        });
+    };
+
+    const handlePassportChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Passport photo must be an image file.');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Passport photo must be 5MB or less.');
+            return;
+        }
+
+        setFormData(prev => ({ ...prev, passportPhoto: file }));
     };
 
     useEffect(() => {
@@ -67,23 +132,27 @@ const NewApplicantForm = ({ onClose }) => {
         try {
             const selectedGrade = options.classes.find(c => c.id == formData.class);
 
-            const payload = {
-                first_name: formData.firstName,
-                last_name: formData.lastName,
-                date_of_birth: formData.dob,
-                gender: formData.gender === 'Male' ? 'M' : 'F',
-                intake: formData.intake,
-                applying_for_curriculum: formData.curriculum,
-                applying_for_grade: formData.class,
-                applying_for_level: selectedGrade?.curriculum_level || null,
-                campus: formData.campus || null,
-                previous_school: formData.prevSchool,
-                score: formData.score,
-                is_transfer: formData.isTransfer,
-                guardian_name: formData.guardianName,
-                phone_number: formData.phone,
-                email: formData.email,
-            };
+            const payload = new FormData();
+            payload.append('first_name', formData.firstName || '');
+            payload.append('last_name', formData.lastName || '');
+            payload.append('date_of_birth', formData.dob || '');
+            payload.append('gender', formData.gender === 'Male' ? 'M' : 'F');
+            payload.append('intake', formData.intake || '');
+            payload.append('applying_for_curriculum', formData.curriculum || '');
+            payload.append('applying_for_grade', formData.class || '');
+            if (selectedGrade?.curriculum_level) {
+                payload.append('applying_for_level', selectedGrade.curriculum_level);
+            }
+            if (formData.campus) payload.append('campus', formData.campus);
+            payload.append('previous_school', formData.prevSchool || '');
+            payload.append('score', formData.score || '');
+            payload.append('is_transfer', String(Boolean(formData.isTransfer)));
+            payload.append('guardian_name', formData.guardianName || '');
+            payload.append('phone_number', formData.phone || '');
+            payload.append('email', formData.email || '');
+            if (formData.passportPhoto) {
+                payload.append('passport_photo', formData.passportPhoto);
+            }
 
             await studentManagementService.createApplication(payload);
             toast.success('Application submitted successfully!');
@@ -200,6 +269,20 @@ const NewApplicantForm = ({ onClose }) => {
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm"
                                     />
                                 </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Passport Photo (Optional)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handlePassportChange}
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-sm text-gray-900 font-medium shadow-sm"
+                                    />
+                                    {formData.passportPhoto && (
+                                        <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                                            <CheckCircle2 size={14} /> {formData.passportPhoto.name}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -212,7 +295,7 @@ const NewApplicantForm = ({ onClose }) => {
                             </div>
 
                             {/* Transfer Toggle */}
-                            <div className="mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-indigo-300 transition-colors cursor-pointer" onClick={() => setFormData({ ...formData, isTransfer: !formData.isTransfer })}>
+                            <div className="mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-indigo-300 transition-colors cursor-pointer" onClick={handleTransferToggle}>
                                 <div className={`w-12 h-6 rounded-full p-1 transition-all duration-300 flex items-center ${formData.isTransfer ? 'bg-indigo-600 justify-end' : 'bg-gray-200 justify-start'}`}>
                                     <div className="w-4 h-4 rounded-full bg-white shadow-sm"></div>
                                 </div>
@@ -225,7 +308,7 @@ const NewApplicantForm = ({ onClose }) => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="col-span-2 md:col-span-1">
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Target Intake <span className="text-red-500">*</span></label>
-                                    <select name="intake" value={formData.intake} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm">
+                                    <select name="intake" value={formData.intake} onChange={handleIntakeChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm">
                                         <option value="">Select Intake...</option>
                                         {options.intakes.map(intake => (
                                             <option key={intake.id} value={intake.id}>{intake.name}</option>
@@ -245,17 +328,32 @@ const NewApplicantForm = ({ onClose }) => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Curriculum <span className="text-red-500">*</span></label>
-                                    <select name="curriculum" value={formData.curriculum} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm">
+                                    <select
+                                        name="curriculum"
+                                        value={formData.curriculum}
+                                        onChange={handleChange}
+                                        disabled={!formData.isTransfer}
+                                        className={`w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm ${!formData.isTransfer ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}
+                                    >
                                         <option value="">Select Curriculum...</option>
                                         {options.curriculums.map(curr => (
                                             <option key={curr.id} value={curr.id}>{curr.name} ({curr.code})</option>
                                         ))}
                                     </select>
+                                    {!formData.isTransfer && (
+                                        <p className="text-xs text-gray-500 mt-1">Auto-selected from intake entry grade.</p>
+                                    )}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Applying For Class <span className="text-red-500">*</span></label>
-                                    <select name="class" value={formData.class} onChange={handleChange} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm">
+                                    <select
+                                        name="class"
+                                        value={formData.class}
+                                        onChange={handleChange}
+                                        disabled={!formData.isTransfer}
+                                        className={`w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300 text-gray-900 font-medium shadow-sm ${!formData.isTransfer ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}
+                                    >
                                         <option value="">Select Class...</option>
                                         {options.classes
                                             .filter(c => !formData.curriculum || c.curriculum == formData.curriculum)
@@ -263,6 +361,9 @@ const NewApplicantForm = ({ onClose }) => {
                                                 <option key={cls.id} value={cls.id}>{cls.name}</option>
                                             ))}
                                     </select>
+                                    {!formData.isTransfer && (
+                                        <p className="text-xs text-gray-500 mt-1">Auto-selected from intake entry grade.</p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -370,6 +471,10 @@ const NewApplicantForm = ({ onClose }) => {
                                     <div>
                                         <span className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Curriculum</span>
                                         <span className="font-medium text-gray-900">{options.curriculums.find(c => c.id == formData.curriculum)?.name || formData.curriculum || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Passport Photo</span>
+                                        <span className="font-medium text-gray-900">{formData.passportPhoto ? formData.passportPhoto.name : 'Not uploaded'}</span>
                                     </div>
                                     <div>
                                         <span className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Primary Guardian</span>

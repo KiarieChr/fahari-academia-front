@@ -41,97 +41,108 @@ const iconComponents = {
 const StatCardMini = ({
   title,
   value,
-  count, // Backend sends 'count' instead of 'value'
+  count,
   change,
   trend,
   trendLabel,
-  icon = 'chart', // Default icon
-  color = '#e3f2fd', // Background color
-  iconColor = '#3f51b5', // Icon color - darker for visibility
+  icon = 'chart',
+  color = '#3b82f6', // Now used as base for gradient
   variant = 'primary'
 }) => {
-  // Get the icon component
   const IconComponent = typeof icon === 'string' ? iconComponents[icon] : icon;
-
-  // Use count or value (backend sends count)
   const displayValue = count || value;
+
+  // Modern color mapping for premium gradients
+  const colorMap = {
+    '#e3f2fd': { from: 'rgba(59, 130, 246, 0.15)', to: 'rgba(59, 130, 246, 0.05)', icon: '#2563eb' },
+    '#f3e5f5': { from: 'rgba(168, 85, 247, 0.15)', to: 'rgba(168, 85, 247, 0.05)', icon: '#9333ea' },
+    '#e8f5e9': { from: 'rgba(34, 197, 94, 0.15)', to: 'rgba(34, 197, 94, 0.05)', icon: '#16a34a' },
+    '#fff3e0': { from: 'rgba(249, 115, 22, 0.15)', to: 'rgba(249, 115, 22, 0.05)', icon: '#ea580c' },
+  };
+
+  const colors = colorMap[color] || { from: 'rgba(59, 130, 246, 0.15)', to: 'rgba(59, 130, 246, 0.05)', icon: '#2563eb' };
 
   return (
     <motion.div
-      className="stat-card-mini"
-      initial={{ opacity: 0, y: 10 }}
+      className="group relative overflow-hidden"
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
       style={{
         background: 'var(--card-bg, #ffffff)',
-        borderRadius: 'var(--border-radius, 12px)',
-        padding: '1rem',
-        border: '1px solid var(--border-color-light, #e5e7eb)',
-        transition: 'all var(--transition-fast, 0.2s)',
+        borderRadius: '20px',
+        padding: '1.25rem',
+        border: '1px solid var(--border-color-light, #f1f5f9)',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         height: '100%',
-        minHeight: '100px',
-        cursor: 'pointer'
-      }}
-      whileHover={{
-        transform: 'translateY(-2px)',
-        boxShadow: 'var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,0.1))'
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
       }}
     >
-      <div
-        className="stat-icon"
-        style={{
-          background: color,
-          width: '40px',
-          height: '40px',
-          borderRadius: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '0.75rem'
-        }}
-      >
-        {IconComponent ? <IconComponent size={20} color={iconColor} /> : icon}
+      {/* Background Accent Pattern */}
+      <div className="absolute -right-2 -top-2 opacity-[0.03] transition-transform duration-700 group-hover:scale-110 group-hover:rotate-12 pointer-events-none">
+        {IconComponent && <IconComponent size={80} />}
       </div>
 
-      <div className="stat-content">
-        <div style={{
-          fontSize: '0.8rem',
-          color: 'var(--text-secondary, #6b7280)',
-          marginBottom: '0.25rem',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}>
-          {title}
-        </div>
-        <div style={{
-          fontSize: '1.5rem',
-          fontWeight: '700',
-          color: 'var(--text-main, #1f2937)',
-          margin: '0.25rem 0',
-          lineHeight: '1.2'
-        }}>
-          {displayValue}
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div
+            style={{
+              background: `linear-gradient(135deg, ${colors.from}, ${colors.to})`,
+              width: '42px',
+              height: '42px',
+              borderRadius: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `1px solid ${colors.from}`
+            }}
+          >
+            {IconComponent && <IconComponent size={20} color={colors.icon} strokeWidth={2.5} />}
+          </div>
+          
+          {(change !== undefined || trend !== undefined) && (
+            <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
+              (change || trend) > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+            }`}>
+              {(change || trend) > 0 ? '↑' : '↓'} {Math.abs(change || trend || 0)}%
+            </div>
+          )}
         </div>
 
-        {(change !== undefined || trend !== undefined) && (
-          <div style={{
+        <div>
+          <h3 style={{
             fontSize: '0.75rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            marginTop: '0.25rem',
-            color: (change || trend) > 0 ? '#10b981' : (change || trend) < 0 ? '#ef4444' : '#6b7280'
+            fontWeight: '600',
+            color: 'var(--text-secondary, #94a3b8)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: '0.5rem'
           }}>
-            {(change || trend) > 0 ? '↗' : (change || trend) < 0 ? '↘' : '→'} {Math.abs(change || trend || 0)}%
-            <span style={{
-              color: 'var(--text-secondary, #6b7280)',
-              fontSize: '0.7rem'
-            }}>
-              {trendLabel || 'from last period'}
-            </span>
+            {title}
+          </h3>
+          <div style={{
+            fontSize: '1.75rem',
+            fontWeight: '800',
+            color: 'var(--text-main, #1e293b)',
+            fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+            letterSpacing: '-0.02em',
+            lineHeight: '1',
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: '0.25rem'
+          }}>
+            <span className="tabular-nums">{displayValue}</span>
           </div>
-        )}
+        </div>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
+        <span className="text-[10px] font-medium text-slate-400 italic">
+          {trendLabel || 'vs previous'}
+        </span>
+        <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
       </div>
     </motion.div>
   );

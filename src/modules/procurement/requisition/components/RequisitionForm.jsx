@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Save, FileText, DollarSign, Calculator, AlertCircle, ArrowLeft } from 'lucide-react';
 
-const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
+const RequisitionForm = ({ onCancel, onSubmit, initialData, inventoryItems = [], departments = [] }) => {
     const [formData, setFormData] = useState({
         title: '',
         department: '',
@@ -12,7 +12,7 @@ const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
         justification: '',
         budgetLine: '',
         items: [
-            { id: Date.now(), name: '', category: '', quantity: 1, unit: 'Pcs', unitCost: 0, total: 0 }
+            { id: Date.now(), itemId: null, name: '', category: '', quantity: 1, unit: 'Pcs', unitCost: 0, total: 0 }
         ]
     });
 
@@ -26,10 +26,49 @@ const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleInventoryItemSelect = (id, inventoryItemId) => {
+        const selectedItem = inventoryItems.find((inv) => String(inv.id) === String(inventoryItemId));
+        if (!selectedItem) {
+            const newItems = formData.items.map(item => {
+                if (item.id === id) {
+                    return {
+                        ...item,
+                        itemId: null,
+                        unitCost: Number(item.unitCost || 0),
+                        total: (item.quantity || 0) * (item.unitCost || 0),
+                    };
+                }
+                return item;
+            });
+            setFormData({ ...formData, items: newItems });
+            return;
+        }
+
+        const newItems = formData.items.map(item => {
+            if (item.id === id) {
+                const updated = {
+                    ...item,
+                    itemId: selectedItem.id,
+                    name: selectedItem.name,
+                    category: selectedItem.category || item.category || '',
+                    unit: selectedItem.unit || item.unit || 'Pcs',
+                    unitCost: Number(selectedItem.unitCost || item.unitCost || 0),
+                };
+                updated.total = (updated.quantity || 0) * (updated.unitCost || 0);
+                return updated;
+            }
+            return item;
+        });
+        setFormData({ ...formData, items: newItems });
+    };
+
     const handleItemChange = (id, field, value) => {
         const newItems = formData.items.map(item => {
             if (item.id === id) {
                 const newItem = { ...item, [field]: value };
+                if (field === 'name' && item.itemId) {
+                    newItem.itemId = null;
+                }
                 if (field === 'quantity' || field === 'unitCost') {
                     newItem.total = (newItem.quantity || 0) * (newItem.unitCost || 0);
                 }
@@ -43,7 +82,7 @@ const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
     const addItem = () => {
         setFormData({
             ...formData,
-            items: [...formData.items, { id: Date.now(), name: '', category: '', quantity: 1, unit: 'Pcs', unitCost: 0, total: 0 }]
+            items: [...formData.items, { id: Date.now(), itemId: null, name: '', category: '', quantity: 1, unit: 'Pcs', unitCost: 0, total: 0 }]
         });
     };
 
@@ -61,6 +100,15 @@ const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (formData.type === 'Goods') {
+            const missingInventoryLinks = formData.items.filter((item) => !item.itemId);
+            if (missingInventoryLinks.length > 0) {
+                alert('For Goods requisitions, every line must be selected from existing inventory items.');
+                return;
+            }
+        }
+
         onSubmit({ ...formData, totalAmount: calculateGrandTotal() });
     };
 
@@ -105,11 +153,11 @@ const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
                             onChange={handleGeneralChange}
                         >
                             <option value="">Select Department...</option>
-                            <option value="Administration">Administration</option>
-                            <option value="IT">IT</option>
-                            <option value="Science">Science</option>
-                            <option value="Library">Library</option>
-                            <option value="Sports">Sports</option>
+                            {departments.map((dept) => (
+                                <option key={dept.id} value={dept.id}>
+                                    {dept.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -168,6 +216,12 @@ const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
                     <Calculator size={16} /> Itemized Request
                 </h4>
 
+                {formData.type === 'Goods' && (
+                    <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                        Goods requisitions require selecting each line from existing inventory items.
+                    </div>
+                )}
+
                 <div className="overflow-x-auto border rounded-xl mb-8">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
@@ -187,14 +241,29 @@ const RequisitionForm = ({ onCancel, onSubmit, initialData }) => {
                                 <tr key={item.id}>
                                     <td className="px-4 py-2 text-sm text-gray-500">{index + 1}</td>
                                     <td className="px-4 py-2">
-                                        <input
-                                            type="text"
-                                            className="w-full px-2 py-1 border border-transparent hover:border-gray-200 focus:border-blue-500 rounded outline-none transition-all"
-                                            placeholder="Item name..."
-                                            value={item.name}
-                                            onChange={(e) => handleItemChange(item.id, 'name', e.target.value)}
-                                            required
-                                        />
+                                        <div className="space-y-2">
+                                            <select
+                                                className="w-full px-2 py-1 border border-gray-200 hover:border-gray-300 focus:border-blue-500 rounded outline-none"
+                                                value={item.itemId || ''}
+                                                onChange={(e) => handleInventoryItemSelect(item.id, e.target.value)}
+                                            >
+                                                <option value="">{formData.type === 'Goods' ? 'Select inventory item...' : 'Custom Item (not from inventory)'}</option>
+                                                {inventoryItems.map((inv) => (
+                                                    <option key={inv.id} value={inv.id}>
+                                                        {inv.code} - {inv.name} (Stock: {inv.stock} {inv.unit})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <input
+                                                type="text"
+                                                className="w-full px-2 py-1 border border-transparent hover:border-gray-200 focus:border-blue-500 rounded outline-none transition-all"
+                                                placeholder="Item name..."
+                                                value={item.name}
+                                                onChange={(e) => handleItemChange(item.id, 'name', e.target.value)}
+                                                disabled={formData.type === 'Goods' && !!item.itemId}
+                                                required
+                                            />
+                                        </div>
                                     </td>
                                     <td className="px-4 py-2">
                                         <select

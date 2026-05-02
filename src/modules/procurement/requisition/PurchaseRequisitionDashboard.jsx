@@ -7,6 +7,8 @@ import RequisitionList from './components/RequisitionList';
 import RequisitionForm from './components/RequisitionForm';
 import RequisitionDetails from './components/RequisitionDetails';
 import procurementApi from '../../../services/procurementApiService';
+import { inventoryService } from '../../../services/inventoryService';
+import { api } from '../../../services/api';
 import { toast } from 'react-toastify';
 import './PurchaseRequisition.css';
 
@@ -17,13 +19,17 @@ const PurchaseRequisitionDashboard = () => {
     const [requisitions, setRequisitions] = useState([]);
     const [stats, setStats] = useState({});
     const [selectedRequisition, setSelectedRequisition] = useState(null);
+    const [inventoryItems, setInventoryItems] = useState([]);
+    const [departments, setDepartments] = useState([]);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [listRes, statsRes] = await Promise.all([
+            const [listRes, statsRes, inventoryRes, departmentsRes] = await Promise.all([
                 procurementApi.requisitions.list(),
                 procurementApi.requisitions.stats(),
+                inventoryService.getInventoryItems(),
+                api.get('/workforce/api/departments/'),
             ]);
             const items = listRes.results || listRes || [];
             setRequisitions(items.map(r => ({
@@ -47,6 +53,10 @@ const PurchaseRequisitionDashboard = () => {
                 poCreated: statsRes.converted || 0,
                 totalAmount: items.reduce((s, r) => s + (Number(r.total_estimated_cost) || 0), 0),
             });
+
+            const mappedInventory = (inventoryRes?.data || []).filter((inv) => inv.status === 'ACTIVE');
+            setInventoryItems(mappedInventory);
+            setDepartments(departmentsRes?.results || departmentsRes || []);
         } catch (error) {
             console.error(error);
             toast.error("Failed to load requisitions");
@@ -67,6 +77,7 @@ const PurchaseRequisitionDashboard = () => {
                 justification: data.description || data.title,
                 notes: data.notes || '',
                 lines: (data.items || []).map(item => ({
+                    item: item.itemId || null,
                     description: item.name || item.description,
                     quantity: item.quantity,
                     unit_of_measure: item.unit || 'Pcs',
@@ -107,7 +118,8 @@ const PurchaseRequisitionDashboard = () => {
                 budgetLine: detail.budget_line || '',
                 items: (detail.lines || []).map(l => ({
                     id: l.id,
-                    name: l.description,
+                    itemId: l.item || null,
+                    name: l.item_name || l.description,
                     category: '',
                     quantity: Number(l.quantity),
                     unit: l.unit_of_measure,
@@ -173,6 +185,8 @@ const PurchaseRequisitionDashboard = () => {
                         onCancel={() => setViewMode('list')}
                         onSubmit={handleCreate}
                         initialData={selectedRequisition}
+                        inventoryItems={inventoryItems}
+                        departments={departments}
                     />
                 ) : (
                     <RequisitionDetails

@@ -25,6 +25,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../../services/api';
 import { toast } from 'react-toastify';
 import DashboardLayout from '../../dashboard/DashboardLayout';
+import StatCardMini from '../../dashboard/components/StatCardMini';
+import '../../dashboard/dashboard.css';
 import {
     DataTable,
     PageHeader,
@@ -1444,74 +1446,39 @@ const StaffRegisterV2 = () => {
                     <CardGridSkeleton count={4} />
                 ) : (
                     <motion.div
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+                        className="stats-grid-dense"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, staggerChildren: 0.1 }}
                     >
-                        <motion.div
-                            whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(59, 130, 246, 0.1)' }}
-                            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/20 cursor-pointer transition-all"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                    <Users className="w-6 h-6" />
-                                </div>
-                                <span className="text-xs font-medium bg-white/20 px-2.5 py-1 rounded-full">
-                                    All Staff
-                                </span>
-                            </div>
-                            <h3 className="text-4xl font-bold mb-1">{stats.total_employees}</h3>
-                            <p className="text-blue-100 text-sm font-medium">Total Employees</p>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(16, 185, 129, 0.1)' }}
-                            className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-500/20 cursor-pointer transition-all"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                    <Briefcase className="w-6 h-6" />
-                                </div>
-                                <span className="text-xs font-medium bg-white/20 px-2.5 py-1 rounded-full">
-                                    Academic
-                                </span>
-                            </div>
-                            <h3 className="text-4xl font-bold mb-1">{stats.teaching_staff}</h3>
-                            <p className="text-emerald-100 text-sm font-medium">Teaching Staff</p>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(139, 92, 246, 0.1)' }}
-                            className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-violet-500/20 cursor-pointer transition-all"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                    <Building className="w-6 h-6" />
-                                </div>
-                                <span className="text-xs font-medium bg-white/20 px-2.5 py-1 rounded-full">
-                                    Support
-                                </span>
-                            </div>
-                            <h3 className="text-4xl font-bold mb-1">{stats.non_teaching_staff}</h3>
-                            <p className="text-violet-100 text-sm font-medium">Non-Teaching Staff</p>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(245, 158, 11, 0.1)' }}
-                            className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-amber-500/20 cursor-pointer transition-all"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                    <Calendar className="w-6 h-6" />
-                                </div>
-                                <span className="text-xs font-medium bg-white/20 px-2.5 py-1 rounded-full">
-                                    Away
-                                </span>
-                            </div>
-                            <h3 className="text-4xl font-bold mb-1">{stats.on_leave}</h3>
-                            <p className="text-amber-100 text-sm font-medium">Currently On Leave</p>
-                        </motion.div>
+                        <StatCardMini
+                            title="Total Employees"
+                            value={stats.total_employees}
+                            icon={Users}
+                            color="#dbeafe"
+                            iconColor="#2563eb"
+                        />
+                        <StatCardMini
+                            title="Teaching Staff"
+                            value={stats.teaching_staff}
+                            icon={Briefcase}
+                            color="#d1fae5"
+                            iconColor="#059669"
+                        />
+                        <StatCardMini
+                            title="Non-Teaching Staff"
+                            value={stats.non_teaching_staff}
+                            icon={Building}
+                            color="#ede9fe"
+                            iconColor="#7c3aed"
+                        />
+                        <StatCardMini
+                            title="Currently On Leave"
+                            value={stats.on_leave}
+                            icon={Calendar}
+                            color="#fef3c7"
+                            iconColor="#d97706"
+                        />
                     </motion.div>
                 )}
 

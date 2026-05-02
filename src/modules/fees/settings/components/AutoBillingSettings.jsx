@@ -23,11 +23,11 @@ const AutoBillingSettings = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/finance/settings/');
-            if (response.data) {
+            const response = await api.get('/api/finance/settings/');
+            if (response) {
                 setSettings(prev => ({
                     ...prev,
-                    ...response.data
+                    ...response
                 }));
             }
         } catch (err) {
@@ -55,7 +55,7 @@ const AutoBillingSettings = () => {
                 default_billing_days: settings.default_billing_days,
             };
 
-            await api.post('/finance/settings/', payload);
+            await api.post('/api/finance/settings/', payload);
             toast.success("Auto-billing settings saved successfully!");
         } catch (err) {
             console.error("Error saving settings:", err);

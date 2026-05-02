@@ -55,10 +55,10 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
     const transformToServiceFormat = (formData, type, status) => {
         const baseData = {
             receiptType: receiptTypeMap[type],
-            status: status === 'Draft' ? 'DRAFT' : 'POSTED', // Using your service's status format
+            status: status === 'Draft' ? 'DRAFT' : 'ISSUED', // Map to backend choices (ISSUED is standard)
             date: formData.date || new Date().toISOString().split('T')[0],
             amount: parseFloat(formData.amount || 0),
-            notes: formData.remarks || '',
+            notes: formData.remarks || formData.notes || '',
             // Default values that should come from your context/auth
             issuedBy: (() => {
                 try {
@@ -91,9 +91,9 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
             case 'Student Non-Fee':
                 return {
                     ...baseData,
-                    payerName: formData.studentName || '',
+                    payerName: formData.payerName || formData.studentName || '',
                     studentId: formData.studentId,
-                    nonFeeCategory: formData.itemDescription,
+                    nonFeeCategory: formData.nonFeeCategory,
                     description: formData.description || '',
                     paymentMethodId: formData.paymentMethodId || 1,
                     incomeAccountId: formData.incomeAccountId,
@@ -102,7 +102,8 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
             case 'General':
                 return {
                     ...baseData,
-                    payerName: formData.customerName || '',
+                    payerName: formData.payerName || formData.customerName || '',
+                    studentId: null, // General receipts are not linked to a student
                     description: formData.description || '',
                     paymentMethodId: formData.paymentMethodId || 1,
                     incomeAccountId: formData.incomeAccountId,
@@ -111,7 +112,7 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
             case 'Sponsor':
                 return {
                     ...baseData,
-                    payerName: formData.sponsorName || '',
+                    payerName: formData.payerName || formData.sponsorName || '',
                     studentId: formData.studentId,
                     sponsorshipType: formData.sponsorshipType,
                     description: formData.description || '',

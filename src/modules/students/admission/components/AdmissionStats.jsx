@@ -16,8 +16,8 @@ import {
     Info
 } from 'lucide-react';
 import {
-    LineChart,
-    Line,
+    AreaChart,
+    Area,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -30,40 +30,37 @@ import {
     Bar,
     Legend
 } from 'recharts';
-import { studentManagementService } from '../../../../services/studentManagementService';
-import StatCardMini from '../../../../dashboard/components/StatCardMini';
 
-import '../../../../dashboard/dashboard.css';
-
-// Memoized Line Chart Component
+// Memoized Area Chart Component for Trends
 const TrendChart = React.memo(({ data }) => {
     const CustomTooltip = useCallback(({ active, payload, label }) => {
         if (active && payload && payload.length) {
             const apps = payload[0]?.value || 0;
             const admitted = payload[1]?.value || 0;
             const conversionRate = apps > 0 ? ((admitted / apps) * 100).toFixed(1) : 0;
-            const conversionGap = apps - admitted;
 
             return (
-                <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-                    <p className="font-semibold text-gray-900 mb-2">{label}</p>
-                    <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                            <span className="text-blue-600">Applications:</span>
-                            <span className="font-semibold">{apps.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-green-600">Admitted:</span>
-                            <span className="font-semibold">{admitted.toLocaleString()}</span>
-                        </div>
-                        <div className="pt-1 border-t border-gray-100">
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600">Conversion:</span>
-                                <span className="font-semibold">{conversionRate}%</span>
+                <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-slate-100 min-w-[180px]">
+                    <p className="font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">{label}</p>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Apps</span>
                             </div>
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600">Remaining:</span>
-                                <span className="font-semibold text-amber-600">{conversionGap.toLocaleString()}</span>
+                            <span className="font-black text-slate-800 tabular-nums">{apps.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Admitted</span>
+                            </div>
+                            <span className="font-black text-slate-800 tabular-nums">{admitted.toLocaleString()}</span>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-slate-100">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-indigo-500 uppercase">Conversion</span>
+                                <span className="text-sm font-black text-indigo-600">{conversionRate}%</span>
                             </div>
                         </div>
                     </div>
@@ -75,64 +72,61 @@ const TrendChart = React.memo(({ data }) => {
 
     return (
         <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                    dy={10}
-                />
-                <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                    tickFormatter={(value) => value.toLocaleString()}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                    verticalAlign="top"
-                    height={36}
-                    iconType="circle"
-                    iconSize={10}
-                />
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                    <linearGradient id="appsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                    <linearGradient id="colorApps" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="admittedGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#16a34a" stopOpacity={0.1} />
+                    <linearGradient id="colorAdmitted" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                 </defs>
-                <Line
-                    type="monotone"
-                    dataKey="apps"
-                    name="Applications"
-                    stroke="url(#appsGradient)"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 6, fill: '#3b82f6' }}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
+                    dy={10}
                 />
-                <Line
-                    type="monotone"
-                    dataKey="admitted"
-                    name="Admitted"
-                    stroke="url(#admittedGradient)"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#16a34a', strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ r: 6, fill: '#16a34a' }}
+                <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }}
                 />
-            </LineChart>
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeWidth: 2, strokeDasharray: '5 5' }} />
+                <Area 
+                    type="monotone" 
+                    dataKey="apps" 
+                    stroke="#3b82f6" 
+                    strokeWidth={4}
+                    fillOpacity={1} 
+                    fill="url(#colorApps)" 
+                    animationDuration={2000}
+                />
+                <Area 
+                    type="monotone" 
+                    dataKey="admitted" 
+                    stroke="#10b981" 
+                    strokeWidth={4}
+                    fillOpacity={1} 
+                    fill="url(#colorAdmitted)" 
+                    animationDuration={2000}
+                />
+            </AreaChart>
         </ResponsiveContainer>
     );
 });
 
 TrendChart.displayName = 'TrendChart';
 
-// Memoized Pie Chart Component
+import { studentManagementService } from '../../../../services/studentManagementService';
+import StatCardMini from '../../../../dashboard/components/StatCardMini';
+import '../../../../dashboard/dashboard.css';
+
+// Memoized Pie Chart Component for Status Distribution
 const StatusPieChart = React.memo(({ data, total }) => {
     const sortedData = useMemo(() => {
         return [...data].sort((a, b) => b.value - a.value);
@@ -144,23 +138,17 @@ const StatusPieChart = React.memo(({ data, total }) => {
             const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
 
             return (
-                <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-                    <div className="flex items-center gap-2 mb-1">
+                <div className="bg-white/95 backdrop-blur-md p-3 rounded-xl shadow-xl border border-slate-100 min-w-[140px]">
+                    <div className="flex items-center gap-2 mb-2">
                         <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: item.color }}
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: item.payload.color }}
                         />
-                        <span className="font-semibold text-gray-900">{item.name}</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.name}</span>
                     </div>
-                    <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Count:</span>
-                            <span className="font-semibold">{item.value.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Percentage:</span>
-                            <span className="font-semibold">{percentage}%</span>
-                        </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-xl font-black text-slate-800 tabular-nums">{item.value.toLocaleString()}</span>
+                        <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-md">{percentage}%</span>
                     </div>
                 </div>
             );
@@ -174,30 +162,33 @@ const StatusPieChart = React.memo(({ data, total }) => {
                 <Pie
                     data={sortedData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
+                    cy="45%"
+                    innerRadius={70}
+                    outerRadius={95}
+                    paddingAngle={8}
                     dataKey="value"
                     labelLine={false}
+                    animationBegin={0}
+                    animationDuration={1500}
                 >
                     {sortedData.map((entry, index) => (
                         <Cell
                             key={`cell-${index}`}
                             fill={entry.color}
-                            stroke="#fff"
-                            strokeWidth={2}
+                            stroke="rgba(255,255,255,0.8)"
+                            strokeWidth={4}
+                            className="outline-none"
                         />
                     ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
                     verticalAlign="bottom"
-                    height={36}
                     iconType="circle"
-                    iconSize={10}
+                    iconSize={8}
+                    wrapperStyle={{ paddingTop: '20px' }}
                     formatter={(value) => (
-                        <span className="text-sm text-gray-700">{value}</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">{value}</span>
                     )}
                 />
             </PieChart>
@@ -207,16 +198,12 @@ const StatusPieChart = React.memo(({ data, total }) => {
 
 StatusPieChart.displayName = 'StatusPieChart';
 
-// Memoized Bar Chart Component
+// Memoized Bar Chart Component for Gender Distribution
 const GenderBarChart = React.memo(({ data }) => {
-    const [viewMode, setViewMode] = useState('absolute'); // 'absolute' or 'percentage'
+    const [viewMode, setViewMode] = useState('absolute');
 
     const processedData = useMemo(() => {
-        // Sort by total students (boys + girls) descending
-        const sorted = [...data].sort((a, b) =>
-            (b.boys + b.girls) - (a.boys + a.girls)
-        );
-
+        const sorted = [...data].sort((a, b) => (b.boys + b.girls) - (a.boys + a.girls));
         if (viewMode === 'percentage') {
             return sorted.map(item => {
                 const total = item.boys + item.girls;
@@ -228,11 +215,7 @@ const GenderBarChart = React.memo(({ data }) => {
                 };
             });
         }
-
-        return sorted.map(item => ({
-            ...item,
-            total: item.boys + item.girls
-        }));
+        return sorted.map(item => ({ ...item, total: item.boys + item.girls }));
     }, [data, viewMode]);
 
     const CustomTooltip = useCallback(({ active, payload, label }) => {
@@ -241,35 +224,27 @@ const GenderBarChart = React.memo(({ data }) => {
             const girls = payload.find(p => p.dataKey === 'girls')?.value || 0;
 
             return (
-                <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-                    <p className="font-semibold text-gray-900 mb-2">{label}</p>
-                    <div className="space-y-1">
+                <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-slate-100 min-w-[200px]">
+                    <p className="font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">{label}</p>
+                    <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                                <span className="text-blue-600">Boys:</span>
+                                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase">Boys</span>
                             </div>
-                            <span className="font-semibold">
+                            <span className="font-black text-slate-800 tabular-nums">
                                 {viewMode === 'percentage' ? `${boys.toFixed(1)}%` : boys.toLocaleString()}
                             </span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-pink-500" />
-                                <span className="text-pink-600">Girls:</span>
+                                <div className="w-2.5 h-2.5 rounded-full bg-pink-500" />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase">Girls</span>
                             </div>
-                            <span className="font-semibold">
+                            <span className="font-black text-slate-800 tabular-nums">
                                 {viewMode === 'percentage' ? `${girls.toFixed(1)}%` : girls.toLocaleString()}
                             </span>
                         </div>
-                        {viewMode === 'absolute' && (
-                            <div className="pt-1 border-t border-gray-100">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">Total:</span>
-                                    <span className="font-semibold">{(boys + girls).toLocaleString()}</span>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             );
@@ -277,83 +252,65 @@ const GenderBarChart = React.memo(({ data }) => {
         return null;
     }, [viewMode]);
 
-    const yAxisFormatter = useCallback((value) => {
-        if (viewMode === 'percentage') {
-            return `${value}%`;
-        }
-        return value.toLocaleString();
-    }, [viewMode]);
-
     return (
         <div className="h-full">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-900">Class-wise Active Students by Gender</h3>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">View:</span>
-                    <div className="inline-flex rounded-lg border border-gray-200 p-1">
-                        <button
-                            onClick={() => setViewMode('absolute')}
-                            className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'absolute'
-                                ? 'bg-indigo-100 text-indigo-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            Count
-                        </button>
-                        <button
-                            onClick={() => setViewMode('percentage')}
-                            className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === 'percentage'
-                                ? 'bg-indigo-100 text-indigo-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
-                                }`}
-                        >
-                            Percentage
-                        </button>
-                    </div>
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h3 className="text-base font-bold text-slate-800 tracking-tight">Academic Distribution</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">By Class & Gender</p>
+                </div>
+                <div className="flex bg-slate-100/80 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50">
+                    <button
+                        onClick={() => setViewMode('absolute')}
+                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                            viewMode === 'absolute' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'
+                        }`}
+                    >
+                        Count
+                    </button>
+                    <button
+                        onClick={() => setViewMode('percentage')}
+                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                            viewMode === 'percentage' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'
+                        }`}
+                    >
+                        Ratio
+                    </button>
                 </div>
             </div>
 
-            <div className="w-full" style={{ height: 300 }}>
+            <div className="w-full" style={{ height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        data={processedData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        barSize={40}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                        <XAxis
-                            dataKey="name"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: '#6b7280', fontSize: 12 }}
+                    <BarChart data={processedData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barSize={32}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis 
+                            dataKey="name" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
                             dy={10}
                         />
-                        <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: '#6b7280', fontSize: 12 }}
-                            tickFormatter={yAxisFormatter}
+                        <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
                         />
-                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                        <Legend
-                            verticalAlign="top"
-                            height={36}
-                            iconType="circle"
-                            iconSize={10}
-                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241,245,249,0.5)', radius: [8, 8, 0, 0] }} />
                         <Bar
                             dataKey="boys"
                             name="Boys"
                             fill="#3b82f6"
-                            radius={[4, 4, 0, 0]}
-                            stackId={viewMode === 'percentage' ? 'a' : undefined}
+                            radius={viewMode === 'percentage' ? [0, 0, 0, 0] : [6, 6, 0, 0]}
+                            stackId="a"
+                            animationDuration={1500}
                         />
                         <Bar
                             dataKey="girls"
                             name="Girls"
                             fill="#ec4899"
-                            radius={[4, 4, 0, 0]}
-                            stackId={viewMode === 'percentage' ? 'a' : undefined}
+                            radius={[6, 6, 0, 0]}
+                            stackId="a"
+                            animationDuration={1500}
                         />
                     </BarChart>
                 </ResponsiveContainer>
@@ -492,190 +449,192 @@ const AdmissionStats = () => {
     if (!stats) return null;
 
     return (
-        <div className="space-y-8">
-            {/* Section header */}
-            <div className="flex items-start justify-between">
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-lg font-bold text-gray-900 tracking-tight">
-                        Admission Analytics
+        <div className="space-y-12 pt-6 px-2">
+            {/* Section Header with Refined Typography */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-2">
+                <div>
+                    <h2 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                        Admissions Intelligence
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-500 text-[10px] font-bold uppercase tracking-widest border border-indigo-100">Live Engine</span>
                     </h2>
-                    <p className="text-xs text-gray-400 flex items-center gap-1.5 font-medium">
-                        <Info size={12} className="text-indigo-400" />
-                        Live insights derived from current admission records
-                    </p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Real-time enrollment monitoring & predictive metrics</p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400
-                                 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    Updated today
-                </span>
+                <div className="flex items-center gap-3">
+                    <div className="px-4 py-2 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Sync Status: Optimal</span>
+                    </div>
+                </div>
             </div>
 
-            {/* Metrics Grid — same compact cards as main dashboard */}
-            <div className="stats-grid-dense">
+            {/* Metrics Grid — Refined for responsiveness to prevent title wrapping */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 <StatCardMini
-                    title="Total Applications"
+                    title="Intake Pipeline"
                     value={stats.metrics.total_apps?.toLocaleString() || '0'}
                     icon="clipboard-list"
-                    color="#dbeafe"
-                    iconColor="#2563eb"
+                    color="#e3f2fd"
                     change={derivedMetrics?.admissionChange}
-                    trendLabel={`${derivedMetrics?.admissionRate}% admission rate`}
+                    trendLabel="Overall volume"
                 />
                 <StatCardMini
-                    title="Admitted Students"
+                    title="Successful Admissions"
                     value={stats.metrics.admitted?.toLocaleString() || '0'}
                     icon="user-plus"
-                    color="#dcfce7"
-                    iconColor="#16a34a"
-                    trendLabel={`${derivedMetrics?.conversionRate}% conversion rate`}
+                    color="#e8f5e9"
+                    trendLabel={`${derivedMetrics?.conversionRate}% yield`}
                 />
                 <StatCardMini
-                    title="Pending Review"
+                    title="Awaiting Review"
                     value={stats.metrics.pending?.toLocaleString() || '0'}
                     icon="users"
-                    color="#fef9c3"
-                    iconColor="#ca8a04"
+                    color="#fff3e0"
                     change={derivedMetrics?.pendingChange}
-                    trendLabel={`${Math.round((stats.metrics.pending / (stats.metrics.total_apps || 1)) * 100)}% of total`}
+                    trendLabel="Processing queue"
                 />
                 <StatCardMini
-                    title="Repeaters"
+                    title="Student Repeaters"
                     value={stats.metrics.repeaters?.toLocaleString() || '0'}
                     icon="repeat"
-                    color="#ffedd5"
-                    iconColor="#ea580c"
-                    trendLabel={`${derivedMetrics?.repeaterPercentage}% of admitted`}
+                    color="#f3e5f5"
+                    trendLabel={`${derivedMetrics?.repeaterPercentage}% of intake`}
                 />
                 <StatCardMini
-                    title="Net Transfers"
+                    title="Mobility Index"
                     value={stats.metrics.transfers?.toLocaleString() || '0'}
                     icon="arrow-right-left"
-                    color="#f3e8ff"
-                    iconColor="#9333ea"
-                    trendLabel={stats.metrics.transfers >= 0 ? "Net gain" : "Net loss"}
+                    color="#e3f2fd"
+                    trendLabel={stats.metrics.transfers >= 0 ? "Growth net" : "Reduction net"}
                 />
             </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                {/* Line Chart - Application Trends */}
-                <div className="bg-white p-7 rounded-2xl border border-gray-100
-                               shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:col-span-2 min-w-0">
-                    <div className="flex items-center justify-between mb-6">
+            {/* Analytics Engine Section — Increased Gapping */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Application Trends Card — Increased Padding */}
+                <div className="bg-white p-10 lg:p-12 rounded-[40px] border border-slate-100/60 shadow-xl shadow-slate-200/40 lg:col-span-2">
+                    <div className="flex items-center justify-between mb-10">
                         <div>
-                            <h3 className="text-base font-bold text-gray-900 mb-0.5 tracking-tight">Application Trends</h3>
-                            <p className="text-xs text-gray-400 flex items-center gap-1">
-                                Last 6 months
-                                <span className="mx-1 text-gray-200">•</span>
-                                <span className="inline-flex items-center gap-1 text-indigo-600 font-medium">
-                                    <TrendingUp size={12} />
-                                    Max gap: {Math.max(0, ...stats.trends.map(t => t.apps - t.admitted))}
-                                </span>
-                            </p>
+                            <h3 className="text-lg font-black text-slate-800 tracking-tight">Enrollment Velocity</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Growth & Conversion Dynamics</p>
                         </div>
-                        <div className="text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                            {stats.trends.reduce((sum, t) => sum + t.apps, 0).toLocaleString()} total apps
+                        <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-500" /> Applications
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500" /> Admitted
+                            </div>
                         </div>
                     </div>
-                    <div className="w-full" style={{ height: 300 }}>
+                    <div className="w-full" style={{ height: 320 }}>
                         <TrendChart data={stats.trends} />
                     </div>
                 </div>
 
-                {/* Pie Chart - Admission Status */}
-                <div className="bg-white p-7 rounded-2xl border border-gray-100
-                               shadow-[0_1px_3px_rgba(0,0,0,0.06)] min-w-0">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-base font-bold text-gray-900 tracking-tight">Status Distribution</h3>
-                        <div className="inline-flex items-center gap-1 text-xs font-medium text-gray-500
-                                        bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
-                            <span className="tabular-nums font-semibold text-gray-700">{stats.metrics.total_apps?.toLocaleString()}</span>
-                            <span>total</span>
-                        </div>
+                {/* Status Distribution Card — Increased Padding */}
+                <div className="bg-white p-10 lg:p-12 rounded-[40px] border border-slate-100/60 shadow-xl shadow-slate-200/40">
+                    <div className="mb-10">
+                        <h3 className="text-lg font-black text-slate-800 tracking-tight">Status Ecosystem</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Lifecycle breakdown</p>
                     </div>
-                    <div className="w-full relative" style={{ height: 300 }}>
+                    <div className="w-full relative" style={{ height: 320 }}>
                         <StatusPieChart
                             data={stats.status_distribution}
                             total={stats.metrics.total_apps}
                         />
-                        {/* Center Display */}
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[60%] text-center pointer-events-none">
-                            <span className="text-3xl font-bold text-gray-900 tabular-nums">
-                                {stats.metrics.total_apps?.toLocaleString()}
+                        <div className="absolute top-[45%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                            <span className="text-4xl font-black text-slate-800 tracking-tighter tabular-nums">
+                                {stats.metrics.total_apps}
                             </span>
-                            <span className="block text-[0.65rem] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">Applications</span>
+                            <span className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Entries</span>
                         </div>
                     </div>
-                    <p className="mt-3 text-center text-xs text-gray-400">
-                        Hover segments for breakdown
-                    </p>
                 </div>
 
-                {/* Bar Chart - Class-wise Gender Distribution */}
-                <div className="bg-white p-7 rounded-2xl border border-gray-100
-                               shadow-[0_1px_3px_rgba(0,0,0,0.06)] lg:col-span-3 min-w-0">
+                {/* Class Distribution Card — Increased Padding */}
+                <div className="bg-white p-10 lg:p-12 rounded-[40px] border border-slate-100/60 shadow-xl shadow-slate-200/40 lg:col-span-3">
                     <GenderBarChart data={stats.class_distribution} />
-                    <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-5">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                                <span className="text-xs text-gray-500 font-medium">
-                                    Boys: <span className="tabular-nums text-gray-700 font-semibold">{stats.class_distribution.reduce((sum, c) => sum + c.boys, 0).toLocaleString()}</span>
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-pink-500" />
-                                <span className="text-xs text-gray-500 font-medium">
-                                    Girls: <span className="tabular-nums text-gray-700 font-semibold">{stats.class_distribution.reduce((sum, c) => sum + c.girls, 0).toLocaleString()}</span>
-                                </span>
-                            </div>
-                        </div>
-                        <p className="text-[0.68rem] text-gray-400">Sorted by total students</p>
-                    </div>
                 </div>
-
             </div>
 
-            {/* ── Key Insights Panel ── full-width below charts grid */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 to-indigo-700
-                rounded-2xl p-7 border border-indigo-500/30
-                shadow-[0_4px_24px_rgba(63,81,181,0.25)]">
-                {/* Decorative background blobs */}
-                <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/5 rounded-full" />
-                <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-white/5 rounded-full" />
+            {/* Smart Intelligence Panel — Robust Glassmorphism Reset */}
+            <div className="relative overflow-hidden group mt-12 mb-8">
+                {/* Decorative Ambient Glows */}
+                <div className="absolute -top-32 -right-32 w-96 h-96 bg-indigo-500/10 blur-[140px] rounded-full group-hover:bg-indigo-500/20 transition-all duration-1000" />
+                <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-blue-500/10 blur-[140px] rounded-full group-hover:bg-blue-500/20 transition-all duration-1000" />
 
-                <div className="relative">
-                    <div className="flex items-center gap-2 mb-5">
-                        <h4 className="text-sm font-bold text-white tracking-wide uppercase">Key Insights</h4>
-                        <div className="h-px flex-1 bg-white/20" />
-                        <span className="text-[0.65rem] text-indigo-200 font-medium">Derived from current data</span>
+                <div className="relative bg-slate-900 rounded-[56px] p-12 lg:p-20 border border-white/5 shadow-2xl overflow-hidden">
+                    {/* Panel Header */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-8 mb-16 relative z-10">
+                        <div className="inline-flex items-center justify-center p-6 bg-white/5 backdrop-blur-3xl rounded-[28px] border border-white/10 shadow-2xl">
+                            <TrendingUp className="text-indigo-400" size={36} />
+                        </div>
+                        <div>
+                            <h4 className="text-3xl font-black text-white tracking-tighter">Smart Admissions Intelligence</h4>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">Executive Analytics & Strategic Forecasting</p>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
-                            <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Admission Efficiency</p>
-                            <p className="text-3xl font-bold text-white tabular-nums">{derivedMetrics?.admissionRate}%</p>
-                            <p className="text-xs text-indigo-200 mt-1">Applications converted to admissions</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10">
+                        {/* Intelligence Card 1 */}
+                        <div className="flex flex-col min-h-[300px] p-10 lg:p-12 rounded-[48px] bg-white/[0.04] backdrop-blur-2xl border border-white/[0.05] hover:bg-white/[0.08] transition-all duration-500 group/item">
+                            <div className="flex items-center justify-between mb-10">
+                                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest px-1">Enrollment Yield</span>
+                                <div className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-[9px] font-black uppercase tracking-widest border border-indigo-500/30">Stable</div>
+                            </div>
+                            <div className="mt-auto">
+                                <div className="flex items-baseline gap-3 mb-4">
+                                    <span className="text-4xl font-black text-white tabular-nums tracking-tighter">{derivedMetrics?.admissionRate}%</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Efficiency</span>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed font-medium opacity-60 group-hover/item:opacity-100 transition-opacity">
+                                    Inquiry-to-admitted conversion metrics are maintaining peak optimal levels for this cycle.
+                                </p>
+                            </div>
                         </div>
-                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
-                            <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Gender Balance</p>
-                            <p className="text-3xl font-bold text-white tabular-nums">
-                                {stats.class_distribution.reduce((sum, c) => sum + c.boys, 0)}:{stats.class_distribution.reduce((sum, c) => sum + c.girls, 0)}
-                            </p>
-                            <p className="text-xs text-indigo-200 mt-1">Overall boys to girls ratio</p>
+
+                        {/* Intelligence Card 2 */}
+                        <div className="flex flex-col min-h-[300px] p-10 lg:p-12 rounded-[48px] bg-white/[0.04] backdrop-blur-2xl border border-white/[0.05] hover:bg-white/[0.08] transition-all duration-500 group/item">
+                            <div className="flex items-center justify-between mb-10">
+                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest px-1">Cohort Balance</span>
+                                <div className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-widest border border-blue-500/30">Diverse</div>
+                            </div>
+                            <div className="mt-auto">
+                                <div className="flex items-baseline gap-3 mb-4">
+                                    <span className="text-4xl font-black text-white tabular-nums tracking-tighter">
+                                        {stats.class_distribution.reduce((sum, c) => sum + c.boys, 0)}:{stats.class_distribution.reduce((sum, c) => sum + c.girls, 0)}
+                                    </span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ratio</span>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed font-medium opacity-60 group-hover/item:opacity-100 transition-opacity">
+                                    Gender parity remains highly consistent across all active recruitment and admission channels.
+                                </p>
+                            </div>
                         </div>
-                        <div className="insight-glass-card bg-white/10 backdrop-blur-sm p-5 rounded-xl border border-white/20 hover:bg-white/[0.16] transition-colors duration-150">
-                            <p className="text-[0.65rem] font-bold text-indigo-200 uppercase tracking-widest mb-2">Top Performing Class</p>
-                            <p className="text-3xl font-bold text-white truncate">
-                                {stats.class_distribution.slice().sort((a, b) => (b.boys + b.girls) - (a.boys + a.girls))[0]?.name || 'N/A'}
-                            </p>
-                            <p className="text-xs text-indigo-200 mt-1">Highest total active students</p>
+
+                        {/* Intelligence Card 3 */}
+                        <div className="flex flex-col min-h-[300px] p-10 lg:p-12 rounded-[48px] bg-white/[0.04] backdrop-blur-2xl border border-white/[0.05] hover:bg-white/[0.08] transition-all duration-500 group/item">
+                            <div className="flex items-center justify-between mb-10">
+                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest px-1">Intake Leader</span>
+                                <div className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest border border-emerald-500/30">Primary</div>
+                            </div>
+                            <div className="mt-auto">
+                                <div className="flex items-baseline gap-3 mb-4">
+                                    <span className="text-3xl font-black text-white truncate tracking-tight">
+                                        {stats.class_distribution.slice().sort((a, b) => (b.boys + b.girls) - (a.boys + a.girls))[0]?.name || 'N/A'}
+                                    </span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cohort</span>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed font-medium opacity-60 group-hover/item:opacity-100 transition-opacity">
+                                    This academic level continues to dominate the current intake cycle in both volume and demand.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    )
-}
-export default AdmissionStats;
+    );
+};
+
+export default AdmissionStats;

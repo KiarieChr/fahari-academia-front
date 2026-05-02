@@ -15,15 +15,15 @@ const PageLoader = () => (
   </div>
 );
 
-/* --- Auth Components (loaded eagerly for fast initial load) --- */
-import Login from './auth/Login';
-import ForgotPassword from './auth/ForgotPassword';
-import VerifyOtp from './auth/VerifyOtp';
-import ResetPassword from './auth/ResetPassword';
-import FirstTimeSetup from './auth/FirstTimeSetup';
+/* --- Auth Components --- */
+import Login from './auth/Login'; // Keep Login eager so the first screen is instant
+const ForgotPassword = lazy(() => import('./auth/ForgotPassword'));
+const VerifyOtp = lazy(() => import('./auth/VerifyOtp'));
+const ResetPassword = lazy(() => import('./auth/ResetPassword'));
+const FirstTimeSetup = lazy(() => import('./auth/FirstTimeSetup'));
 
 /* --- Layout & Dashboards --- */
-import DashboardHome from './dashboard/DashboardHome';
+const DashboardHome = lazy(() => import('./dashboard/DashboardHome'));
 
 /* --- Students Module (Lazy loaded) --- */
 const StudentManagement = lazy(() => import('./modules/students/StudentManagement'));
@@ -73,6 +73,7 @@ const ProcurementSettings = lazy(() => import('./modules/procurement/settings/Pr
 const RFQDashboard = lazy(() => import('./modules/procurement/rfq/RFQDashboard'));
 const ContractsDashboard = lazy(() => import('./modules/procurement/contracts/ContractsDashboard'));
 const PublicQuotation = lazy(() => import('./modules/procurement/public/PublicQuotation'));
+const FleetDashboard = lazy(() => import('./modules/fleet/FleetDashboard'));
 
 /* --- HR & Other Modules (Lazy loaded) --- */
 // Use new modern HR Dashboard
@@ -194,6 +195,9 @@ function App() {
             <Route path="/dashboard/procurement/settings" element={<ProtectedRoute><PermissionGate module="procurement"><ProcurementSettings /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/procurement/rfq" element={<ProtectedRoute><PermissionGate module="procurement"><RFQDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/procurement/contracts" element={<ProtectedRoute><PermissionGate module="procurement"><ContractsDashboard /></PermissionGate></ProtectedRoute>} />
+
+            {/* Fleet Module */}
+            <Route path="/dashboard/fleet" element={<ProtectedRoute><PermissionGate module="fleet"><FleetDashboard /></PermissionGate></ProtectedRoute>} />
 
             {/* HR & Other Modules */}
             <Route path="/dashboard/hr" element={<ProtectedRoute><PermissionGate module="hr"><HumanResource /></PermissionGate></ProtectedRoute>} />

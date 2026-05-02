@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Download, Filter, Plus, User, Clock, Calendar, XCircle } from 'lucide-react';
+import { Download, Plus, User, Clock, Calendar, XCircle } from 'lucide-react';
 import { api } from '../../../services/api';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 
@@ -29,7 +28,7 @@ const StaffAttendanceDashboard = () => {
                 api.get('/workforce/api/attendance/')
             ]);
 
-            const summary = summaryRes.data;
+            const summary = summaryRes;
 
             // Update metrics based on summary
             const newMetrics = [
@@ -72,7 +71,7 @@ const StaffAttendanceDashboard = () => {
             ];
 
             setMetrics(newMetrics);
-            setRecords(recordsRes.data.results);
+            setRecords(recordsRes.results || recordsRes || []);
             setLoading(false);
 
         } catch (error) {

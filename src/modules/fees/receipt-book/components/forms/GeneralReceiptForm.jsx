@@ -1,10 +1,56 @@
-import React from 'react';
-import { incomeAccounts, paymentMethods } from '../../data/mockReceiptData';
+import React, { useState, useEffect } from 'react';
+import { financeService } from '../../../../../services/financeService';
+import FilterDropdown from '../../../../../components/ui/FilterDropdown';
+import { Landmark, CreditCard } from 'lucide-react';
 
-const GeneralReceiptForm = ({ data, onChange }) => {
+const GeneralReceiptForm = ({ data, onChange, disabled }) => {
+    const [incomeAccounts, setIncomeAccounts] = useState([]);
+    const [paymentMethods, setPaymentMethods] = useState([]);
+    const [isLoadingData, setIsLoadingData] = useState(false);
+
+    useEffect(() => {
+        const fetchFormData = async () => {
+            setIsLoadingData(true);
+            try {
+                const [paymentMethodsRes, accountsRes] = await Promise.all([
+                    financeService.getPaymentMethods(),
+                    financeService.getAccounts()
+                ]);
+
+                setPaymentMethods(paymentMethodsRes.results || paymentMethodsRes || []);
+                
+                const accounts = accountsRes.results || accountsRes || [];
+                setIncomeAccounts(accounts.filter(acc => 
+                    acc.account_type?.toLowerCase().includes('income') || 
+                    acc.type?.toLowerCase().includes('income') ||
+                    acc.category?.toLowerCase().includes('income')
+                ));
+
+            } catch (error) {
+                console.error('Error fetching form data:', error);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        fetchFormData();
+    }, []);
+
     const handleChange = (field, value) => {
         onChange({ ...data, [field]: value, receiptType: 'General' });
     };
+
+    const accountOptions = incomeAccounts.map(acc => ({
+        value: acc.id,
+        label: `${acc.code} - ${acc.name}`,
+        icon: Landmark
+    }));
+
+    const paymentMethodOptions = paymentMethods.map(m => ({
+        value: m.id,
+        label: m.name,
+        icon: CreditCard
+    }));
 
     return (
         <div className="row g-3">
@@ -18,25 +64,31 @@ const GeneralReceiptForm = ({ data, onChange }) => {
                     onChange={(e) => handleChange('payerName', e.target.value)}
                     placeholder="Individual or organization name"
                     required
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
             {/* Income Account */}
             <div className="col-md-6">
                 <label className="form-label">Income Account <span className="text-danger">*</span></label>
-                <select
-                    className="form-select"
-                    value={data.incomeAccount || ''}
-                    onChange={(e) => handleChange('incomeAccount', e.target.value)}
-                    required
-                >
-                    <option value="">Select Income Account...</option>
-                    {incomeAccounts.map(acc => (
-                        <option key={acc.id} value={acc.name}>
-                            {acc.name} ({acc.code})
-                        </option>
-                    ))}
-                </select>
+                <FilterDropdown
+                    placeholder="Select Income Account..."
+                    value={data.incomeAccountId}
+                    options={accountOptions}
+                    onChange={(val) => {
+                        const account = incomeAccounts.find(acc => String(acc.id) === String(val));
+                        onChange({
+                            ...data,
+                            incomeAccountId: val,
+                            incomeAccount: account ? account.name : '',
+                            receiptType: 'General'
+                        });
+                    }}
+                    searchable={true}
+                    disabled={disabled || isLoadingData}
+                    className="w-100"
+                />
             </div>
 
             {/* Amount */}
@@ -51,6 +103,8 @@ const GeneralReceiptForm = ({ data, onChange }) => {
                     min="0"
                     step="0.01"
                     required
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
@@ -64,29 +118,36 @@ const GeneralReceiptForm = ({ data, onChange }) => {
                     onChange={(e) => handleChange('description', e.target.value)}
                     placeholder="What is this payment for?"
                     required
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
             {/* Payment Method */}
             <div className="col-md-6">
                 <label className="form-label">Payment Method <span className="text-danger">*</span></label>
-                <select
-                    className="form-select"
-                    value={data.paymentMethod || ''}
-                    onChange={(e) => handleChange('paymentMethod', e.target.value)}
-                    required
-                >
-                    <option value="">Select Method...</option>
-                    {paymentMethods.map(method => (
-                        <option key={method} value={method}>{method}</option>
-                    ))}
-                </select>
+                <FilterDropdown
+                    placeholder="Select Method..."
+                    value={data.paymentMethodId}
+                    options={paymentMethodOptions}
+                    onChange={(val) => {
+                        const method = paymentMethods.find(m => String(m.id) === String(val));
+                        onChange({
+                            ...data,
+                            paymentMethodId: val,
+                            paymentMethod: method ? method.name : '',
+                            receiptType: 'General'
+                        });
+                    }}
+                    disabled={disabled || isLoadingData}
+                    className="w-100"
+                />
             </div>
 
             {/* Reference Number */}
             <div className="col-md-6">
                 <label className="form-label">
-                    Reference {data.paymentMethod && data.paymentMethod !== 'Cash' && <span className="text-danger">*</span>}
+                    Reference <span className="text-muted small">(Optional for Cash)</span>
                 </label>
                 <input
                     type="text"
@@ -94,7 +155,8 @@ const GeneralReceiptForm = ({ data, onChange }) => {
                     value={data.reference || ''}
                     onChange={(e) => handleChange('reference', e.target.value)}
                     placeholder="Reference number"
-                    required={data.paymentMethod && data.paymentMethod !== 'Cash'}
+                    disabled={disabled}
+                    style={{ height: '40px' }}
                 />
             </div>
 
@@ -107,6 +169,7 @@ const GeneralReceiptForm = ({ data, onChange }) => {
                     value={data.notes || ''}
                     onChange={(e) => handleChange('notes', e.target.value)}
                     placeholder="Additional notes..."
+                    disabled={disabled}
                 ></textarea>
             </div>
         </div>

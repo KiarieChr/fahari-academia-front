@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, EyeOff, Loader2, X, Check, AlertCircle,
@@ -13,6 +13,25 @@ const STEPS = [
   { id: 'personal', label: 'Personal Info', icon: User },
   { id: 'security', label: 'Set Password', icon: Key },
 ];
+
+// ── Hoisted helpers ─────────────────────────────────────────────────────────
+// IMPORTANT: These must live at MODULE SCOPE, not inside the parent component.
+// Defining components inside another component causes React to treat them as
+// new types on every render, which unmounts/remounts them and drops focus.
+
+const FieldError = ({ errors, name }) => {
+  const err = errors[name];
+  if (!err) return null;
+  const msg = Array.isArray(err) ? err[0] : err;
+  return <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} />{msg}</p>;
+};
+
+const InputWrapper = ({ icon: Icon, children, error }) => (
+  <div className={`group relative flex items-center rounded-xl border-2 ${error ? 'border-red-300 bg-red-50/30 ring-2 ring-red-100' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/30'} focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 focus-within:bg-white focus-within:shadow-sm transition-all duration-200`}>
+    {Icon && <Icon size={18} className="absolute left-3.5 text-gray-400 group-focus-within:text-indigo-500 transition-colors duration-200 pointer-events-none" />}
+    {children}
+  </div>
+);
 
 const FirstTimeSetup = () => {
   const navigate = useNavigate();
@@ -149,6 +168,7 @@ const FirstTimeSetup = () => {
       if (result.success) {
         if (result.user) localStorage.setItem('user', JSON.stringify(result.user));
         if (result.token) localStorage.setItem('token', result.token);
+        sessionStorage.setItem('force_system_tour', '1');
         sessionStorage.removeItem('first_time_user_id');
         sessionStorage.removeItem('user_email');
 
@@ -174,20 +194,7 @@ const FirstTimeSetup = () => {
     }
   };
 
-  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const FieldError = ({ name }) => {
-    const err = errors[name];
-    if (!err) return null;
-    const msg = Array.isArray(err) ? err[0] : err;
-    return <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} />{msg}</p>;
-  };
 
-  const InputWrapper = ({ icon: Icon, children, error }) => (
-    <div className={`group relative flex items-center rounded-xl border-2 ${error ? 'border-red-300 bg-red-50/30 ring-2 ring-red-100' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/30'} focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 focus-within:bg-white focus-within:shadow-sm transition-all duration-200`}>
-      {Icon && <Icon size={18} className="absolute left-3.5 text-gray-400 group-focus-within:text-indigo-500 transition-colors duration-200 pointer-events-none" />}
-      {children}
-    </div>
-  );
 
   // â”€â”€ Loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isLoadingUser) {
@@ -195,7 +202,7 @@ const FirstTimeSetup = () => {
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={36} className="animate-spin text-indigo-500 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">Loading your informationâ€¦</p>
+          <p className="text-gray-500 text-sm">Loading your information...</p>
         </div>
       </div>
     );
@@ -273,7 +280,7 @@ const FirstTimeSetup = () => {
                         <input name="firstName" value={formData.firstName} onChange={handleChange}
                           className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="John" />
                       </InputWrapper>
-                      <FieldError name="firstName" />
+                      <FieldError errors={errors} name="firstName" />
                     </div>
                     <div>
                       <label className="block text-[13px] font-semibold text-gray-600 mb-2">Last Name <span className="text-red-400">*</span></label>
@@ -281,7 +288,7 @@ const FirstTimeSetup = () => {
                         <input name="lastName" value={formData.lastName} onChange={handleChange}
                           className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="Doe" />
                       </InputWrapper>
-                      <FieldError name="lastName" />
+                      <FieldError errors={errors} name="lastName" />
                     </div>
                   </div>
 
@@ -292,7 +299,7 @@ const FirstTimeSetup = () => {
                       <input name="email" type="email" value={formData.email} onChange={handleChange}
                         className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="john@institution.edu" />
                     </InputWrapper>
-                    <FieldError name="email" />
+                    <FieldError errors={errors} name="email" />
                     {emailConflict && (
                       <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
                         <AlertCircle size={12} /> A suggested email was generated because the original is used by another account. You can edit it.
@@ -307,7 +314,7 @@ const FirstTimeSetup = () => {
                       <input name="username" value={formData.username} onChange={handleChange}
                         className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="johndoe" />
                     </InputWrapper>
-                    <FieldError name="username" />
+                    <FieldError errors={errors} name="username" />
                   </div>
 
                   {/* Phone & Gender */}
@@ -323,11 +330,17 @@ const FirstTimeSetup = () => {
                       <label className="block text-[13px] font-semibold text-gray-600 mb-2">Gender</label>
                       <InputWrapper>
                         <select name="gender" value={formData.gender} onChange={handleChange}
-                          className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 outline-none rounded-xl appearance-none cursor-pointer">
-                          <option value="">Selectâ€¦</option>
+                          className="w-full bg-transparent pl-4 pr-10 py-3 text-sm sm:text-[15px] text-gray-800 outline-none rounded-xl appearance-none cursor-pointer">
+                          <option value="">Select Gender</option>
                           <option value="M">Male</option>
                           <option value="F">Female</option>
+                          <option value="O">Other</option>
                         </select>
+                        <div className="absolute right-3.5 pointer-events-none text-gray-400">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
                       </InputWrapper>
                     </div>
                   </div>
@@ -366,13 +379,14 @@ const FirstTimeSetup = () => {
                     <label className="block text-[13px] font-semibold text-gray-600 mb-2">New Password <span className="text-red-400">*</span></label>
                     <InputWrapper icon={Key} error={errors.password}>
                       <input name="password" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={handleChange}
-                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="•••••••• (Min. 8 chars)" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100">
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        className="absolute right-3.5 text-gray-400 hover:text-indigo-500 transition-colors p-1.5 rounded-lg hover:bg-indigo-50"
+                        title={showPassword ? "Hide Password" : "Show Password"}>
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </InputWrapper>
-                    <FieldError name="password" />
+                    <FieldError errors={errors} name="password" />
 
                     {/* Strength meter */}
                     {formData.password && (
@@ -408,13 +422,14 @@ const FirstTimeSetup = () => {
                     <label className="block text-[13px] font-semibold text-gray-600 mb-2">Confirm Password <span className="text-red-400">*</span></label>
                     <InputWrapper icon={Key} error={errors.confirmPassword}>
                       <input name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange}
-                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="•••••••• (Repeat password)" />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3.5 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100">
-                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        className="absolute right-3.5 text-gray-400 hover:text-indigo-500 transition-colors p-1.5 rounded-lg hover:bg-indigo-50"
+                        title={showConfirmPassword ? "Hide Password" : "Show Password"}>
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </InputWrapper>
-                    <FieldError name="confirmPassword" />
+                    <FieldError errors={errors} name="confirmPassword" />
                     {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
                       <p className="mt-1 text-xs text-emerald-500 flex items-center gap-1"><Check size={12} /> Passwords match</p>
                     )}
@@ -441,7 +456,7 @@ const FirstTimeSetup = () => {
                     <button type="submit" disabled={isLoading}
                       className="flex items-center gap-2 px-7 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-sm hover:shadow-md hover:shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed">
                       {isLoading ? (
-                        <><Loader2 size={16} className="animate-spin" /> Setting upâ€¦</>
+                        <><Loader2 size={16} className="animate-spin" /> Setting up...</>
                       ) : (
                         <><Check size={16} /> Complete Setup</>
                       )}

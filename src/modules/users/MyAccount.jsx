@@ -88,38 +88,37 @@ const MyAccount = () => {
     const fetchUserProfile = async () => {
         try {
             setLoading(true);
+            // api.js returns the unwrapped body directly — no .data wrapper
             const response = await api.get('/api/users/profile/');
-            const data = response?.data;
-            
-            if (data) {
-                const profile = data.success ? data.profile : data;
-                
-                if (profile && typeof profile === 'object') {
-                    setUserData(prev => ({
-                        ...prev,
-                        firstName: profile.first_name || '',
-                        lastName: profile.last_name || '',
-                        email: profile.email || '',
-                        phone: profile.phone || '',
-                        location: profile.address || '',
-                        role: profile.role || 'User',
-                        joinDate: profile.date_joined ? new Date(profile.date_joined).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        }) : '',
-                        avatar: (profile.first_name?.[0] || '') + (profile.last_name?.[0] || ''),
-                        department: profile.department || 'General',
-                        bio: profile.bio || 'No bio provided',
-                    }));
-                    if (profile.avatar) {
-                        setPreviewAvatar(profile.avatar);
-                    }
-                    return;
+
+            // Backend returns { success: true, profile: {...} } or a flat user object
+            const profile = response?.success ? response.profile : response;
+
+            if (profile && typeof profile === 'object') {
+                setUserData(prev => ({
+                    ...prev,
+                    firstName: profile.first_name || '',
+                    lastName: profile.last_name || '',
+                    email: profile.email || '',
+                    phone: profile.phone || '',
+                    location: profile.address || '',
+                    role: profile.role || 'User',
+                    joinDate: profile.date_joined ? new Date(profile.date_joined).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }) : '',
+                    avatar: (profile.first_name?.[0] || '') + (profile.last_name?.[0] || ''),
+                    department: profile.department || 'General',
+                    bio: profile.bio || 'No bio provided',
+                }));
+                if (profile.avatar || profile.picture) {
+                    setPreviewAvatar(profile.avatar || profile.picture);
                 }
             }
         } catch (error) {
             console.error("Failed to fetch profile:", error);
+            toast.error('Failed to load profile. ' + (error?.message || ''));
         } finally {
             setLoading(false);
         }
@@ -128,31 +127,25 @@ const MyAccount = () => {
     // Fetch active sessions
     const fetchActiveSessions = async () => {
         try {
+            // api.js returns body directly — backend sends { success, sessions: [...] }
             const response = await api.get('/api/users/sessions/');
-            const data = response?.data;
-            
-            if (data) {
-                const sessions = data.success ? data.sessions : (Array.isArray(data) ? data : []);
-                
-                if (sessions && Array.isArray(sessions)) {
-                    const mappedSessions = sessions.map(s => ({
-                        id: s.id ?? s.session_key,
-                        device: s.device || 'Unknown Device',
-                        browser: s.browser || 'Unknown Browser',
-                        os: s.os || 'Unknown OS',
-                        location: s.location || 'Unknown',
-                        ip: s.ip || 'Unknown IP',
-                        createdAt: s.created_at ? new Date(s.created_at).toLocaleString() : '',
-                        lastActive: s.last_used ? new Date(s.last_used).toLocaleString()
-                            : s.expire_date ? new Date(s.expire_date).toLocaleString()
-                            : 'Unknown',
-                        current: s.current || false,
-                        label: s.label || '',
-                    }));
-                    setActiveSessions(mappedSessions);
-                } else {
-                    setActiveSessions([]);
-                }
+            const sessions = response?.success ? response.sessions : (Array.isArray(response) ? response : []);
+
+            if (Array.isArray(sessions)) {
+                setActiveSessions(sessions.map(s => ({
+                    id: s.id ?? s.session_key,
+                    device: s.device || 'Unknown Device',
+                    browser: s.browser || 'Unknown Browser',
+                    os: s.os || 'Unknown OS',
+                    location: s.location || 'Unknown',
+                    ip: s.ip || 'Unknown IP',
+                    createdAt: s.created_at ? new Date(s.created_at).toLocaleString() : '',
+                    lastActive: s.last_used ? new Date(s.last_used).toLocaleString()
+                        : s.expire_date ? new Date(s.expire_date).toLocaleString()
+                        : 'Unknown',
+                    current: s.current || false,
+                    label: s.label || '',
+                })));
             } else {
                 setActiveSessions([]);
             }
@@ -165,15 +158,10 @@ const MyAccount = () => {
     // Fetch activity log
     const fetchActivities = async () => {
         try {
+            // api.js returns body directly — backend sends { success, activities: [...] }
             const response = await api.get('/api/users/activities/');
-            const data = response?.data;
-            
-            if (data) {
-                const activities = data.success ? data.activities : (Array.isArray(data) ? data : []);
-                setActivities(activities.slice(0, 10)); // Limit to 10 most recent
-            } else {
-                setActivities([]);
-            }
+            const acts = response?.success ? response.activities : (Array.isArray(response) ? response : []);
+            setActivities(Array.isArray(acts) ? acts.slice(0, 10) : []);
         } catch (error) {
             console.error("Failed to fetch activities", error);
             setActivities([]);
@@ -234,60 +222,48 @@ const MyAccount = () => {
                 const formData = new FormData();
                 formData.append('avatar', avatarFile);
                 try {
-                    await api.post('/api/users/upload_avatar/', formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    });
+                    // api.js handles FormData — do NOT set Content-Type manually
+                    await api.post('/api/users/upload_avatar/', formData);
                     setAvatarFile(null);
-                    setPreviewAvatar(null);
                 } catch (error) {
                     console.error('Avatar upload failed:', error);
-                    const errorMsg = error.response?.data?.message || 'Failed to upload avatar';
-                    alert(errorMsg);
+                    toast.error(error?.data?.message || 'Failed to upload avatar');
                     setSubmitting(false);
                     return;
                 }
             }
 
-            await api.put('/api/users/update_profile/', payload);
+            // DRF router generates /api/users/update_profile/ for detail=False + put/patch
+            await api.patch('/api/users/update_profile/', payload);
             setIsEditing(false);
             setAvatarFile(null);
-            setPreviewAvatar(null);
             fetchUserProfile();
-            alert('Profile updated successfully');
+            toast.success('Profile updated successfully');
         } catch (error) {
             console.error(error);
-            alert(error.response?.data?.message || 'Failed to update profile');
+            toast.error(error?.data?.message || error?.message || 'Failed to update profile');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handlePasswordUpdate = async () => {
+        if (passwordData.new_password !== passwordData.confirm_new_password) {
+            toast.error('New passwords do not match!');
+            return;
+        }
+        if (passwordData.new_password.length < 8) {
+            toast.error('Password must be at least 8 characters long');
+            return;
+        }
         try {
-            if (passwordData.new_password !== passwordData.confirm_new_password) {
-                alert('New passwords do not match!');
-                return;
-            }
-
-            if (passwordData.new_password.length < 8) {
-                alert('Password must be at least 8 characters long');
-                return;
-            }
-
             setSubmitting(true);
             await api.post('/api/users/change_password/', passwordData);
-
-            setPasswordData({
-                old_password: '',
-                new_password: '',
-                confirm_new_password: ''
-            });
-            alert('Password changed successfully');
+            setPasswordData({ old_password: '', new_password: '', confirm_new_password: '' });
+            toast.success('Password changed successfully');
         } catch (error) {
             console.error(error);
-            alert(error.response?.data?.message || 'Failed to change password');
+            toast.error(error?.data?.message || error?.data?.errors?.old_password?.[0] || error?.message || 'Failed to change password');
         } finally {
             setSubmitting(false);
         }
@@ -313,13 +289,13 @@ const MyAccount = () => {
     const terminateSession = async (sessionId) => {
         setTerminatingId(sessionId);
         try {
+            // api.js returns unwrapped body — { success, message }
             const response = await api.post('/api/users/terminate_session/', { token_id: sessionId });
-            const data = response?.data;
-            toast.success(data?.message || 'Session terminated successfully');
+            toast.success(response?.message || 'Session terminated successfully');
             fetchActiveSessions();
         } catch (error) {
             console.error('Failed to terminate session:', error);
-            toast.error('Failed to terminate session: ' + (error.response?.data?.message || error.message));
+            toast.error('Failed to terminate session: ' + (error?.data?.message || error?.message || 'Unknown error'));
         } finally {
             setTerminatingId(null);
         }
@@ -328,12 +304,11 @@ const MyAccount = () => {
     const terminateAllSessions = async () => {
         try {
             const response = await api.post('/api/users/logout_all/');
-            const data = response?.data;
-            toast.success(data?.message || 'Logged out from all devices successfully');
+            toast.success(response?.message || 'Logged out from all devices successfully');
             setTimeout(() => fetchActiveSessions(), 500);
         } catch (error) {
             console.error('Failed to logout all sessions:', error);
-            toast.error('Failed to logout all sessions: ' + (error.response?.data?.message || error.message));
+            toast.error('Failed to logout all sessions: ' + (error?.data?.message || error?.message || 'Unknown error'));
         }
     };
 

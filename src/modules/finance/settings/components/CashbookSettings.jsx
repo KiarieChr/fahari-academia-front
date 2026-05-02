@@ -53,40 +53,39 @@ const CashbookSettings = ({ cashbooks: initialCashbooks, accounts }) => {
 
         try {
             if (editingCashbook) {
-                const res = await financeService.updateCashbook(editingCashbook.id, formData);
-                setCashbooks(cashbooks.map(cb => cb.id === editingCashbook.id ? res.data : cb));
+                // api.js returns the unwrapped data object directly (no .data wrapper)
+                const updated = await financeService.updateCashbook(editingCashbook.id, formData);
+                setCashbooks(cashbooks.map(cb => cb.id === editingCashbook.id ? updated : cb));
                 toast.success("Cashbook updated successfully");
             } else {
-                const res = await financeService.createCashbook(formData);
-                setCashbooks([...cashbooks, res.data]);
+                const created = await financeService.createCashbook(formData);
+                setCashbooks([...cashbooks, created]);
                 toast.success("Cashbook created successfully");
             }
             setShowModal(false);
         } catch (error) {
             console.error("Failed to save cashbook", error);
-            toast.error("Error saving cashbook: " + (error.response?.data?.detail || error.message));
+            toast.error("Error saving cashbook: " + (error?.data?.detail || error?.message || 'Unknown error'));
         }
     };
 
     const handleToggleActive = (id) => {
-        // Optimistic update - in real app might want to call API here
-        // Ideally we call API update here
         const cb = cashbooks.find(c => c.id === id);
         if (cb) {
-            financeService.updateCashbook(id, { is_active: !cb.is_active }).then(res => {
-                setCashbooks(cashbooks.map(c => c.id === id ? res.data : c));
-            });
+            financeService.updateCashbook(id, { is_active: !cb.is_active })
+                .then(updated => {
+                    setCashbooks(cashbooks.map(c => c.id === id ? { ...c, ...updated } : c));
+                })
+                .catch(err => toast.error('Failed to update status: ' + (err?.message || 'Unknown error')));
         }
     };
 
     const handleSetDefault = (id) => {
-        // The backend logic ensures only one default, but we should update UI optimistically or reload
-        financeService.updateCashbook(id, { is_default: true }).then(res => {
-            // Refresh all because others might have changed to false
-            // For now, let's just update locally based on assumption or reload
-            // Better to just set the one to true and others to false strictly in UI
-            setCashbooks(cashbooks.map(cb => ({ ...cb, is_default: cb.id === id })));
-        });
+        financeService.updateCashbook(id, { is_default: true })
+            .then(() => {
+                setCashbooks(cashbooks.map(cb => ({ ...cb, is_default: cb.id === id })));
+            })
+            .catch(err => toast.error('Failed to set default: ' + (err?.message || 'Unknown error')));
     };
 
     const getAccountName = (id) => {
