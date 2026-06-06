@@ -36,6 +36,9 @@ export const userService = {
     assignPermissions: (userId, permissionIds) =>
         api.post(`/api/users/${userId}/user_permissions/`, { permission_ids: permissionIds }),
 
+    linkEmployee: (userId, employeeId) =>
+        api.post(`/api/users/${userId}/link_employee/`, { employee_id: employeeId }),
+
     // ─── Roles (Groups) CRUD ─────────────────────────────────────
     getRoles: () =>
         api.get('/api/roles/'),

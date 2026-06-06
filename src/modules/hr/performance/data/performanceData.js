@@ -1,5 +1,4 @@
-
-import { Target, TrendingUp, Users, AlertCircle, Award } from 'lucide-react';
+import { Target, TrendingUp, Users, AlertCircle, Award, Settings } from 'lucide-react';
 
 export const performanceMetrics = [
     {
@@ -80,4 +79,3 @@ export const timelineData = [
 // Helper for timeline icon component in timeline data would need component reference not just string if rendering directly, 
 // using names for now or importing in component. 
 // Corrected to use the objects, assuming consumer handles it.
-import { Settings } from 'lucide-react';

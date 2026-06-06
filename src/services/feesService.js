@@ -128,4 +128,53 @@ export const feesService = {
        
         return response;
     },
+
+    /**
+     * Get ageing analysis — outstanding amounts bucketed by days overdue
+     * @param {Object} filters - { year, term, grade, intake }
+     */
+    getAgeingAnalysis: async (filters = {}) => {
+        const params = {};
+        if (filters.year && filters.year !== 'All') params.academic_year = filters.year;
+        if (filters.term && filters.term !== 'All') params.term = filters.term;
+        if (filters.class && filters.class !== 'All') params.grade = filters.class;
+        if (filters.intake && filters.intake !== 'All') params.intake = filters.intake;
+        return await api.get('/api/fees/arrears/ageing_analysis/', { params });
+    },
+
+    /**
+     * Get full fee statement for a student (invoices + payments + prepayments)
+     * @param {number} studentId
+     * @param {Object} filters - { year, term }
+     */
+    getStudentStatement: async (studentId, filters = {}) => {
+        const params = { student_id: studentId };
+        if (filters.year) params.year = filters.year;
+        if (filters.term) params.term = filters.term;
+        return await api.get('/api/fees/arrears/student_statement/', { params });
+    },
+
+    /**
+     * Get all students with arrears — unpaginated, for export/report generation
+     * @param {Object} filters
+     */
+    getAllStudentsInArrears: async (filters = {}) => {
+        const params = { page: 1, page_size: 500 };
+        if (filters.year && filters.year !== 'All') params.academic_year = filters.year;
+        if (filters.term && filters.term !== 'All') params.term = filters.term;
+        if (filters.class && filters.class !== 'All') params.grade = filters.class;
+        if (filters.intake && filters.intake !== 'All') params.intake = filters.intake;
+        const response = await api.get('/api/fees/arrears/students/', { params });
+        return (response.results || []).map(s => ({
+            id: s.id,
+            name: s.name,
+            admNo: s.admission_number,
+            class: s.class_name,
+            term: s.term,
+            payable: s.total_payable,
+            paid: s.total_paid,
+            balance: s.balance,
+            status: s.status,
+        }));
+    },
 };

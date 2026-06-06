@@ -1,7 +1,7 @@
 // Enhanced API Client with Session Management
 // Features: Auto-logout, session expiry detection, retry, caching
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
 const USER_KEY = import.meta.env.VITE_USER_KEY || 'academia-user';
 
@@ -437,8 +437,8 @@ export const api = {
 
             return handleResponse(response).catch(() => ({ success: true }));
         } catch (error) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
             clearCache();
             return { success: true };
         }
@@ -446,7 +446,7 @@ export const api = {
 
     getCurrentUser: async () => {
         try {
-            const response = await fetch(`${API_URL}/api/users/profile/`, {
+            const response = await fetch(`${API_URL}/api/auth/me/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -590,6 +590,8 @@ export const api = {
         // Auto-generate
         generate: (data) =>
             api.post('/api/timetable/generate/', data),
+        generateForTerm: (data) =>
+            api.post('/api/timetable/generate-for-term/', data),
         // Analytics
         getAnalytics: (reportType) =>
             api.get(`/api/timetable/analytics/${reportType}/`),
@@ -602,6 +604,8 @@ export const api = {
             api.get(`/api/timetable/teacher/${teacherId}/full/`),
         getRoomTimetable: (roomId) =>
             api.get(`/api/timetable/room/${roomId}/full/`),
+        getMonthlyView: (params) =>
+            api.get('/api/timetable/monthly-view/', { params }),
         // Teachers (from users API)
         getTeachers: (params = {}) =>
             api.get('/api/users/', { params: { is_lecturer: true, ...params } }),
@@ -727,7 +731,7 @@ if (typeof window !== 'undefined') {
     // Track user activity
     ['mousedown', 'keydown', 'touchstart', 'scroll'].forEach(event => {
         window.addEventListener(event, () => {
-            if (localStorage.getItem('token')) {
+            if (localStorage.getItem(TOKEN_KEY)) {
                 updateLastActivity();
             }
         }, { passive: true });

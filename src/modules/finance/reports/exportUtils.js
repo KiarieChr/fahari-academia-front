@@ -9,53 +9,102 @@
  * or pass { tableId } to export an existing HTML table by DOM id.
  */
 
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+
 const fmtCurrency = (v) =>
     new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 }).format(v ?? 0);
 
-/** Export via browser print dialog — renders a styled HTML document */
+/** Export via jsPDF - Perfectly formatted for printing or saving */
 export function exportToPDF({ title, subtitle = '', headers, rows, filename = 'report' }) {
-    const tableRows = rows
-        .map(
-            (row) =>
-                `<tr>${row
-                    .map((cell, i) => {
-                        const isNum = typeof cell === 'number';
-                        return `<td style="text-align:${isNum ? 'right' : 'left'};padding:5px 8px;border-bottom:1px solid #e2e8f0">${isNum ? fmtCurrency(cell) : (cell ?? '')}</td>`;
-                    })
-                    .join('')}</tr>`
-        )
-        .join('');
+    const doc = new jsPDF('p', 'pt', 'a4');
+    const totalPagesExp = '{total_pages_count_string}';
+    
+    const tableData = rows.map(row => 
+        row.map(cell => {
+            if (typeof cell === 'number') {
+                return fmtCurrency(cell);
+            }
+            return cell ?? '';
+        })
+    );
 
-    const headerRow = headers
-        .map((h) => `<th style="text-align:left;padding:6px 8px;background:#1e40af;color:white;font-size:11px">${h}</th>`)
-        .join('');
+    const institutionName = "Fahari Academy";
+    
+    const printDate = new Date();
+    // E.g., 1st June 2026
+    const day = printDate.getDate();
+    const suffix = ["th", "st", "nd", "rd"][(day % 10 > 3 || Math.floor(day % 100 / 10) === 1) ? 0 : day % 10];
+    const month = printDate.toLocaleString('en-GB', { month: 'long' });
+    const year = printDate.getFullYear();
+    const time = printDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+    
+    const printedOnStr = `Printed On : ${day}${suffix} ${month} ${year} ${time}`;
 
-    const html = `<!DOCTYPE html><html><head>
-        <meta charset="UTF-8"><title>${title}</title>
-        <style>
-            body{font-family:Arial,sans-serif;font-size:12px;color:#1e293b;margin:20px}
-            h1{font-size:18px;margin-bottom:2px;color:#1e40af}
-            p.sub{font-size:11px;color:#64748b;margin-top:0}
-            table{width:100%;border-collapse:collapse;margin-top:16px}
-            th{white-space:nowrap}
-            tr:nth-child(even){background:#f8fafc}
-            tfoot td{font-weight:bold;background:#f1f5f9;border-top:2px solid #1e40af}
-            @media print{@page{margin:15mm}}
-        </style>
-    </head><body>
-        <h1>${title}</h1>
-        <p class="sub">${subtitle} &nbsp;|&nbsp; Printed: ${new Date().toLocaleString('en-KE')}</p>
-        <table>
-            <thead><tr>${headerRow}</tr></thead>
-            <tbody>${tableRows}</tbody>
-        </table>
-    </body></html>`;
+    doc.autoTable({
+        head: [headers],
+        body: tableData,
+        startY: 110,
+        theme: 'striped',
+        headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 10, halign: 'left' },
+        styles: { fontSize: 9, cellPadding: 5 },
+        didDrawPage: function (data) {
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(30, 41, 59);
+            doc.setFont("helvetica", "bold");
+            doc.text(institutionName, data.settings.margin.left, 40);
 
-    const win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 300);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 116, 139);
+            const printedOnWidth = doc.getStringUnitWidth(printedOnStr) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+            doc.text(printedOnStr, doc.internal.pageSize.width - data.settings.margin.right - printedOnWidth, 40);
+
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 64, 175);
+            doc.text(title, data.settings.margin.left, 70);
+
+            if (subtitle) {
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(100, 116, 139);
+                doc.text(subtitle, data.settings.margin.left, 85);
+            }
+
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(1);
+            doc.line(data.settings.margin.left, 95, doc.internal.pageSize.width - data.settings.margin.right, 95);
+
+            // Footer
+            const pageSize = doc.internal.pageSize;
+            const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+            
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(1);
+            doc.line(data.settings.margin.left, pageHeight - 35, pageSize.width - data.settings.margin.right, pageHeight - 35);
+            
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(150, 150, 150);
+            doc.text("Generated by Fahari School Management System", data.settings.margin.left, pageHeight - 20);
+
+            doc.setFont("helvetica", "normal");
+            const str = `Page ${doc.internal.getNumberOfPages()} of ${totalPagesExp}`;
+            const strWidth = doc.getStringUnitWidth(str) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+            doc.text(str, pageSize.width - data.settings.margin.right - strWidth, pageHeight - 20);
+        },
+        margin: { top: 110, bottom: 50, left: 40, right: 40 }
+    });
+
+    if (typeof doc.putTotalPages === 'function') {
+        doc.putTotalPages(totalPagesExp);
+    }
+    
+    // Open in new tab so user can immediately view/print
+    const blobUrl = doc.output('bloburl');
+    window.open(blobUrl, '_blank');
 }
 
 /** Export to CSV (opens as Excel) */

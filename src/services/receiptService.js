@@ -54,6 +54,7 @@ export const receiptService = {
                 studentName: receipt.student_name,
                 admissionNo: receipt.admission_no,
                 amount: receipt.amount,
+                amountAllocated: receipt.amount_allocated || 0,
                 paymentMethod: receipt.payment_method,
                 reference: receipt.reference,
                 issuedBy: receipt.issued_by,
@@ -119,37 +120,34 @@ export const receiptService = {
      * @returns {Promise} Promise resolving to created receipt
      */
     createReceipt: async (receiptData) => {
-        // Transform to snake_case for backend
+        // receiptData.receiptType already comes in as backend value (e.g. 'GENERAL', 'STUDENT_FEE')
+        // because CreateReceiptModal.transformToServiceFormat already maps it.
         const payload = {
-            // Map receipt types to backend choices
-            receipt_type: {
-                'Student Fee': 'STUDENT_FEE',
-                'Student Non-Fee': 'STUDENT_NON_FEE',
-                'Sponsor': 'SPONSOR',
-                'General': 'GENERAL'
-            }[receiptData.receiptType] || receiptData.receiptType,
+            receipt_type: receiptData.receiptType,  // already snake_case backend value
 
             payer_name: receiptData.payerName,
-            student_id: receiptData.studentId,
+            student_id: receiptData.studentId || null,
             amount_received: receiptData.amount,
             payment_method_id: receiptData.paymentMethodId,
-            reference: receiptData.reference,
-            notes: receiptData.notes,
+            reference: receiptData.reference || '',
+            notes: receiptData.notes || '',
             received_date: receiptData.date,
-            status: receiptData.status || 'DRAFT',
+            // Always create as DRAFT — the modal's handleSave posts it via /post/ if status=Issued
+            status: 'DRAFT',
 
             // Allocations
             allocations: receiptData.allocations || [],
 
             // Type-specific fields
-            fee_category: receiptData.feeCategory,
-            term_id: receiptData.termId,
-            academic_year_id: receiptData.academicYearId,
-            non_fee_category: receiptData.nonFeeCategory,
-            description: receiptData.description,
-            sponsorship_type: receiptData.sponsorshipType,
-            allocation_rule: receiptData.allocationRule,
-            income_account_id: receiptData.incomeAccountId,
+            fee_category: receiptData.feeCategory || null,
+            term_id: receiptData.termId || null,
+            academic_year_id: receiptData.academicYearId || null,
+            non_fee_category: receiptData.nonFeeCategory || null,
+            description: receiptData.description || '',
+            sponsorship_type: receiptData.sponsorshipType || null,
+            sponsorship_id: receiptData.sponsorshipId || null,
+            allocation_rule: receiptData.allocationRule || null,
+            income_account_id: receiptData.incomeAccountId || null,
         };
 
         const response = await api.post('/api/fees/receipts/', payload);
@@ -212,6 +210,21 @@ export const receiptService = {
             },
         });
 
+        return response;
+    },
+
+    /**
+     * Allocate a portion of a Sponsor receipt to a student
+     * @param {number} id - Sponsor receipt ID
+     * @param {Object} allocationData - Allocation details { studentId, amount }
+     * @returns {Promise}
+     */
+    allocateSponsorship: async (id, allocationData) => {
+        const payload = {
+            student_id: allocationData.studentId,
+            amount: allocationData.amount
+        };
+        const response = await api.post(`/api/fees/receipts/${id}/allocate_sponsor/`, payload);
         return response;
     },
 

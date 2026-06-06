@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL;
+// Use empty string to force relative URLs. Next.js rewrites will proxy /api to the backend.
+const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
 
 const handleResponse = async (response, options = {}) => {
@@ -395,4 +396,24 @@ export const api = {
         getSubjectSummary: (params = {}) =>
             api.get('/api/lesson-sessions/coverage/subject_summary/', { params }),
     },
+
+    // ─── Workforce & HR ──────────────────────────────────────────
+    workforce: {
+        getStats: () => api.get('/workforce/api/employees/statistics/'),
+        getHRAnalytics: () => api.get('/workforce/api/hr-analytics/dashboard/'),
+        getPayrollSummary: () => api.get('/workforce/api/payroll-dashboard/summary/'),
+        getMySummary: () => api.get('/workforce/api/employees/my_comprehensive_summary/'),
+    },
+
+    // ─── Fees & Finance ──────────────────────────────────────────
+    fees: {
+        getInsights: () => api.get('/api/fees/insights/'),
+    },
+
+    // ─── Examinations ─────────────────────────────────────────────
+    examination: {
+        getExams: (params) => api.get('/examinations/api/examinations/', { params }),
+        getAnalysis: (id) => api.get(`/examinations/api/examinations/${id}/analysis/`),
+        getClassAnalysis: (session_id) => api.get('/examinations/api/term-results/class_analysis/', { params: { class_session: session_id } }),
+    }
 };

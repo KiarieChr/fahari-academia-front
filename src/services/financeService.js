@@ -131,4 +131,16 @@ export const financeService = {
     getPaymentMethods: () => api.get('/api/finance/payment-methods/'),
     createPaymentMethod: (data) => api.post('/api/finance/payment-methods/', data),
     updatePaymentMethod: (id, data) => api.patch(`/api/finance/payment-methods/${id}/`, data),
+
+    // Sponsor Types
+    getSponsorTypes: () => api.get('/api/finance/sponsor-types/'),
+    createSponsorType: (data) => api.post('/api/finance/sponsor-types/', data),
+    updateSponsorType: (id, data) => api.patch(`/api/finance/sponsor-types/${id}/`, data),
+    deleteSponsorType: (id) => api.delete(`/api/finance/sponsor-types/${id}/`),
+
+    // Sponsorships
+    getSponsorships: () => api.get('/api/finance/sponsorships/'),
+    createSponsorship: (data) => api.post('/api/finance/sponsorships/', data),
+    updateSponsorship: (id, data) => api.patch(`/api/finance/sponsorships/${id}/`, data),
+    deleteSponsorship: (id) => api.delete(`/api/finance/sponsorships/${id}/`),
 };
