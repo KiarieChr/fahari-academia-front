@@ -176,7 +176,7 @@ const PaymentMethodSettings = ({ methods: initialMethods, accounts }) => {
 
             {/* Add Payment Method Modal */}
             {showAddModal && (
-                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', inset: 0, zIndex: 1055 }} tabIndex="-1">
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', inset: 0, zIndex: 1200 }} tabIndex="-1">
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
