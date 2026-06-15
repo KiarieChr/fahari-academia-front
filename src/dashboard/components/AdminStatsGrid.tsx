@@ -1,57 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
-    TrendingUp, 
     Users, 
     CreditCard, 
     Wallet, 
-    UserCheck, 
     GraduationCap,
-    ArrowUpRight,
-    ArrowDownRight,
     Loader2
 } from 'lucide-react';
 import { api } from '../../services/api';
 
-const StatCard = ({ title, value, subValue, icon: Icon, trend, color, loading }) => (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white/80 backdrop-blur-md border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group"
-    >
-        <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 bg-${color}-50 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity`} />
-        
-        <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-xl bg-${color}-100/50 text-${color}-600`}>
-                    <Icon size={24} />
-                </div>
-                {trend && (
-                    <div className={`flex items-center text-sm font-medium ${trend > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {trend > 0 ? <ArrowUpRight size={16} className="mr-1" /> : <ArrowDownRight size={16} className="mr-1" />}
-                        {Math.abs(trend)}%
-                    </div>
-                )}
+const StatCard = ({ title, value, subValue, icon: Icon, iconColor, bgHex, loading }) => (
+    <div className="mini-stat-card-premium">
+        <div className="card-top">
+            <div className="stat-icon-glow" style={{ '--icon-color': iconColor, '--icon-bg': bgHex }}>
+                <Icon size={16} />
             </div>
-
+            <span className="stat-label-modern">{title}</span>
+        </div>
+        
+        <div className="card-bottom mt-2">
             {loading ? (
-                <div className="h-14 flex items-center">
-                    <Loader2 className="animate-spin text-slate-300" size={24} />
+                <div className="h-8 flex items-center">
+                    <Loader2 className="animate-spin text-slate-300" size={20} />
                 </div>
             ) : (
                 <>
-                    <h3 className="text-3xl font-bold text-slate-800 mb-1">{value}</h3>
-                    <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{title}</p>
+                    <div className="stat-value-large">{value}</div>
                     {subValue && (
-                        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <span className="text-xs text-slate-400">{subValue.label}</span>
-                            <span className="text-sm font-semibold text-slate-700">{subValue.value}</span>
+                        <div className="stat-trend-badge mt-2" style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #f1f5f9' }}>
+                            {subValue.label}: {subValue.value}
                         </div>
                     )}
                 </>
             )}
         </div>
-    </motion.div>
+    </div>
 );
 
 const AdminStatsGrid = () => {
@@ -99,13 +81,14 @@ const AdminStatsGrid = () => {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard 
                 title="Payroll Summary"
                 value={formatCurrency(stats.payroll?.gross_payroll)}
                 subValue={{ label: 'Net Payable', value: formatCurrency(stats.payroll?.net_payable) }}
                 icon={Wallet}
-                color="blue"
+                iconColor="#1976d2"
+                bgHex="#e3f2fd"
                 loading={loading}
             />
             <StatCard 
@@ -113,7 +96,8 @@ const AdminStatsGrid = () => {
                 value={formatCurrency(stats.finance?.collection?.total_collected)}
                 subValue={{ label: 'Total Billed', value: formatCurrency(stats.finance?.collection?.total_billed) }}
                 icon={CreditCard}
-                color="indigo"
+                iconColor="#4f46e5"
+                bgHex="#e0e7ff"
                 loading={loading}
             />
             <StatCard 
@@ -121,7 +105,8 @@ const AdminStatsGrid = () => {
                 value={formatNumber(stats.finance?.invoicing?.total_enrolled || stats.finance?.total_enrolled)}
                 subValue={{ label: 'Pending Invoice', value: formatNumber(stats.finance?.invoicing?.not_invoiced) }}
                 icon={GraduationCap}
-                color="emerald"
+                iconColor="#059669"
+                bgHex="#d1fae5"
                 loading={loading}
             />
             <StatCard 
@@ -129,7 +114,8 @@ const AdminStatsGrid = () => {
                 value={formatNumber(stats.workforce?.active_employees)}
                 subValue={{ label: 'On Leave', value: stats.workforce?.on_leave || 0 }}
                 icon={Users}
-                color="amber"
+                iconColor="#d97706"
+                bgHex="#fef3c7"
                 loading={loading}
             />
         </div>
@@ -137,3 +123,4 @@ const AdminStatsGrid = () => {
 };
 
 export default AdminStatsGrid;
+

@@ -30,7 +30,7 @@ const PayrollDashboard = ({ noLayout = false }) => {
                     <div className="space-y-6">
                         <KPIGrid />
                         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                            <div className="xl:col-span-2 space-y-6">
+                            <div className="xl:col-span-2 space-y-6 p-4">
                                 <WorkflowStatus />
                                 <AnalyticsSection />
                                 <RecentRunsTable />
@@ -56,48 +56,43 @@ const PayrollDashboard = ({ noLayout = false }) => {
     const content = (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-8rem)] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white z-10">
+            <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-white z-10">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Payroll</h1>
                     <p className="text-sm text-gray-500 mt-1 font-medium">Process payroll, manage pay profiles, and review analytics</p>
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar Navigation */}
-                <div className="w-64 border-r border-gray-100 bg-gray-50/50 flex flex-col overflow-y-auto">
-                    <div className="p-4 space-y-1">
-                        {tabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeTab === tab.id
-                                    ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
-                                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                                }`}
-                            >
-                                <div className={`p-2 rounded-lg transition-colors ${activeTab === tab.id ? 'bg-blue-50' : 'bg-gray-100 group-hover:bg-white'}`}>
-                                    <tab.icon size={18} className={activeTab === tab.id ? 'text-blue-600' : 'text-gray-500'} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <span className={`block text-sm font-semibold ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-600'}`}>
-                                        {tab.label}
-                                    </span>
-                                    <span className="text-[11px] text-gray-400 font-medium">{tab.desc}</span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
+            <div className="border-b border-gray-100 bg-white px-4 pt-2 py-3">
+                <div className="flex space-x-8 overflow-x-auto no-scrollbar py-3">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 py-2 px-3 border-b-2 transition-colors whitespace-nowrap ${
+                                activeTab === tab.id
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300'
+                            }`}
+                        >
+                            <tab.icon size={18} className={activeTab === tab.id ? 'text-blue-600' : 'text-gray-400'} />
+                            <span className={`text-sm font-semibold ${activeTab === tab.id ? 'text-blue-600' : 'text-gray-600'}`}>
+                                {tab.label}
+                            </span>
+                        </button>
+                    ))}
                 </div>
+            </div>
 
+            <div className="flex flex-1 overflow-hidden">
                 {/* Content Area */}
-                <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-8">
+                <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-4">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -10 }}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2, ease: "easeInOut" }}
                         >
                             {renderContent()}

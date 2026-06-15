@@ -7,6 +7,7 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 
 const ViewTimetableModal = ({ isOpen, onClose, classSessionId, classSessionName }) => {
     const [data, setData] = useState(null);
+    const [periods, setPeriods] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -14,10 +15,15 @@ const ViewTimetableModal = ({ isOpen, onClose, classSessionId, classSessionName 
         const fetchData = async () => {
             setLoading(true);
             try {
-                const result = await api.timetable.getClassTimetable(classSessionId);
+                const [result, periodData] = await Promise.all([
+                    api.timetable.getClassTimetable(classSessionId),
+                    api.timetable.getSchedulablePeriods()
+                ]);
                 setData(result);
+                setPeriods(periodData.results || periodData || []);
             } catch {
                 setData(null);
+                setPeriods([]);
             } finally {
                 setLoading(false);
             }
@@ -27,12 +33,11 @@ const ViewTimetableModal = ({ isOpen, onClose, classSessionId, classSessionName 
 
     const days = data?.days || {};
 
-    // Build unique time rows sorted
-    const timeSet = new Set();
-    Object.values(days).forEach(slots => {
-        slots.forEach(s => timeSet.add(s.start_time));
-    });
-    const timeRows = [...timeSet].sort();
+    // Build time rows
+    const allSlots = Object.values(days).flat();
+    const timeRows = periods.length > 0
+        ? periods.map(p => ({ label: `${p.start_time?.slice(0, 5)} - ${p.end_time?.slice(0, 5)}`, start: p.start_time, name: p.short_name || p.name, isBreak: !p.is_schedulable }))
+        : [...new Set(allSlots.map(s => s.start_time))].sort().map(t => ({ label: t?.slice(0, 5), start: t, name: '', isBreak: false }));
 
     const getSlot = (dayName, startTime) => {
         const daySlots = days[dayName] || [];
@@ -76,13 +81,21 @@ const ViewTimetableModal = ({ isOpen, onClose, classSessionId, classSessionName 
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white">
-                                {timeRows.map((time, idx) => (
-                                    <tr key={idx} className="hover:bg-gray-50">
+                                {timeRows.map((row, idx) => (
+                                    <tr key={idx} className={row.isBreak ? 'bg-orange-50' : 'hover:bg-gray-50'}>
                                         <td className="px-4 py-3 border-r border-gray-100 font-mono text-xs font-medium text-gray-500">
-                                            {time}
+                                            <div>{row.label}</div>
+                                            {row.name && <div className="text-[10px] text-gray-400 mt-0.5">{row.name}</div>}
                                         </td>
                                         {DAY_NAMES.slice(0, 5).map(day => {
-                                            const slot = getSlot(day, time);
+                                            if (row.isBreak) {
+                                                return (
+                                                    <td key={day} className="px-4 py-3 border-r border-gray-100 text-center text-orange-700 font-bold text-xs bg-orange-50">
+                                                        BREAK
+                                                    </td>
+                                                );
+                                            }
+                                            const slot = getSlot(day, row.start);
                                             if (!slot) {
                                                 return <td key={day} className="px-4 py-3 border-r border-gray-100 text-gray-300">—</td>;
                                             }

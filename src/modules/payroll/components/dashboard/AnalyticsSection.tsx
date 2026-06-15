@@ -97,9 +97,9 @@ const AnalyticsSection = () => {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8 p-3">
             {/* Trend Chart */}
-            <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
+            <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
                         <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -159,7 +159,7 @@ const AnalyticsSection = () => {
             </div>
 
             {/* Distribution Pie */}
-            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
                 <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4">Cost Distribution</h3>
                 <div className="flex-1 min-h-[200px] relative">
                     {distributionData.length > 0 ? (

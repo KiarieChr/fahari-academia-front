@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, DollarSign, Wallet, AlertCircle, TrendingUp, TrendingDown, Banknote, PiggyBank } from 'lucide-react';
+import { Users, DollarSign, Wallet, AlertCircle, TrendingUp, TrendingDown, PiggyBank, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { payrollService } from '../../../../services/payrollService';
+import '../../../../dashboard/dashboard.css';
 
 const KPIGrid = () => {
     const [data, setData] = useState(null);
@@ -35,60 +36,40 @@ const KPIGrid = () => {
         return `KES ${value.toLocaleString()}`;
     };
 
-    const stats = data ? [
+    const statsConfig = [
         {
             title: 'Total Employees',
-            value: data.total_employees?.toLocaleString() || '0',
-            sub: `${data.employees_processed || 0} processed`,
+            value: data?.total_employees?.toLocaleString() || '0',
+            sub: `${data?.employees_processed || 0} processed`,
             icon: Users,
-            color: 'blue',
-            gradient: 'from-blue-500 to-blue-600'
+            colorClass: 'stat-blue',
+            badge: 'Active'
         },
         {
             title: 'Gross Payroll',
-            value: formatCurrency(data.gross_payroll || 0),
-            sub: data.gross_change !== 0 ? `${data.gross_change > 0 ? '+' : ''}${data.gross_change}% vs last` : 'No change',
+            value: formatCurrency(data?.gross_payroll || 0),
+            sub: data?.gross_change ? `${data.gross_change > 0 ? '+' : ''}${data.gross_change}% vs last` : 'No change',
             icon: DollarSign,
-            color: 'emerald',
-            gradient: 'from-emerald-500 to-teal-600',
-            trend: data.gross_change > 0 ? 'up' : data.gross_change < 0 ? 'down' : null
+            colorClass: 'stat-emerald',
+            badge: data?.gross_change > 0 ? 'Up' : data?.gross_change < 0 ? 'Down' : 'Stable'
         },
         {
             title: 'Net Payable',
-            value: formatCurrency(data.net_payable || 0),
-            sub: data.current_period?.status === 'calculated' ? 'Pending Approval' : data.current_period?.status || 'No active period',
+            value: formatCurrency(data?.net_payable || 0),
+            sub: data?.current_period?.status === 'calculated' ? 'Pending Approval' : data?.current_period?.status || 'No active period',
             icon: Wallet,
-            color: 'indigo',
-            gradient: 'from-indigo-500 to-purple-600',
-            trend: data.net_change > 0 ? 'up' : data.net_change < 0 ? 'down' : null
+            colorClass: 'stat-indigo',
+            badge: 'Pending'
         },
         {
             title: 'Total Deductions',
-            value: formatCurrency(data.total_deductions || 0),
-            sub: `Allowances: ${formatCurrency(data.total_allowances || 0)}`,
+            value: formatCurrency(data?.total_deductions || 0),
+            sub: `Allowances: ${formatCurrency(data?.total_allowances || 0)}`,
             icon: PiggyBank,
-            color: 'amber',
-            gradient: 'from-amber-500 to-orange-500'
+            colorClass: 'stat-amber',
+            badge: 'Deductions'
         },
-    ] : [];
-
-    // Loading skeleton
-    if (loading) {
-        return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-white rounded-2xl p-8 shadow-sm animate-pulse">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="h-4 w-24 bg-gray-200 rounded" />
-                            <div className="h-10 w-10 bg-gray-200 rounded-xl" />
-                        </div>
-                        <div className="h-8 w-28 bg-gray-200 rounded mb-2" />
-                        <div className="h-3 w-20 bg-gray-200 rounded" />
-                    </div>
-                ))}
-            </div>
-        );
-    }
+    ];
 
     // Error state
     if (error) {
@@ -108,29 +89,29 @@ const KPIGrid = () => {
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
+            {statsConfig.map((stat, index) => (
                 <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
-                    className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-8 text-white shadow-lg cursor-pointer transition-all`}
+                    className={`mini-stat-card-premium ${stat.colorClass} relative overflow-hidden group cursor-pointer`}
                 >
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                            <stat.icon className="w-6 h-6" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top">
+                        <div className="stat-title">{stat.title}</div>
+                        <div className="stat-icon-glow">
+                            <stat.icon className="w-5 h-5" />
                         </div>
-                        {stat.trend && (
-                            <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${stat.trend === 'up' ? 'bg-white/20' : 'bg-white/20'
-                                }`}>
-                                {stat.trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            </span>
-                        )}
                     </div>
-                    <h3 className="text-3xl font-bold mb-1">{stat.value}</h3>
-                    <p className="text-white/80 text-sm font-medium">{stat.title}</p>
-                    <p className="text-white/60 text-xs mt-1">{stat.sub}</p>
+                    <div className="stat-value-large mt-4">
+                        {loading ? <Loader2 className="w-6 h-6 animate-spin text-gray-400" /> : stat.value}
+                    </div>
+                    <div className="stat-subtitle mt-2 flex items-center justify-between">
+                        <span>{stat.sub}</span>
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-white/50">{stat.badge}</span>
+                    </div>
                 </motion.div>
             ))}
         </div>

@@ -100,7 +100,7 @@ const WorkAllocationsPanel = ({ classSessionId, classSessionName }) => {
                 subject: Number(formData.subject),
                 class_session: classSessionId,
                 lessons_per_week: Number(formData.lessons_per_week),
-                required_room_type: formData.required_room_type || null,
+                required_room_type: formData.required_room_type || "",
                 notes: formData.notes,
             });
             toast.success('Allocation created');

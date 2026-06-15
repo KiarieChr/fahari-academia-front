@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { payrollService } from '../../../../services/payrollService';
+import '../../../../dashboard/dashboard.css';
 
 const CATEGORIES = [
     { value: 'teaching', label: 'Teaching' },
@@ -230,39 +231,53 @@ const PayGradesSteps = () => {
         <div className="space-y-6">
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-indigo-50 rounded-lg">
-                            <Layers size={20} className="text-indigo-600" />
+                <motion.div 
+                    className="mini-stat-card-premium stat-indigo relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#4f46e5', '--icon-bg': '#e0e7ff' }}>
+                            <Layers size={16} />
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Total Grades</p>
-                            <p className="text-2xl font-bold text-gray-800">{totalGrades}</p>
-                        </div>
+                        <span className="stat-label-modern">Total Grades</span>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-green-50 rounded-lg">
-                            <Award size={20} className="text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Active Grades</p>
-                            <p className="text-2xl font-bold text-gray-800">{activeGrades}</p>
-                        </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{totalGrades}</div>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-50 rounded-lg">
-                            <DollarSign size={20} className="text-blue-600" />
+                </motion.div>
+
+                <motion.div 
+                    className="mini-stat-card-premium stat-emerald relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#059669', '--icon-bg': '#d1fae5' }}>
+                            <Award size={16} />
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Total Steps</p>
-                            <p className="text-2xl font-bold text-gray-800">{totalSteps}</p>
-                        </div>
+                        <span className="stat-label-modern">Active Grades</span>
                     </div>
-                </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{activeGrades}</div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    className="mini-stat-card-premium stat-blue relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#2563eb', '--icon-bg': '#dbeafe' }}>
+                            <DollarSign size={16} />
+                        </div>
+                        <span className="stat-label-modern">Total Steps</span>
+                    </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{totalSteps}</div>
+                    </div>
+                </motion.div>
             </div>
 
             {/* Toolbar */}

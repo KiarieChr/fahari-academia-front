@@ -1,7 +1,7 @@
 // Enterprise DataTable Component
 // Features: Search, Filter, Sort, Pagination, Export, Column Visibility
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search, Filter, Download, ChevronLeft, ChevronRight,
@@ -37,6 +37,10 @@ const DataTable = ({
     showRefresh = true,
     filters = [],
     className = "",
+    onEditSave,
+    onLoadMore,
+    hasMore = false,
+    loadingMore = false,
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -47,6 +51,44 @@ const DataTable = ({
     const [showColumnMenu, setShowColumnMenu] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [activeFilters, setActiveFilters] = useState({});
+    const [editingCell, setEditingCell] = useState({ rowId: null, columnKey: null });
+
+    const handleDoubleClick = (row, col) => {
+        if (col.editable) {
+            setEditingCell({ rowId: row.id, columnKey: col.key });
+        }
+    };
+
+    const handleSaveEdit = (row, col, value) => {
+        if (onEditSave && value !== row[col.key]) {
+            onEditSave(row.id, col.key, value);
+        }
+        setEditingCell({ rowId: null, columnKey: null });
+    };
+
+    // Infinite scroll observer
+    const observerTarget = useRef(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && onLoadMore && hasMore && !loading && !loadingMore) {
+                    onLoadMore();
+                }
+            },
+            { rootMargin: '100px' }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [onLoadMore, hasMore, loading, loadingMore]);
 
     // Debounced search
     const handleSearch = useCallback((value) => {
@@ -333,8 +375,19 @@ const DataTable = ({
                                         </td>
                                     )}
                                     {visibleColumnsList.map(col => (
-                                        <td key={col.key}>
-                                            {col.render
+                                        <td key={col.key} onDoubleClick={() => handleDoubleClick(row, col)}>
+                                            {editingCell.rowId === row.id && editingCell.columnKey === col.key ? (
+                                                <input
+                                                    autoFocus
+                                                    className="w-full bg-transparent border-0 outline-none text-gray-900 font-medium"
+                                                    defaultValue={row[col.key] || ''}
+                                                    onBlur={(e) => handleSaveEdit(row, col, e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleSaveEdit(row, col, e.target.value);
+                                                        if (e.key === 'Escape') setEditingCell({ rowId: null, columnKey: null });
+                                                    }}
+                                                />
+                                            ) : col.render
                                                 ? col.render(row[col.key], row)
                                                 : row[col.key]}
                                         </td>
@@ -347,12 +400,25 @@ const DataTable = ({
                                 </motion.tr>
                             ))
                         )}
+                        {/* Infinite Scroll Trigger & Loader */}
+                        {onLoadMore && (hasMore || loadingMore) && (
+                            <tr ref={observerTarget}>
+                                <td colSpan={visibleColumnsList.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0)} className="py-6 text-center">
+                                    {loadingMore && (
+                                        <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
+                                            <RefreshCw className="w-4 h-4 animate-spin text-indigo-500" />
+                                            <span>Loading more data...</span>
+                                        </div>
+                                    )}
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
 
-            {/* Pagination */}
-            {pagination && (
+            {/* Pagination (Hidden if using infinite scroll) */}
+            {pagination && !onLoadMore && (
                 <div className="data-table-pagination">
                     <div className="data-table-pagination-info">
                         Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to{' '}

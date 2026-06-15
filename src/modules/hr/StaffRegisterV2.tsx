@@ -17,9 +17,10 @@ import {
     Users,
     FileSpreadsheet,
     X,
-    CheckCircle,
     AlertCircle,
-    FileText
+    FileText,
+    Loader2,
+    MoreHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../../services/api';
@@ -1012,6 +1013,7 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
     // State
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [stats, setStats] = useState({
         total_employees: 0,
         teaching_staff: 0,
@@ -1041,7 +1043,11 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
     // Fetch employees
     const fetchEmployees = useCallback(async () => {
         try {
-            setLoading(true);
+            if (currentPage === 1) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
             const params = {
                 page: currentPage,
                 search: searchTerm,
@@ -1055,7 +1061,7 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
             const response = await api.get('/workforce/api/employees/', { params });
 
             if (response.results) {
-                setEmployees(response.results);
+                setEmployees(prev => currentPage === 1 ? response.results : [...prev, ...response.results]);
                 setTotalCount(response.count || 0);
                 setTotalPages(Math.ceil((response.count || 0) / ITEMS_PER_PAGE));
             } else {
@@ -1066,9 +1072,10 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
         } catch (error) {
             console.error('Error fetching employees:', error);
             toast.error('Failed to load employees');
-            setEmployees([]);
+            if (currentPage === 1) setEmployees([]);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     }, [currentPage, searchTerm, filters]);
 
@@ -1211,12 +1218,38 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
         // Implement export logic here
     }, []);
 
+    // Handle inline edit save
+    const handleInlineEditSave = async (id, key, value) => {
+        try {
+            const employee = employees.find(e => e.id === id);
+            if (!employee) return;
+            
+            let payload = { ...employee };
+            if (key === 'email') {
+                payload.official_email = value;
+                payload.email = value;
+            } else if (key === 'phone') {
+                payload.phone_primary = value;
+                payload.phone = value;
+            } else {
+                payload[key] = value;
+            }
+
+            await api.put(`/workforce/api/employees/${id}/`, payload);
+            toast.success('Employee updated');
+            fetchEmployees();
+        } catch (error) {
+            toast.error('Failed to update employee');
+        }
+    };
+
     // Table columns definition
     const columns = useMemo(() => [
         {
-            key: 'employee',
+            key: 'email',
             label: 'Employee',
             sortable: true,
+            editable: true,
             render: (_, row) => (
                 <div className="flex items-center gap-4">
                     <div className="relative">
@@ -1242,10 +1275,25 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
             key: 'employee_no',
             label: 'Employee ID',
             sortable: true,
+            editable: true,
             render: (_, row) => (
                 <span className="inline-flex items-center font-mono text-sm font-medium text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
                     {row.employee_no || `EMP${String(row.id || 0).padStart(4, '0')}`}
                 </span>
+            )
+        },
+        {
+            key: 'phone',
+            label: 'Phone No',
+            sortable: true,
+            editable: true,
+            render: (_, row) => (
+                <div className="flex items-center gap-2 text-sm">
+                    <div className="p-1.5 bg-emerald-50 rounded">
+                        <Phone className="w-3 h-3 text-emerald-600" />
+                    </div>
+                    <span className="font-medium text-gray-700">{row.phone || row.phone_primary || 'N/A'}</span>
+                </div>
             )
         },
         {
@@ -1271,26 +1319,6 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
                         <Briefcase className="w-4 h-4 text-blue-600" />
                     </div>
                     <span className="font-medium text-gray-700">{row.job_title?.title || 'Not Assigned'}</span>
-                </div>
-            )
-        },
-        {
-            key: 'contact',
-            label: 'Contact',
-            render: (_, row) => (
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 text-sm">
-                        <div className="p-1.5 bg-emerald-50 rounded">
-                            <Phone className="w-3 h-3 text-emerald-600" />
-                        </div>
-                        <span className="font-medium text-gray-700">{row.phone || row.phone_primary || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <div className="p-1.5 bg-gray-50 rounded">
-                            <Mail className="w-3 h-3 text-gray-500" />
-                        </div>
-                        <span className="truncate max-w-[140px]">{row.email || row.official_email || ''}</span>
-                    </div>
                 </div>
             )
         },
@@ -1374,34 +1402,22 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
 
     // Row actions - returns JSX for action buttons
     const rowActions = useCallback((row) => (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-                onClick={() => {
-                    setSelectedEmployee(row);
-                    setShowViewModal(true);
-                }}
-                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 group/btn"
-                title="View Details"
-            >
-                <Eye className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+        <div className="relative group z-20 flex justify-end">
+            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200">
+                <MoreHorizontal className="w-5 h-5" />
             </button>
-            <button
-                onClick={() => {
-                    setSelectedEmployee(row);
-                    setShowFormModal(true);
-                }}
-                className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200 group/btn"
-                title="Edit Employee"
-            >
-                <Edit className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-            </button>
-            <button
-                onClick={() => setDeleteConfirm({ open: true, employee: row })}
-                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group/btn"
-                title="Delete Employee"
-            >
-                <Trash2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-            </button>
+            <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all overflow-hidden origin-top-right">
+                <button onClick={() => { setSelectedEmployee(row); setShowViewModal(true); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-slate-50 flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-gray-400" /> View Profile
+                </button>
+                <button onClick={() => { setSelectedEmployee(row); setShowFormModal(true); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-slate-50 flex items-center gap-2">
+                    <Edit className="w-4 h-4 text-gray-400" /> Edit Details
+                </button>
+                <div className="h-px bg-gray-100"></div>
+                <button onClick={() => setDeleteConfirm({ open: true, employee: row })} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                    <Trash2 className="w-4 h-4 text-red-400" /> Delete
+                </button>
+            </div>
         </div>
     ), []);
 
@@ -1440,45 +1456,100 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
                 />
 
                 {/* Stats Cards */}
-                {loading ? (
-                    <CardGridSkeleton count={4} />
-                ) : (
-                    <motion.div
-                        className="stats-grid-dense"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, staggerChildren: 0.1 }}
+                <motion.div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, staggerChildren: 0.1 }}
+                >
+                    <motion.div 
+                        className="mini-stat-card-premium relative overflow-hidden group cursor-pointer"
+                        whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
                     >
-                        <StatCardMini
-                            title="Total Employees"
-                            value={stats.total_employees}
-                            icon={Users}
-                            color="#dbeafe"
-                            iconColor="#2563eb"
-                        />
-                        <StatCardMini
-                            title="Teaching Staff"
-                            value={stats.teaching_staff}
-                            icon={Briefcase}
-                            color="#d1fae5"
-                            iconColor="#059669"
-                        />
-                        <StatCardMini
-                            title="Non-Teaching Staff"
-                            value={stats.non_teaching_staff}
-                            icon={Building}
-                            color="#ede9fe"
-                            iconColor="#7c3aed"
-                        />
-                        <StatCardMini
-                            title="Currently On Leave"
-                            value={stats.on_leave}
-                            icon={Calendar}
-                            color="#fef3c7"
-                            iconColor="#d97706"
-                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="card-top relative z-10">
+                            <div className="stat-icon-glow" style={{ '--icon-color': '#1976d2', '--icon-bg': '#e3f2fd' }}>
+                                <Users size={16} />
+                            </div>
+                            <span className="stat-label-modern">Total Employees</span>
+                        </div>
+                        <div className="card-bottom mt-2 relative z-10">
+                            {loading ? (
+                                <div className="h-8 flex items-center">
+                                    <Loader2 className="animate-spin text-slate-300" size={20} />
+                                </div>
+                            ) : (
+                                <div className="stat-value-large">{stats.total_employees}</div>
+                            )}
+                        </div>
                     </motion.div>
-                )}
+
+                    <motion.div 
+                        className="mini-stat-card-premium relative overflow-hidden group cursor-pointer"
+                        whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="card-top relative z-10">
+                            <div className="stat-icon-glow" style={{ '--icon-color': '#059669', '--icon-bg': '#d1fae5' }}>
+                                <Briefcase size={16} />
+                            </div>
+                            <span className="stat-label-modern">Teaching Staff</span>
+                        </div>
+                        <div className="card-bottom mt-2 relative z-10">
+                            {loading ? (
+                                <div className="h-8 flex items-center">
+                                    <Loader2 className="animate-spin text-slate-300" size={20} />
+                                </div>
+                            ) : (
+                                <div className="stat-value-large">{stats.teaching_staff}</div>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        className="mini-stat-card-premium relative overflow-hidden group cursor-pointer"
+                        whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="card-top relative z-10">
+                            <div className="stat-icon-glow" style={{ '--icon-color': '#ea580c', '--icon-bg': '#ffedd5' }}>
+                                <Building size={16} />
+                            </div>
+                            <span className="stat-label-modern">Non-Teaching</span>
+                        </div>
+                        <div className="card-bottom mt-2 relative z-10">
+                            {loading ? (
+                                <div className="h-8 flex items-center">
+                                    <Loader2 className="animate-spin text-slate-300" size={20} />
+                                </div>
+                            ) : (
+                                <div className="stat-value-large">{stats.non_teaching_staff}</div>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        className="mini-stat-card-premium relative overflow-hidden group cursor-pointer"
+                        whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="card-top relative z-10">
+                            <div className="stat-icon-glow" style={{ '--icon-color': '#9333ea', '--icon-bg': '#f3e8ff' }}>
+                                <AlertCircle size={16} />
+                            </div>
+                            <span className="stat-label-modern">On Leave</span>
+                        </div>
+                        <div className="card-bottom mt-2 relative z-10">
+                            {loading ? (
+                                <div className="h-8 flex items-center">
+                                    <Loader2 className="animate-spin text-slate-300" size={20} />
+                                </div>
+                            ) : (
+                                <div className="stat-value-large">{stats.on_leave}</div>
+                            )}
+                        </div>
+                    </motion.div>
+                </motion.div>
 
                 {/* Data Table */}
                 <motion.div
@@ -1486,42 +1557,48 @@ const StaffRegisterV2 = ({ noLayout = false }) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.15 }}
                 >
-                    <Card className="overflow-hidden border-0 shadow-xl shadow-gray-200/50 rounded-2xl">
-                        <DataTable
-                            columns={columns}
-                            data={employees}
-                            loading={loading}
-                            pagination={{
-                                currentPage,
-                                totalPages,
-                                totalCount,
-                                pageSize: ITEMS_PER_PAGE
-                            }}
-                            onPageChange={handlePageChange}
-                            onSearch={handleSearch}
-                            searchPlaceholder="Search by name, ID, email, department..."
-                            filters={filterDefs}
-                            onFilter={handleFilterChange}
-                            activeFilters={filters}
-                            onExport={handleExport}
-                            exportFormats={['csv', 'excel', 'pdf']}
-                            rowActions={rowActions}
-                            hoverable={true}
-                            striped={false}
-                            emptyState={{
-                                icon: Users,
-                                title: 'No employees found',
-                                description: 'Get started by adding your first employee or importing from an Excel file.',
-                                action: {
-                                    label: 'Add First Employee',
-                                    onClick: () => {
-                                        setSelectedEmployee(null);
-                                        setShowFormModal(true);
-                                    }
+                    <DataTable
+                        columns={columns}
+                        data={employees}
+                        loading={loading}
+                        loadingMore={loadingMore}
+                        hasMore={currentPage < totalPages}
+                        onLoadMore={() => {
+                            if (currentPage < totalPages && !loading && !loadingMore) {
+                                setCurrentPage(prev => prev + 1);
+                            }
+                        }}
+                        pagination={{
+                            currentPage,
+                            totalPages,
+                            totalCount,
+                            pageSize: ITEMS_PER_PAGE
+                        }}
+                        onPageChange={handlePageChange}
+                        onSearch={handleSearch}
+                        searchPlaceholder="Search by name, ID, email, department..."
+                        filters={filterDefs}
+                        onFilter={handleFilterChange}
+                        activeFilters={filters}
+                        onExport={handleExport}
+                        onEditSave={handleInlineEditSave}
+                        exportFormats={['csv', 'excel', 'pdf']}
+                        rowActions={rowActions}
+                        hoverable={true}
+                        striped={false}
+                        emptyState={{
+                            icon: Users,
+                            title: 'No employees found',
+                            description: 'Get started by adding your first employee or importing from an Excel file.',
+                            action: {
+                                label: 'Add First Employee',
+                                onClick: () => {
+                                    setSelectedEmployee(null);
+                                    setShowFormModal(true);
                                 }
-                            }}
-                        />
-                    </Card>
+                            }
+                        }}
+                    />
                 </motion.div>
 
                 {/* Modals */}

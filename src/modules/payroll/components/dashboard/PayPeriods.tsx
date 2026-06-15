@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { payrollService } from '../../../../services/payrollService';
 import { useAuth } from '../../../../auth/AuthProvider';
+import '../../../../dashboard/dashboard.css';
 
 const STATUS_CONFIG = {
     open: { label: 'Open', color: 'bg-blue-50 text-blue-700', icon: Clock },
@@ -199,39 +200,53 @@ const PayPeriods = () => {
         <div className="space-y-6">
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-50 rounded-lg">
-                            <Clock size={20} className="text-blue-600" />
+                <motion.div 
+                    className="mini-stat-card-premium stat-blue relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#2563eb', '--icon-bg': '#dbeafe' }}>
+                            <Clock size={16} />
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Open Periods</p>
-                            <p className="text-2xl font-bold text-gray-800">{openCount}</p>
-                        </div>
+                        <span className="stat-label-modern">Open Periods</span>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-green-50 rounded-lg">
-                            <CheckCircle size={20} className="text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Processed</p>
-                            <p className="text-2xl font-bold text-gray-800">{processedCount}</p>
-                        </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{openCount}</div>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-emerald-50 rounded-lg">
-                            <DollarSign size={20} className="text-emerald-600" />
+                </motion.div>
+
+                <motion.div 
+                    className="mini-stat-card-premium stat-emerald relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#059669', '--icon-bg': '#d1fae5' }}>
+                            <CheckCircle size={16} />
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Total Paid Out</p>
-                            <p className="text-2xl font-bold text-gray-800">{formatCurrency(totalNetPay)}</p>
-                        </div>
+                        <span className="stat-label-modern">Processed</span>
                     </div>
-                </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{processedCount}</div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    className="mini-stat-card-premium stat-amber relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#d97706', '--icon-bg': '#fef3c7' }}>
+                            <DollarSign size={16} />
+                        </div>
+                        <span className="stat-label-modern">Total Paid Out</span>
+                    </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{formatCurrency(totalNetPay)}</div>
+                    </div>
+                </motion.div>
             </div>
 
             {/* Toolbar */}

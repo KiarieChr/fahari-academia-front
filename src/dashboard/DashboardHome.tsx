@@ -640,46 +640,51 @@ const DashboardHome = () => {
     return (
         <DashboardLayout>
             <div className="dashboard-page-container">
-                {/* Unified Dashboard Header */}
-                <header className="dashboard-header-premium">
-                    <div className="header-main-content">
+                {/* Unified Dashboard Header - Progressive */}
+                <header className="analytics-header-container">
+                    {/* Hero Section (Scrolls away) */}
+                    <div className="analytics-hero-section">
                         <div className="title-section">
                             <h1 className="dashboard-main-title">Fahari Analytics</h1>
                             <p className="dashboard-main-subtitle">
                                 {isAdminView ? "Institutional performance & administrative insights" : "Real-time overview of your personal work performance"}
                             </p>
                         </div>
-                        
-                        <div className="header-actions">
-                            <div className="last-sync">
-                                <Clock size={14} />
-                                <span>Updated just now</span>
-                            </div>
-                            {isAdminView && (
-                                <button className="premium-action-btn bg-slate-900 text-white border-none hover:bg-slate-800">
-                                    <Sparkles size={16} className="text-amber-400" />
-                                    <span>AI Insights</span>
-                                </button>
-                            )}
-                            <button className="premium-action-btn">
-                                <FileText size={16} />
-                                <span>Export Report</span>
-                            </button>
-                        </div>
                     </div>
 
-                    {/* Integrated Tab Navigation */}
-                    <div className="dashboard-tabs-wrapper">
-                        <div className="horizontal-tabs">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab}
-                                    className={`h-tab ${activeTab === tab ? 'active' : ''}`}
-                                    onClick={() => setActiveTab(tab)}
-                                >
-                                    {tab}
+                    {/* Sticky Nav Row */}
+                    <div className="analytics-sticky-nav">
+                        {/* Integrated Tab Navigation */}
+                        <div className="dashboard-tabs-wrapper">
+                            <div className="horizontal-tabs">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab}
+                                        className={`h-tab ${activeTab === tab ? 'active' : ''}`}
+                                        onClick={() => setActiveTab(tab)}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Actions integrated into the sticky nav */}
+                        <div className="sticky-nav-actions">
+                            <div className="last-sync compact-sync">
+                                <Clock size={14} />
+                                <span className="hidden sm:inline text-xs font-medium">Updated just now</span>
+                            </div>
+                            {isAdminView && (
+                                <button className="premium-action-btn compact-action bg-slate-900 text-white border-none hover:bg-slate-800">
+                                    <Sparkles size={14} className="text-amber-400" />
+                                    <span className="hidden md:inline text-xs">AI Insights</span>
                                 </button>
-                            ))}
+                            )}
+                            <button className="premium-action-btn compact-action">
+                                <FileText size={14} />
+                                <span className="hidden md:inline text-xs">Export</span>
+                            </button>
                         </div>
                     </div>
                 </header>

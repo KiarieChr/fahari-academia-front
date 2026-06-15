@@ -40,8 +40,8 @@ const WorkflowStatus = () => {
     // Loading skeleton
     if (loading) {
         return (
-            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8 animate-pulse">
-                <div className="flex justify-between items-center mb-6">
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-2 animate-pulse">
+                <div className="flex justify-between items-center mb-3">
                     <div>
                         <div className="h-6 w-48 bg-gray-200 rounded mb-2" />
                         <div className="h-4 w-32 bg-gray-200 rounded" />
@@ -63,7 +63,7 @@ const WorkflowStatus = () => {
     // Error state
     if (error) {
         return (
-            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8">
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-8">
                 <div className="text-center py-6">
                     <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
                     <p className="text-red-700 mb-3">{error}</p>
@@ -81,7 +81,7 @@ const WorkflowStatus = () => {
     // No period found
     if (!data?.period) {
         return (
-            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8">
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-8">
                 <div className="text-center py-8">
                     <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-semibold text-gray-800 mb-1">No Active Payroll Period</h3>
@@ -101,7 +101,7 @@ const WorkflowStatus = () => {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm mb-8"
+            className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-3"
         >
             <div className="flex justify-between items-start mb-6">
                 <div>

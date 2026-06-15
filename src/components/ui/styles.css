@@ -5,18 +5,18 @@
    ================================ */
 
 .data-table-container {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    overflow: visible;
 }
 
 .data-table-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 16px 0;
+    border-bottom: none;
     gap: 16px;
     flex-wrap: wrap;
 }
@@ -227,25 +227,28 @@ label.data-table-dropdown-item input {
 }
 
 .data-table th {
-    font-weight: 600;
-    color: #6b7280;
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
     background: transparent;
     border: none;
-    border-bottom: 1px dashed #e5e7eb;
+    padding-bottom: 24px;
     white-space: nowrap;
 }
 
 .data-table tbody tr {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 16px;
+    transition: all 0.2s ease-in-out;
+    border-radius: 0;
 }
 
 .data-table td {
     color: #4b5563;
-    border-top: 1px solid transparent;
-    border-bottom: 1px solid transparent;
+    border-top: none;
+    border-bottom: 1px solid #f8fafc;
     background: transparent;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease-in-out;
 }
 
 .data-table tbody tr:not(:hover) td {
@@ -253,15 +256,11 @@ label.data-table-dropdown-item input {
 }
 
 .data-table td:first-child {
-    border-top-left-radius: 16px;
-    border-bottom-left-radius: 16px;
-    border-left: 1px solid transparent;
+    border-left: none;
 }
 
 .data-table td:last-child {
-    border-top-right-radius: 16px;
-    border-bottom-right-radius: 16px;
-    border-right: 1px solid transparent;
+    border-right: none;
 }
 
 .data-table--compact th,
@@ -270,21 +269,22 @@ label.data-table-dropdown-item input {
 }
 
 .data-table--striped tbody tr:nth-child(even) {
-    background: #fafafa;
-}
-
-.data-table--hoverable tbody tr:hover {
-    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.04);
+    background: transparent;
 }
 
 .data-table--hoverable tbody tr:hover td {
-    background: #ffffff;
-    border-color: #ffffff;
+    background: #f8fafc; /* Tailwind slate-50 */
+    border-color: #f8fafc;
+}
+
+.data-table--hoverable tbody tr:hover {
+    box-shadow: none;
+    transform: translateY(-1px);
 }
 
 .data-table--bordered th,
 .data-table--bordered td {
-    border: 1px solid #e5e7eb;
+    border: none;
 }
 
 .data-table-sortable {
@@ -300,6 +300,10 @@ label.data-table-dropdown-item input {
     display: flex;
     align-items: center;
     gap: 6px;
+    transition: color 0.2s;
+}
+.data-table-sortable:hover .data-table-header-content {
+    color: #374151;
 }
 
 .data-table-sticky-header {

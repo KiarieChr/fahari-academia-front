@@ -25,6 +25,7 @@ import { api } from '../../services/api'; // Your API service
 import { toast } from 'react-toastify';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 import './StaffRegister.css';
+import '../../dashboard/dashboard.css';
 
 const StaffRegister = () => {
   const [employees, setEmployees] = useState([]);
@@ -551,44 +552,52 @@ const StaffRegister = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon bg-blue-100">
-              <User className="text-blue-600" size={24} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="mini-stat-card-premium">
+            <div className="card-top">
+              <div className="stat-icon-glow" style={{ '--icon-color': '#1976d2', '--icon-bg': '#e3f2fd' }}>
+                <User size={16} />
+              </div>
+              <span className="stat-label-modern">Total Staff</span>
             </div>
-            <div className="stat-content">
-              <h3 className="stat-value">{stats.total_employees.toLocaleString()}</h3>
-              <p className="stat-label">Total Staff</p>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon bg-green-100">
-              <Briefcase className="text-green-600" size={24} />
-            </div>
-            <div className="stat-content">
-              <h3 className="stat-value">{stats.teaching_staff.toLocaleString()}</h3>
-              <p className="stat-label">Teaching Staff</p>
+            <div className="card-bottom mt-2">
+              <div className="stat-value-large">{stats.total_employees.toLocaleString()}</div>
             </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon bg-purple-100">
-              <Building className="text-purple-600" size={24} />
+          <div className="mini-stat-card-premium">
+            <div className="card-top">
+              <div className="stat-icon-glow" style={{ '--icon-color': '#059669', '--icon-bg': '#d1fae5' }}>
+                <Briefcase size={16} />
+              </div>
+              <span className="stat-label-modern">Teaching Staff</span>
             </div>
-            <div className="stat-content">
-              <h3 className="stat-value">{stats.non_teaching_staff.toLocaleString()}</h3>
-              <p className="stat-label">Non-Teaching</p>
+            <div className="card-bottom mt-2">
+              <div className="stat-value-large">{stats.teaching_staff.toLocaleString()}</div>
             </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon bg-orange-100">
-              <Calendar className="text-orange-600" size={24} />
+          <div className="mini-stat-card-premium">
+            <div className="card-top">
+              <div className="stat-icon-glow" style={{ '--icon-color': '#4f46e5', '--icon-bg': '#e0e7ff' }}>
+                <Building size={16} />
+              </div>
+              <span className="stat-label-modern">Non-Teaching</span>
             </div>
-            <div className="stat-content">
-              <h3 className="stat-value">{stats.on_leave.toLocaleString()}</h3>
-              <p className="stat-label">On Leave</p>
+            <div className="card-bottom mt-2">
+              <div className="stat-value-large">{stats.non_teaching_staff.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div className="mini-stat-card-premium">
+            <div className="card-top">
+              <div className="stat-icon-glow" style={{ '--icon-color': '#d97706', '--icon-bg': '#fef3c7' }}>
+                <Calendar size={16} />
+              </div>
+              <span className="stat-label-modern">On Leave</span>
+            </div>
+            <div className="card-bottom mt-2">
+              <div className="stat-value-large">{stats.on_leave.toLocaleString()}</div>
             </div>
           </div>
         </div>

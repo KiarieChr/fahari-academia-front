@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    Lightbulb, 
+    Bell, 
     ChevronRight, 
     AlertCircle, 
-    Clock, 
-    CheckCircle2,
-    ArrowRight
+    ArrowRight,
+    ClipboardCheck,
+    UserCheck,
+    Users,
+    MessageSquare,
+    CheckCircle2
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { studentManagementService } from '../../services/studentManagementService';
 
 const RecommendationItem = ({ icon: Icon, title, description, actionText, type = 'info' }) => {
     const colors = {
@@ -43,65 +47,89 @@ const RecommendationsCard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchRecommendations = async () => {
+        const fetchAlerts = async () => {
             try {
-                const finance = await api.fees.getInsights();
-                const data = finance.data || finance;
+                // Fetch real data from the backend APIs
+                const [hrRes, studentStatsRes] = await Promise.allSettled([
+                    api.workforce.getHRAnalytics(),
+                    studentManagementService.getDashboardStats()
+                ]);
                 
-                const recs = [];
+                const hrData = hrRes.status === 'fulfilled' ? (hrRes.value.data || hrRes.value) : {};
+                const studentData = studentStatsRes.status === 'fulfilled' ? (studentStatsRes.value.data || studentStatsRes.value) : {};
 
-                // 1. Invoicing Alert
-                if (data.invoicing?.not_invoiced > 0) {
-                    recs.push({
-                        icon: AlertCircle,
-                        title: 'Pending Invoicing',
-                        description: `${data.invoicing.not_invoiced} students in ${data.current_term || 'this term'} have not yet been invoiced.`,
-                        actionText: 'Generate Bulk Invoices',
+                const alerts = [];
+
+                // 1. Approvals Needed
+                const pendingLeaves = hrData?.pending_leaves || hrData?.leave_requests_pending || 0;
+                const pendingPO = hrData?.pending_purchase_orders || hrData?.pending_approvals || 0;
+                const totalApprovals = pendingLeaves + pendingPO;
+
+                if (totalApprovals > 0 || hrData?.approvals_needed > 0) {
+                    alerts.push({
+                        icon: ClipboardCheck,
+                        title: 'Approvals Required',
+                        description: `${pendingLeaves > 0 ? `${pendingLeaves} leave requests ` : ''}${pendingPO > 0 ? `and ${pendingPO} purchase orders ` : ''}are pending your approval.`.trim() || 'You have pending administrative approvals.',
+                        actionText: 'Review Approvals',
                         type: 'warning'
                     });
                 }
 
-                // 2. Payables Alert
-                if (data.payables?.overdue?.count > 0) {
-                    recs.push({
-                        icon: Clock,
-                        title: 'Overdue Supplier Payments',
-                        description: `You have ${data.payables.overdue.count} supplier invoices past their due date totaling ${new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(data.payables.overdue.total)}.`,
-                        actionText: 'View Payables',
-                        type: 'error'
-                    });
-                }
-
-                // 3. Attendance Insight (Placeholder logic based on backend check)
-                if (data.attendance?.low_attendance?.count > 0) {
-                    recs.push({
-                        icon: Lightbulb,
-                        title: 'Attendance Alert',
-                        description: `${data.attendance.low_attendance.count} classes have attendance below 80% this week.`,
-                        actionText: 'View Report',
-                        type: 'info'
-                    });
-                }
-
-                // Default if empty
-                if (recs.length === 0) {
-                    recs.push({
-                        icon: CheckCircle2,
-                        title: 'System Healthy',
-                        description: 'No urgent administrative tasks detected. All students are invoiced and payments are up to date.',
+                // 2. New Students Enrolled
+                const newEnrolled = studentData?.new_enrollments || studentData?.enrolled_today || studentData?.recent_admissions || 0;
+                if (newEnrolled > 0) {
+                    alerts.push({
+                        icon: UserCheck,
+                        title: 'New Enrolments',
+                        description: `${newEnrolled} new students have successfully completed their enrolment.`,
+                        actionText: 'View Students',
                         type: 'success'
                     });
                 }
 
-                setRecommendations(recs);
+                // 3. New Applicants
+                const pendingApps = studentData?.pending_applications || studentData?.applications_pending || studentData?.total_pending || 0;
+                if (pendingApps > 0) {
+                    alerts.push({
+                        icon: Users,
+                        title: 'Pending Applications',
+                        description: `${pendingApps} admission applications have been received and require review.`,
+                        actionText: 'Review Applications',
+                        type: 'info'
+                    });
+                }
+
+                // 4. New Enquiries
+                const newEnquiries = studentData?.new_enquiries || studentData?.enquiries_today || studentData?.unread_enquiries || 0;
+                if (newEnquiries > 0) {
+                    alerts.push({
+                        icon: MessageSquare,
+                        title: 'Recent Enquiries',
+                        description: `${newEnquiries} new enquiries from the institution website need follow-up.`,
+                        actionText: 'View Enquiries',
+                        type: 'info'
+                    });
+                }
+
+                // Fallback if no urgent alerts exist (keeps the card from looking broken)
+                if (alerts.length === 0) {
+                    alerts.push({
+                        icon: CheckCircle2,
+                        title: 'All Caught Up!',
+                        description: 'There are no pending approvals, new applications, or enquiries at this time.',
+                        type: 'success'
+                    });
+                }
+
+                setRecommendations(alerts);
             } catch (error) {
-                console.error("Failed to fetch recommendations", error);
+                console.error("Failed to fetch alerts", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchRecommendations();
+        fetchAlerts();
     }, []);
 
     return (
@@ -112,12 +140,12 @@ const RecommendationsCard = () => {
         >
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                        <Lightbulb size={20} />
+                    <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                        <Bell size={20} />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-slate-800">Admin Insights</h2>
-                        <p className="text-xs text-slate-400 font-medium tracking-tight">Smart Recommendations</p>
+                        <h2 className="text-lg font-bold text-slate-800">Alerts & Notifications</h2>
+                        <p className="text-xs text-slate-400 font-medium tracking-tight">Items requiring your attention</p>
                     </div>
                 </div>
             </div>
@@ -142,7 +170,7 @@ const RecommendationsCard = () => {
             
             <div className="p-4 bg-slate-50 border-t border-slate-100">
                 <button className="w-full py-2.5 px-4 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                    View All Activity <ChevronRight size={16} />
+                    View All Notifications <ChevronRight size={16} />
                 </button>
             </div>
         </motion.div>

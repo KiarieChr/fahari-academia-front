@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { payrollService } from '../../../../services/payrollService';
 import { api } from '../../../../services/api';
+import '../../../../dashboard/dashboard.css';
 
 const EmployeePayProfiles = () => {
     const [profiles, setProfiles] = useState([]);
@@ -237,39 +238,53 @@ const EmployeePayProfiles = () => {
         <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-50 rounded-lg">
-                            <Users size={20} className="text-blue-600" />
+                <motion.div 
+                    className="mini-stat-card-premium stat-blue relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#2563eb', '--icon-bg': '#dbeafe' }}>
+                            <Users size={16} />
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Active Profiles</p>
-                            <p className="text-2xl font-bold text-gray-800">{totalActive}</p>
-                        </div>
+                        <span className="stat-label-modern">Active Profiles</span>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-green-50 rounded-lg">
-                            <DollarSign size={20} className="text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Avg. Basic Salary</p>
-                            <p className="text-2xl font-bold text-gray-800">{formatCurrency(avgSalary)}</p>
-                        </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{totalActive}</div>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-purple-50 rounded-lg">
-                            <Briefcase size={20} className="text-purple-600" />
+                </motion.div>
+
+                <motion.div 
+                    className="mini-stat-card-premium stat-emerald relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#059669', '--icon-bg': '#d1fae5' }}>
+                            <DollarSign size={16} />
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Total Profiles</p>
-                            <p className="text-2xl font-bold text-gray-800">{profiles.length}</p>
-                        </div>
+                        <span className="stat-label-modern">Avg. Basic Salary</span>
                     </div>
-                </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{formatCurrency(avgSalary)}</div>
+                    </div>
+                </motion.div>
+
+                <motion.div 
+                    className="mini-stat-card-premium stat-purple relative overflow-hidden group cursor-pointer"
+                    whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="card-top relative z-10">
+                        <div className="stat-icon-glow" style={{ '--icon-color': '#9333ea', '--icon-bg': '#f3e8ff' }}>
+                            <Briefcase size={16} />
+                        </div>
+                        <span className="stat-label-modern">Total Profiles</span>
+                    </div>
+                    <div className="card-bottom mt-2 relative z-10">
+                        <div className="stat-value-large">{profiles.length}</div>
+                    </div>
+                </motion.div>
             </div>
 
             {/* Toolbar */}
