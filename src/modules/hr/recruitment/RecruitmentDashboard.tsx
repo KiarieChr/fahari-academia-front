@@ -34,10 +34,15 @@ import RecentApplicantsWidget from './components/RecentApplicantsWidget';
 import MiniInterviewCalendar from './components/MiniInterviewCalendar';
 import InterviewsPage from './components/InterviewsPage';
 import OnboardingPage from './components/OnboardingPage';
+import RecruitmentChartsWidget from './components/RecruitmentChartsWidget';
 
 import { recruitmentService } from './services/recruitmentService';
+import { useAuth } from '../../../auth/AuthProvider';
 
 const RecruitmentDashboard = ({ noLayout = false }) => {
+    const { user } = useAuth();
+    const userName = user?.full_name || user?.first_name || user?.name || user?.username || 'HR';
+
     const [activeTab, setActiveTab] = useState('dashboard');
     const [loading, setLoading] = useState(true);
     const [dashboardData, setDashboardData] = useState(null);
@@ -304,11 +309,24 @@ const RecruitmentDashboard = ({ noLayout = false }) => {
                     {/* Overview Dashboard View */}
                     {activeTab === 'dashboard' && (
                         <div>
-                            <RecruitmentWelcomeBanner newApplicationsCount={dashboardData?.applications_today || 0} userName="HR" />
+                            <RecruitmentWelcomeBanner newApplicationsCount={dashboardData?.applications_today || 0} userName={userName} />
+                            
+                            {/* KPI Metrics row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 mt-6">
+                                {metrics_data.map(metric => (
+                                    <RecruitmentMetricCard key={metric.id} {...metric} />
+                                ))}
+                            </div>
+
+                            <RecruitmentChartsWidget 
+                                statusDistribution={dashboardData?.application_status_distribution} 
+                                sourceDistribution={dashboardData?.source_distribution} 
+                            />
+
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Left Column: Hiring Needs & Pipeline */}
                                 <div className="lg:col-span-2 space-y-6">
-                                    <HiringNeedsWidget openings={[]} /> {/* We can pass actual stats later */}
+                                    <HiringNeedsWidget openings={dashboardData?.expiring_jobs || []} />
                                     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                                         <div className="flex justify-between items-center mb-4">
                                             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Recruitment progress</h3>
@@ -326,7 +344,7 @@ const RecruitmentDashboard = ({ noLayout = false }) => {
                                 {/* Right Column: Calendar & Applicants */}
                                 <div className="space-y-6">
                                     <MiniInterviewCalendar interviews={interviews_list} />
-                                    <RecentApplicantsWidget applicants={[]} />
+                                    <RecentApplicantsWidget applicants={dashboardData?.recent_applications || []} />
                                 </div>
                             </div>
                         </div>

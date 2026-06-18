@@ -15,7 +15,7 @@ const StatCard = ({ title, count, icon: Icon, color, subtext }) => (
                 <p className="text-[10px] text-slate-400 mt-1">{subtext}</p>
             </div>
             <div className={`p-2 rounded-lg ${color} bg-opacity-20 text-opacity-100`}>
-                <Icon size={20} className={color.replace('bg-', 'text-')} />
+                <Icon size={20} className="text-white" />
             </div>
         </div>
     </motion.div>

@@ -27,6 +27,8 @@ const PayGradesSteps = () => {
     const [editingStep, setEditingStep] = useState(null);
     const [stepGradeId, setStepGradeId] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     const [gradeForm, setGradeForm] = useState({
         code: '',
@@ -70,6 +72,14 @@ const PayGradesSteps = () => {
         g.code.toLowerCase().includes(search.toLowerCase()) ||
         g.name.toLowerCase().includes(search.toLowerCase())
     );
+
+    // Pagination
+    const totalPages = Math.ceil(filteredGrades.length / ITEMS_PER_PAGE);
+    const paginatedGrades = filteredGrades.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search]);
 
     const getStepsForGrade = (gradeId) =>
         steps.filter(s => s.job_grade === gradeId).sort((a, b) => a.step_number - b.step_number);
@@ -230,7 +240,8 @@ const PayGradesSteps = () => {
     return (
         <div className="space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="row g-4">
+                <div className="col-md-4">
                 <motion.div 
                     className="mini-stat-card-premium stat-indigo relative overflow-hidden group cursor-pointer"
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
@@ -246,7 +257,9 @@ const PayGradesSteps = () => {
                         <div className="stat-value-large">{totalGrades}</div>
                     </div>
                 </motion.div>
+                </div>
 
+                <div className="col-md-4">
                 <motion.div 
                     className="mini-stat-card-premium stat-emerald relative overflow-hidden group cursor-pointer"
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
@@ -262,7 +275,9 @@ const PayGradesSteps = () => {
                         <div className="stat-value-large">{activeGrades}</div>
                     </div>
                 </motion.div>
+                </div>
 
+                <div className="col-md-4">
                 <motion.div 
                     className="mini-stat-card-premium stat-blue relative overflow-hidden group cursor-pointer"
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
@@ -278,10 +293,11 @@ const PayGradesSteps = () => {
                         <div className="stat-value-large">{totalSteps}</div>
                     </div>
                 </motion.div>
+                </div>
             </div>
 
             {/* Toolbar */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm mt-4">
                 <div className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                     <div className="relative flex-1 max-w-sm">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -289,8 +305,9 @@ const PayGradesSteps = () => {
                             type="text"
                             placeholder="Search grades..."
                             value={search}
+                            style= {{paddingLeft:'15px'}}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                            className="w-full pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                         />
                     </div>
                     <button
@@ -315,7 +332,7 @@ const PayGradesSteps = () => {
                             <p className="text-sm text-gray-400">No pay grades found</p>
                         </div>
                     ) : (
-                        filteredGrades.map(grade => {
+                        paginatedGrades.map(grade => {
                             const gradeSteps = getStepsForGrade(grade.id);
                             const isExpanded = expandedGrade === grade.id;
                             return (
@@ -469,6 +486,34 @@ const PayGradesSteps = () => {
                         })
                     )}
                 </div>
+
+                {/* Pagination Controls */}
+                {filteredGrades.length > 0 && totalPages > 1 && (
+                    <div className="px-5 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50 rounded-b-xl">
+                        <span className="text-sm text-gray-500 font-medium">
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredGrades.length)} of {filteredGrades.length} grades
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Previous
+                            </button>
+                            <div className="flex items-center px-2 text-sm font-semibold text-gray-700">
+                                Page {currentPage} of {totalPages}
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-medium bg-white text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors shadow-sm"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Grade Modal */}

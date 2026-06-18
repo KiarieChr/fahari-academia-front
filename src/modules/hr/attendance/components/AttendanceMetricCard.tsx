@@ -18,28 +18,28 @@ const AttendanceMetricCard = ({ title, value, trend, trendUp, icon: Icon, color,
 
     return (
         <motion.div
-            whileHover={{ y: -5 }}
-            className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300"
+            whileHover={{ y: -3 }}
+            className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden relative"
         >
-            <div className="flex justify-between items-start mb-3">
-                <div className={`p-2.5 rounded-xl ${styles.bg} ${styles.text}`}>
-                    <Icon size={20} />
+            <div className="flex justify-between items-start mb-2 relative z-10">
+                <div className={`p-2 rounded-lg ${styles.bg} ${styles.text}`}>
+                    <Icon size={18} />
                 </div>
                 {trend && (
-                    <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${trendUp ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        {trendUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    <div className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${trendUp ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        {trendUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                         {trend}
                     </div>
                 )}
             </div>
 
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-1">{value}</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-            {description && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{description}</p>
-            )}
+            <div className="relative z-10">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 leading-tight">{value}</h3>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{title}</p>
+            </div>
+            
             {/* Decorative background element */}
-            <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-5 ${styles.bg} pointer-events-none`} />
+            <div className={`absolute -right-4 -bottom-4 w-20 h-20 rounded-full opacity-5 ${styles.bg} pointer-events-none`} />
         </motion.div>
     );
 };

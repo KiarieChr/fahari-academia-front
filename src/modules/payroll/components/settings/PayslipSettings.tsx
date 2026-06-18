@@ -3,7 +3,7 @@ import { Upload, Image, Eye, X, Save, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { PDFViewer } from '@react-pdf/renderer';
 import payrollService from '../../../../services/payrollService';
-import PDFPayslipDocument from './templates/PDFPayslipDocument';
+import PDFPayslipDocument from '../documents/PDFPayslipDocument';
 
 const PayslipSettings = () => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);

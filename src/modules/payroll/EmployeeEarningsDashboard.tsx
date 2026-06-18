@@ -400,10 +400,15 @@ const GroupTab = ({ groupEarnings, accounts, jobGrades, onRefresh }) => {
     const [saving, setSaving] = useState(false);
     const [filterGrade, setFilterGrade] = useState('');
     const [form, setForm] = useState({
-        job_grade: '', payroll_account: '', amount: '',
+        job_grade: '', payroll_account: '', amount: '', calculation_method: 'fixed', percentage: '',
         effective_from: new Date().toISOString().split('T')[0], effective_to: '',
         is_active: true, notes: '',
     });
+
+    const CALC_METHOD_OPTIONS = [
+        { value: 'fixed', label: 'Fixed Amount' },
+        { value: 'percentage_of_basic', label: 'Percentage of Basic' },
+    ];
 
     const filtered = groupEarnings.filter(g => !filterGrade || String(g.job_grade) === filterGrade);
 
@@ -418,7 +423,7 @@ const GroupTab = ({ groupEarnings, accounts, jobGrades, onRefresh }) => {
     const openCreate = () => {
         setEditItem(null);
         setForm({
-            job_grade: '', payroll_account: '', amount: '',
+            job_grade: '', payroll_account: '', amount: '', calculation_method: 'fixed', percentage: '',
             effective_from: new Date().toISOString().split('T')[0], effective_to: '',
             is_active: true, notes: '',
         });
@@ -429,7 +434,8 @@ const GroupTab = ({ groupEarnings, accounts, jobGrades, onRefresh }) => {
         setEditItem(item);
         setForm({
             job_grade: item.job_grade, payroll_account: item.payroll_account,
-            amount: item.amount, effective_from: item.effective_from || '',
+            amount: item.amount, calculation_method: item.calculation_method || 'fixed',
+            percentage: item.percentage || '', effective_from: item.effective_from || '',
             effective_to: item.effective_to || '', is_active: item.is_active, notes: item.notes || '',
         });
         setShowModal(true);
@@ -503,7 +509,8 @@ const GroupTab = ({ groupEarnings, accounts, jobGrades, onRefresh }) => {
                                 <thead className="text-xs text-gray-500 uppercase bg-gray-50/50">
                                     <tr>
                                         <th className="px-4 py-2 text-left">Payroll Account</th>
-                                        <th className="px-4 py-2 text-right">Amount</th>
+                                        <th className="px-4 py-2 text-left">Method</th>
+                                        <th className="px-4 py-2 text-right">Amount / %</th>
                                         <th className="px-4 py-2 text-left">Effective</th>
                                         <th className="px-4 py-2 text-left">Status</th>
                                         <th className="px-4 py-2 text-right">Actions</th>
@@ -516,7 +523,12 @@ const GroupTab = ({ groupEarnings, accounts, jobGrades, onRefresh }) => {
                                                 <span className="font-medium text-gray-800">{item.payroll_account_code}</span>
                                                 <span className="text-gray-500 ml-2">{item.payroll_account_name}</span>
                                             </td>
-                                            <td className="px-4 py-3 text-right font-medium">{formatCurrency(item.amount)}</td>
+                                            <td className="px-4 py-3 text-gray-500 text-xs">{item.calculation_method === 'percentage_of_basic' ? 'Percentage' : 'Fixed'}</td>
+                                            <td className="px-4 py-3 text-right font-medium">
+                                                {item.calculation_method === 'percentage_of_basic' && item.percentage
+                                                    ? `${item.percentage}%`
+                                                    : formatCurrency(item.amount)}
+                                            </td>
                                             <td className="px-4 py-3 text-gray-500">
                                                 {formatDate(item.effective_from)}{item.effective_to ? ` → ${formatDate(item.effective_to)}` : ''}
                                             </td>
@@ -573,10 +585,27 @@ const GroupTab = ({ groupEarnings, accounts, jobGrades, onRefresh }) => {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Calculation Method</label>
+                                        <select value={form.calculation_method} onChange={e => setForm({ ...form, calculation_method: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                            {CALC_METHOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
                                         <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })}
                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                                     </div>
+                                </div>
+                                {form.calculation_method === 'percentage_of_basic' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Percentage (%)</label>
+                                        <input type="number" step="0.01" value={form.percentage}
+                                            onChange={e => setForm({ ...form, percentage: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="flex items-end">
                                         <label className="flex items-center gap-2 text-sm pb-2">
                                             <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })}

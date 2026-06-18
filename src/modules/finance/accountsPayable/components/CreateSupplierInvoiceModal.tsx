@@ -473,13 +473,13 @@ const CreateSupplierInvoiceModal = ({ show, onClose, onCreated }) => {
                                     <table className="table table-bordered mb-0" style={{ minWidth: '950px' }}>
                                         <thead className="table-light">
                                             <tr>
-                                                <th style={{ minWidth: '220px' }}>Description</th>
-                                                <th style={{ minWidth: '240px' }}>GL Account / Vote Head</th>
-                                                <th style={{ minWidth: '80px', width: '80px' }}>Qty</th>
+                                                <th style={{ minWidth: '200px' }}>Description</th>
+                                                <th style={{ minWidth: '200px' }}>GL Account / Vote Head</th>
+                                                <th style={{ minWidth: '120px', width: '120px' }}>Qty</th>
                                                 <th style={{ minWidth: '120px', width: '120px' }}>Unit Price</th>
                                                 <th style={{ minWidth: '100px', width: '100px' }}>VAT</th>
                                                 <th style={{ minWidth: '110px', width: '110px' }}>Amount</th>
-                                                <th style={{ width: '40px' }}></th>
+                                                <th style={{ width: '30px' }}></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -506,7 +506,7 @@ const CreateSupplierInvoiceModal = ({ show, onClose, onCreated }) => {
                                                     <td>
                                                         <input type="number" className="form-control form-control-sm"
                                                             value={line.quantity} onChange={(e) => handleLineChange(idx, 'quantity', e.target.value)}
-                                                            min="0.01" step="0.01" />
+                                                            min="0.01" step="0.01" style={{ minWidth: '80px' }} />
                                                     </td>
                                                     <td>
                                                         <input type="number" className="form-control form-control-sm"

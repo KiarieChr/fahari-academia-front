@@ -9,7 +9,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import DashboardLayout from '../../dashboard/DashboardLayout';
 import { payrollService } from '../../services/payrollService';
-
+import { institutionService } from '../../services/institutionService';
+import { pdf } from '@react-pdf/renderer';
+import PDFPayslipDocument from './components/documents/PDFPayslipDocument';
 // ============================================================================
 // UTILITIES
 // ============================================================================
@@ -97,7 +99,7 @@ const PayrollRegisterTab = ({ calculations, loading, periods, selectedPeriod, on
 
     const SortHeader = ({ field, children, className = '' }) => (
         <th
-            className={`px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 select-none ${className}`}
+            className={`px-2 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 select-none ${className}`}
             onClick={() => toggleSort(field)}
         >
             <div className="flex items-center gap-1">
@@ -108,16 +110,17 @@ const PayrollRegisterTab = ({ calculations, loading, periods, selectedPeriod, on
     );
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4  ml-3  mr-3 px-3" >
             {/* Toolbar */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1">
+            <div className="mt-4 mb-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-1 ">
                     <div className="relative flex-1 max-w-xs">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text" placeholder="Search employee..."
+                            style={{ paddingLeft: '30px' }}
                             value={search} onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                         />
                     </div>
                     <PeriodSelector periods={periods} selected={selectedPeriod} onChange={onPeriodChange} />
@@ -133,7 +136,7 @@ const PayrollRegisterTab = ({ calculations, loading, periods, selectedPeriod, on
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 ">
                 {[
                     { label: 'Employees', value: filtered.length, icon: Users, color: 'blue' },
                     { label: 'Total Basic', value: fmt(totals.basic), icon: DollarSign, color: 'gray' },
@@ -152,7 +155,7 @@ const PayrollRegisterTab = ({ calculations, loading, periods, selectedPeriod, on
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto print-area" ref={printRef}>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto print-area mt-4" ref={printRef}>
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-gray-100 bg-gray-50/50">
@@ -176,15 +179,15 @@ const PayrollRegisterTab = ({ calculations, loading, periods, selectedPeriod, on
                             <>
                                 {filtered.map(c => (
                                     <tr key={c.id} className="hover:bg-blue-50/30 transition-colors">
-                                        <td className="px-4 py-3 text-gray-500 font-mono text-xs">{c.employee_no}</td>
-                                        <td className="px-4 py-3 font-medium text-gray-800">{c.employee_name}</td>
-                                        <td className="px-4 py-3 text-gray-500">{c.department_name || '-'}</td>
-                                        <td className="px-4 py-3 text-right text-gray-700">{fmt(c.basic_salary)}</td>
-                                        <td className="px-4 py-3 text-right text-gray-700">{fmt(c.total_allowances)}</td>
-                                        <td className="px-4 py-3 text-right font-semibold text-gray-800">{fmt(c.gross_pay)}</td>
-                                        <td className="px-4 py-3 text-right text-red-600">{fmt(c.tax_amount)}</td>
-                                        <td className="px-4 py-3 text-right text-red-600">{fmt(c.total_deductions)}</td>
-                                        <td className="px-4 py-3 text-right font-bold text-green-700">{fmt(c.net_pay)}</td>
+                                        <td className="px-2 py-3 text-gray-500 font-mono text-xs">{c.employee_no}</td>
+                                        <td className="px-2 py-3 font-medium text-gray-800">{c.employee_name}</td>
+                                        <td className="px-2 py-3 text-gray-500">{c.department_name || '-'}</td>
+                                        <td className="px-2 py-3 text-right text-gray-700">{fmt(c.basic_salary)}</td>
+                                        <td className="px-2 py-3 text-right text-gray-700">{fmt(c.total_allowances)}</td>
+                                        <td className="px-2 py-3 text-right font-semibold text-gray-800">{fmt(c.gross_pay)}</td>
+                                        <td className="px-2 py-3 text-right text-red-600">{fmt(c.tax_amount)}</td>
+                                        <td className="px-2 py-3 text-right text-red-600">{fmt(c.total_deductions)}</td>
+                                        <td className="px-2 py-3 text-right font-bold text-green-700">{fmt(c.net_pay)}</td>
                                     </tr>
                                 ))}
                                 {/* Totals row */}
@@ -246,13 +249,13 @@ const BankInstructionsTab = ({ calculations, loading, periods, selectedPeriod, o
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="space-y-4 p-3 ">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mt-4">
                 <div className="flex items-center gap-3 flex-1">
                     <div className="relative flex-1 max-w-xs">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                        <input type="text" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} style = {{ paddingLeft: '30px' }}
+                            className="w-full pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                     </div>
                     <PeriodSelector periods={periods} selected={selectedPeriod} onChange={onPeriodChange} />
                 </div>
@@ -261,7 +264,7 @@ const BankInstructionsTab = ({ calculations, loading, periods, selectedPeriod, o
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-3 mt-4 ">
                 <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
                     <p className="text-xs text-gray-500 font-medium">Total Transfers</p>
                     <p className="text-xl font-bold text-gray-800">{bankData.length}</p>
@@ -276,7 +279,7 @@ const BankInstructionsTab = ({ calculations, loading, periods, selectedPeriod, o
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto mt-4">
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-gray-100 bg-gray-50/50">
@@ -330,6 +333,39 @@ const PayslipsTab = ({ calculations, loading, periods, selectedPeriod, onPeriodC
     const [expandedId, setExpandedId] = useState(null);
     const [breakdownData, setBreakdownData] = useState({});
     const [loadingBreakdown, setLoadingBreakdown] = useState(null);
+    const [institutionProfile, setInstitutionProfile] = useState(null);
+    const [downloadingPdfId, setDownloadingPdfId] = useState(null);
+
+    useEffect(() => {
+        const fetchInst = async () => {
+            try {
+                const data = await institutionService.getProfile();
+                setInstitutionProfile(data);
+            } catch (err) {
+                console.error('Failed to load institution profile', err);
+            }
+        };
+        fetchInst();
+    }, []);
+
+    const handleDownloadPDF = async (activeBreakdown, activeEmployee) => {
+        try {
+            setDownloadingPdfId(activeEmployee.id);
+            const blob = await pdf(<PDFPayslipDocument activeBreakdown={activeBreakdown} institution={institutionProfile} />).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Payslip_${activeEmployee.employee_no || 'emp'}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success('Payslip downloaded successfully');
+        } catch (error) {
+            console.error('PDF Generation Error:', error);
+            toast.error('Failed to generate PDF');
+        } finally {
+            setDownloadingPdfId(null);
+        }
+    };
 
     const filtered = calculations.filter(c => {
         const q = search.toLowerCase();
@@ -354,14 +390,14 @@ const PayslipsTab = ({ calculations, loading, periods, selectedPeriod, onPeriodC
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="space-y-4 p-3">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mt-4">
                 <div className="flex items-center gap-3 flex-1">
                     <div className="relative flex-1 max-w-xs">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input type="text" placeholder="Search employee..." value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                            onChange={e => setSearch(e.target.value)} style={{ paddingLeft: '30px'}}
+                            className="w-full  pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                     </div>
                     <PeriodSelector periods={periods} selected={selectedPeriod} onChange={onPeriodChange} />
                 </div>
@@ -372,102 +408,156 @@ const PayslipsTab = ({ calculations, loading, periods, selectedPeriod, onPeriodC
             ) : filtered.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">No payslip data available</div>
             ) : (
-                <div className="space-y-3">
-                    {filtered.map(c => {
-                        const bd = breakdownData[c.id];
-                        const isExpanded = expandedId === c.id;
-                        return (
-                            <div key={c.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                                <div
-                                    className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50/50 transition-colors"
-                                    onClick={() => loadBreakdown(c.id)}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm">
-                                            {(c.employee_name || '?')[0]}
+                <>
+                    <div className="space-y-3 mt-4">
+                        {filtered.map(c => {
+                            const isExpanded = expandedId === c.id;
+                            return (
+                                <div key={c.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-3">
+                                    <div
+                                        className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50/50 transition-colors"
+                                        onClick={() => loadBreakdown(c.id)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm">
+                                                {(c.employee_name || '?')[0]}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-gray-800">{c.employee_name}</p>
+                                                <p className="text-xs text-gray-400">{c.employee_no} · {c.department_name || 'N/A'}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-semibold text-gray-800">{c.employee_name}</p>
-                                            <p className="text-xs text-gray-400">{c.employee_no} · {c.department_name || 'N/A'}</p>
+                                        <div className="flex items-center gap-6">
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-400">Gross</p>
+                                                <p className="font-semibold text-gray-700">{fmt(c.gross_pay)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-400">Net Pay</p>
+                                                <p className="font-bold text-green-700 text-lg">{fmt(c.net_pay)}</p>
+                                            </div>
+                                            {loadingBreakdown === c.id ? (
+                                                <Loader2 size={16} className="animate-spin text-blue-500" />
+                                            ) : (
+                                                <ChevronRight size={16} className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-6">
-                                        <div className="text-right">
-                                            <p className="text-xs text-gray-400">Gross</p>
-                                            <p className="font-semibold text-gray-700">{fmt(c.gross_pay)}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-gray-400">Net Pay</p>
-                                            <p className="font-bold text-green-700 text-lg">{fmt(c.net_pay)}</p>
-                                        </div>
-                                        {loadingBreakdown === c.id ? (
-                                            <Loader2 size={16} className="animate-spin text-blue-500" />
-                                        ) : (
-                                            <ChevronRight size={16} className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                                        )}
                                     </div>
                                 </div>
+                            );
+                        })}
+                    </div>
 
-                                <AnimatePresence>
-                                    {isExpanded && bd && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-hidden"
-                                        >
-                                            <div className="px-5 pb-5 border-t border-gray-100">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                                                    {/* Earnings */}
-                                                    <div>
-                                                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center gap-1">
-                                                            <TrendingUp size={12} className="text-green-500" /> Earnings
-                                                        </h4>
-                                                        <div className="space-y-1.5">
-                                                            {(bd.earnings || []).map((e, i) => (
-                                                                <div key={i} className="flex justify-between text-sm">
-                                                                    <span className="text-gray-600">{e.description}</span>
-                                                                    <span className="font-medium text-gray-800">{fmt(e.amount)}</span>
-                                                                </div>
-                                                            ))}
-                                                            <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1.5">
-                                                                <span className="text-gray-700">Gross Pay</span>
-                                                                <span className="text-gray-900">{fmt(bd.summary?.gross_pay)}</span>
+                    <AnimatePresence>
+                        {expandedId && breakdownData[expandedId] && (() => {
+                            const activeBreakdown = breakdownData[expandedId];
+                            const activeEmployee = calculations.find(c => c.id === expandedId);
+                            if (!activeEmployee) return null;
+
+                            return (
+                                <>
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40"
+                                        onClick={() => setExpandedId(null)}
+                                    />
+                                    <motion.div
+                                        initial={{ x: '100%' }}
+                                        animate={{ x: 0 }}
+                                        exit={{ x: '100%' }}
+                                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                                        className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-1200 flex flex-col"
+                                    >
+                                        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 backdrop-blur-md">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-800">Payslip Breakdown</h3>
+                                                <p className="text-sm text-gray-500">{activeEmployee.employee_name}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button 
+                                                    onClick={() => handleDownloadPDF(activeBreakdown, activeEmployee)}
+                                                    disabled={downloadingPdfId === activeEmployee.id}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                                                >
+                                                    {downloadingPdfId === activeEmployee.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                                                    <span className="hidden sm:inline">PDF</span>
+                                                </button>
+                                                <button onClick={() => setExpandedId(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                                                    <X size={20} className="text-gray-500" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex-1 overflow-y-auto p-6">
+                                            <div className="space-y-8">
+                                                {/* Earnings */}
+                                                <div>
+                                                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-4 flex items-center gap-1.5">
+                                                        <TrendingUp size={14} className="text-green-500" /> Earnings
+                                                    </h4>
+                                                    <div className="space-y-3">
+                                                        {(activeBreakdown.earnings || []).map((e, i) => (
+                                                            <div key={i} className="flex justify-between text-sm">
+                                                                <span className="text-gray-600">{e.description}</span>
+                                                                <span className="font-medium text-gray-800">{fmt(e.amount)}</span>
                                                             </div>
-                                                        </div>
-                                                    </div>
-                                                    {/* Deductions */}
-                                                    <div>
-                                                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center gap-1">
-                                                            <TrendingDown size={12} className="text-red-500" /> Deductions
-                                                        </h4>
-                                                        <div className="space-y-1.5">
-                                                            {(bd.deductions || []).map((d, i) => (
-                                                                <div key={i} className="flex justify-between text-sm">
-                                                                    <span className="text-gray-600">{d.description}</span>
-                                                                    <span className="font-medium text-red-600">{fmt(d.amount)}</span>
-                                                                </div>
-                                                            ))}
-                                                            <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1.5">
-                                                                <span className="text-gray-700">Total Deductions</span>
-                                                                <span className="text-red-700">{fmt(bd.summary?.total_deductions)}</span>
-                                                            </div>
+                                                        ))}
+                                                        <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-3 mt-3">
+                                                            <span className="text-gray-700">Gross Pay</span>
+                                                            <span className="text-gray-900">{fmt(activeBreakdown.summary?.gross_pay)}</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                {/* Net */}
-                                                <div className="mt-4 p-3 bg-green-50 rounded-lg flex justify-between items-center">
-                                                    <span className="font-bold text-green-800">NET PAY</span>
-                                                    <span className="text-xl font-bold text-green-800">{fmt(bd.summary?.net_pay)}</span>
+                                                {/* Deductions */}
+                                                <div>
+                                                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-4 flex items-center gap-1.5">
+                                                        <TrendingDown size={14} className="text-red-500" /> Deductions
+                                                    </h4>
+                                                    <div className="space-y-3">
+                                                        {(activeBreakdown.deductions || []).map((d, i) => (
+                                                            <div key={i} className="flex justify-between text-sm">
+                                                                <span className="text-gray-600">{d.description}</span>
+                                                                <span className="font-medium text-red-600">{fmt(d.amount)}</span>
+                                                            </div>
+                                                        ))}
+                                                        {activeBreakdown.reliefs && activeBreakdown.reliefs.length > 0 && (
+                                                            <div className="pt-3 pb-1 border-t border-dashed border-gray-200 mt-3 space-y-2">
+                                                                <p className="text-[10px] font-bold text-gray-400 tracking-wider uppercase">Reliefs Applied (Reduces PAYE)</p>
+                                                                {activeBreakdown.reliefs.map((r, i) => (
+                                                                    <div key={`r-${i}`} className="flex justify-between text-sm">
+                                                                        <span className="text-gray-500 italic flex items-center gap-1.5">
+                                                                            <span className="w-1 h-1 rounded-full bg-green-400"></span>
+                                                                            {r.description}
+                                                                        </span>
+                                                                        <span className="font-medium text-green-600">-{fmt(r.amount)}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-3 mt-3">
+                                                            <span className="text-gray-700">Total Deductions</span>
+                                                            <span className="text-red-700">{fmt(activeBreakdown.summary?.total_deductions)}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        );
-                    })}
-                </div>
+                                        </div>
+                                        
+                                        {/* Net */}
+                                        <div className="p-6 border-t border-gray-100 bg-gray-50">
+                                            <div className="p-4 bg-green-50 border border-green-100 rounded-xl flex justify-between items-center shadow-sm">
+                                                <span className="font-bold text-green-800">NET PAY</span>
+                                                <span className="text-2xl font-bold text-green-800">{fmt(activeBreakdown.summary?.net_pay)}</span>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </>
+                            );
+                        })()}
+                    </AnimatePresence>
+                </>
             )}
         </div>
     );
@@ -781,13 +871,13 @@ const PayrollReports = ({ noLayout = false }) => {
     const content = (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-8rem)] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white z-10">
+            <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center bg-white z-10">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Payroll Reports</h1>
+                    <h1 className="text-2xl font-bold text-blue-800 tracking-tight">Payroll Reports</h1>
                     <p className="text-sm text-gray-500 mt-1 font-medium">View, export, and print payroll reports</p>
                 </div>
                 {selectedPeriod && (
-                    <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                    <div className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
                         {periods.find(p => String(p.id) === selectedPeriod)?.period_name || 'Selected Period'}
                     </div>
                 )}
@@ -824,7 +914,7 @@ const PayrollReports = ({ noLayout = false }) => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-8">
+                <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-3">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}

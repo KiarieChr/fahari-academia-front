@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Filter, FileSpreadsheet, Printer, Bell, Building2, Plus } from 'lucide-react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import DashboardSummary from './components/DashboardSummary';
-import CustomerInvoicesTab from './components/CustomerInvoicesTab';
 import ProcurementAPTab from './components/ProcurementAPTab';
 import PaymentVouchersTab from './components/PaymentVouchersTab';
 import EnhancedPaymentVouchersTab from './components/EnhancedPaymentVouchersTab';
 import VoucherPostingTab from './components/VoucherPostingTab';
 import RefundsTab from './components/RefundsTab';
 import ReportsTab from './components/ReportsTab';
-import CreateCustomerInvoiceModal from './components/CreateCustomerInvoiceModal.jsx';
 import CreateSupplierInvoiceModal from './components/CreateSupplierInvoiceModal.jsx';
 // New Accounts Payable Components
 import SupplierInvoicesTab from './components/SupplierInvoicesTab';
@@ -118,7 +116,6 @@ const AccountsPayableDashboard = () => {
 
     const tabs = [
         { id: 'summary', label: 'Summary', icon: '📊' },
-        { id: 'customer-invoices', label: 'Customer Invoices', icon: '💰' },
         { id: 'supplier-invoices', label: 'Supplier Invoices', icon: '🏢' },
         { id: 'ap-invoices', label: 'AP Invoices', icon: '📦' },
         { id: 'vouchers', label: 'Payment Vouchers', icon: '💳' },
@@ -243,7 +240,7 @@ const AccountsPayableDashboard = () => {
                                                 Welcome to the Accounts Payable Dashboard. Use the sidebar to navigate through different sections:
                                             </p>
                                             <ul className="text-muted">
-                                                <li><strong>Customer Invoices:</strong> Manage student and sponsor invoices, track overpayments</li>
+                                                <li><strong>Supplier Invoices:</strong> Manage all supplier invoices</li>
                                                 <li><strong>AP Invoices:</strong> Pick approved invoices from procurement for payment</li>
                                                 <li><strong>Payment Vouchers:</strong> Create and manage payment vouchers (General, AP, Refund)</li>
                                                 <li><strong>Voucher Posting:</strong> Review and post approved vouchers to the ledger</li>
@@ -255,13 +252,6 @@ const AccountsPayableDashboard = () => {
                                 </div>
                             </div>
                         </div>
-                    )}
-
-                    {activeTab === 'customer-invoices' && (
-                        <CustomerInvoicesTab
-                            onCreateRefund={handleCreateRefund}
-                            onCreateInvoice={() => setShowInvoiceModal(true)}
-                        />
                     )}
 
                     {activeTab === 'supplier-invoices' && (
@@ -310,12 +300,6 @@ const AccountsPayableDashboard = () => {
                 </div>
                 </div>
             </div>
-
-            <CreateCustomerInvoiceModal
-                show={showInvoiceModal}
-                onClose={() => setShowInvoiceModal(false)}
-                onSave={() => loadHbData()} // Refresh data
-            />
 
             <CreateSupplierInvoiceModal
                 show={showBillModal}

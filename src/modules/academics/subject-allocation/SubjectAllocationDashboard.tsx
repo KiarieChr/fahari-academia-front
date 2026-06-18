@@ -122,7 +122,7 @@ const SubjectAllocationDashboard = () => {
             <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 pb-20 relative">
 
                 {/* Header */}
-                <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-16 z-30 px-6 py-4 shadow-sm">
+                <div className="bg-transparent px-6 py-4">
                     <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">

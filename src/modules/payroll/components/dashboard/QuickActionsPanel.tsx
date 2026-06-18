@@ -3,57 +3,53 @@ import { Play, CheckCircle, FileText, Settings, Download, Printer, DollarSign, C
 
 const QuickActionsPanel = () => {
     return (
-        <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm h-full">
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-3">
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-6">Quick Actions</h3>
 
-            <div className="grid grid-cols-2 gap-4">
-                <button className="flex flex-col items-center justify-center p-5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95 group">
-                    <Play size={24} className="mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">Run Payroll</span>
+            <div className="grid grid-cols-4 gap-2 p-2">
+                <button className="flex flex-col items-center justify-center p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95 group">
+                    <Play size={18} className="mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-center">Run Payroll</span>
                 </button>
 
-                <button className="flex flex-col items-center justify-center p-5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all active:scale-95 group">
-                    <CheckCircle size={24} className="mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">Approve</span>
+                <button className="flex flex-col items-center justify-center p-3 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all active:scale-95 group">
+                    <CheckCircle size={18} className="mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-center">Approve</span>
                 </button>
 
-                <button className="flex flex-col items-center justify-center p-5 bg-gray-50 text-gray-600 border border-gray-100 rounded-xl hover:bg-gray-100 transition-all active:scale-95 group">
-                    <Printer size={24} className="mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">Payslips</span>
+                <button className="flex flex-col items-center justify-center p-3 bg-gray-50 text-gray-600 border border-gray-100 rounded-xl hover:bg-gray-100 transition-all active:scale-95 group">
+                    <Printer size={18} className="mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-center">Payslips</span>
                 </button>
 
-                <Link to="/dashboard/payroll/earnings" className="flex flex-col items-center justify-center p-5 bg-amber-50 text-amber-700 border border-amber-100 rounded-xl hover:bg-amber-100 transition-all active:scale-95 group">
-                    <DollarSign size={24} className="mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">Earnings</span>
+                <Link to="/dashboard/payroll/earnings" className="flex flex-col items-center justify-center p-3 bg-amber-50 text-amber-700 border border-amber-100 rounded-xl hover:bg-amber-100 transition-all active:scale-95 group">
+                    <DollarSign size={18} className="mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-center">Earnings</span>
                 </Link>
 
-                <Link to="/dashboard/payroll/deductions" className="flex flex-col items-center justify-center p-5 bg-red-50 text-red-700 border border-red-100 rounded-xl hover:bg-red-100 transition-all active:scale-95 group">
-                    <Coins size={24} className="mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">Deductions</span>
+                <Link to="/dashboard/payroll/deductions" className="flex flex-col items-center justify-center p-3 bg-red-50 text-red-700 border border-red-100 rounded-xl hover:bg-red-100 transition-all active:scale-95 group">
+                    <Coins size={18} className="mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-center">Deductions</span>
                 </Link>
 
-                <Link to="/dashboard/payroll/financial-institutions" className="flex flex-col items-center justify-center p-5 bg-blue-50 text-blue-700 border border-blue-100 rounded-xl hover:bg-blue-100 transition-all active:scale-95 group">
-                    <Landmark size={24} className="mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">Bank Info</span>
+                <Link to="/dashboard/payroll/financial-institutions" className="flex flex-col items-center justify-center p-3 bg-blue-50 text-blue-700 border border-blue-100 rounded-xl hover:bg-blue-100 transition-all active:scale-95 group">
+                    <Landmark size={18} className="mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-center">Bank Info</span>
                 </Link>
 
-                <Link to="/dashboard/payroll/statutory" className="flex flex-col items-center justify-center p-5 bg-purple-50 text-purple-700 border border-purple-100 rounded-xl hover:bg-purple-100 transition-all active:scale-95 group">
-                    <Scale size={24} className="mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold">Statutory</span>
+                <Link to="/dashboard/payroll/statutory" className="flex flex-col items-center justify-center p-3 bg-purple-50 text-purple-700 border border-purple-100 rounded-xl hover:bg-purple-100 transition-all active:scale-95 group">
+                    <Scale size={18} className="mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-bold text-center">Statutory</span>
                 </Link>
 
                 {/* NOTE: Linking to the settings route we just set up */}
-                <Link to="/dashboard/payroll/settings" className="flex flex-col items-center justify-center p-5 bg-gray-50 text-gray-600 border border-gray-100 rounded-xl hover:bg-gray-100 transition-all active:scale-95 group">
-                    <Settings size={24} className="mb-2 group-hover:rotate-90 transition-transform duration-500" />
-                    <span className="text-xs font-bold">Settings</span>
+                <Link to="/dashboard/payroll/settings" className="flex flex-col items-center justify-center p-3 bg-gray-50 text-gray-600 border border-gray-100 rounded-xl hover:bg-gray-100 transition-all active:scale-95 group">
+                    <Settings size={18} className="mb-1 group-hover:rotate-90 transition-transform duration-500" />
+                    <span className="text-[10px] font-bold text-center">Settings</span>
                 </Link>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100">
-                <button className="w-full btn btn-secondary">
-                    <Download size={16} /> Download Reports
-                </button>
-            </div>
+           
         </div>
     );
 };

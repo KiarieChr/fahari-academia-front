@@ -2,13 +2,19 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const HiringNeedsWidget = ({ openings = [] }) => {
-    // If no openings, provide some mock ones to match the mockup
-    const displayOpenings = openings.length > 0 ? openings : [
-        { title: 'Content Designers', count: 3, candidates: 5, progress: 75, color: 'text-indigo-500' },
-        { title: 'Node.js Developers', count: 9, candidates: 12, progress: 25, color: 'text-rose-500' },
-        { title: 'Senior UI Designer', count: 1, candidates: 0, progress: 0, color: 'text-slate-300' },
-        { title: 'Marketing Managers', count: 2, candidates: 10, progress: 45, color: 'text-blue-500' }
-    ];
+    const displayOpenings = openings.length > 0 ? openings.map((job, idx) => {
+        const colorPalette = ['text-indigo-500', 'text-rose-500', 'text-blue-500', 'text-emerald-500'];
+        const total = job.number_of_positions || 1;
+        const filled = job.applications?.filter(a => a.application_status === 'hired').length || 0;
+        const progress = Math.round((filled / total) * 100);
+        return {
+            title: job.title,
+            count: total,
+            candidates: job.total_applications || 0,
+            progress: progress,
+            color: colorPalette[idx % colorPalette.length]
+        };
+    }) : [];
 
     return (
         <div className="mb-8">

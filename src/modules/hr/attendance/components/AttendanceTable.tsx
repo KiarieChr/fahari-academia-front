@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { MoreHorizontal, Download, Filter, Search, Clock, CheckCircle } from 'lucide-react';
 
-const AttendanceTable = ({ records }) => {
+const AttendanceTable = ({ records = [], loading = false }) => {
     // Helper to get status styles
     const getStatusStyle = (status) => {
         const styles = {
@@ -19,18 +19,18 @@ const AttendanceTable = ({ records }) => {
         return styles[status] || 'bg-slate-50 text-slate-700 border-slate-100';
     };
 
-    // Renaming records to attendanceLogs for consistency with the provided snippet
-    const attendanceLogs = records;
+    const attendanceLogs = records || [];
 
     return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex-1">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex-1 mb-3">
             <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
+                        style={{ paddingLeft: '30px'}}
                         placeholder="Search logs..."
-                        className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-700 dark:text-slate-200"
+                        className="w-full pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-700 dark:text-slate-200"
                     />
                 </div>
                 <div className="flex gap-2">
@@ -58,8 +58,24 @@ const AttendanceTable = ({ records }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                        {attendanceLogs.map((log) => (
-                            <motion.tr
+                        {loading ? (
+                            <tr>
+                                <td colSpan={6} className="py-12 text-center">
+                                    <div className="flex flex-col items-center justify-center space-y-2">
+                                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <span className="text-sm text-slate-500">Loading records...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : attendanceLogs.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="py-8 text-center text-sm text-slate-500">
+                                    No attendance records found.
+                                </td>
+                            </tr>
+                        ) : (
+                            attendanceLogs.map((log) => (
+                                <motion.tr
                                 key={log.id}
                                 whileHover={{ backgroundColor: 'rgba(248,250,252, 0.5)' }}
                                 className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
@@ -88,7 +104,7 @@ const AttendanceTable = ({ records }) => {
                                     </span>
                                 </td>
                             </motion.tr>
-                        ))}
+                        )))}
                     </tbody>
                 </table>
             </div>

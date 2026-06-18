@@ -2,12 +2,23 @@ import React from 'react';
 import { Mail, Phone } from 'lucide-react';
 
 const RecentApplicantsWidget = ({ applicants = [] }) => {
-    // Fallback data if empty, based on the mockup styling
-    const displayApplicants = applicants.length > 0 ? applicants : [
-        { name: 'Lewis S. Cunningham', role: 'Applied for iOS Developer', initials: 'LC', bg: 'bg-orange-100 text-orange-600' },
-        { name: 'Danny Nelson', role: 'Applied for Node.js Developer', initials: 'DN', bg: 'bg-emerald-100 text-emerald-600' },
-        { name: 'Jennifer Patterson', role: 'Applied for UI Designer', initials: 'JP', bg: 'bg-pink-100 text-pink-600' },
-    ];
+    const displayApplicants = applicants.map((app, idx) => {
+        const bgPalette = [
+            'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+            'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+            'bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400',
+            'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+            'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
+        ];
+        return {
+            name: app.full_name || `${app.first_name} ${app.last_name}`,
+            role: `Applied for ${app.job_opening?.title || app.job_opening || 'Unknown Role'}`,
+            initials: (app.first_name?.[0] || '') + (app.last_name?.[0] || ''),
+            bg: bgPalette[idx % bgPalette.length],
+            email: app.email,
+            phone: app.phone
+        };
+    });
 
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm mt-6">
@@ -19,11 +30,11 @@ const RecentApplicantsWidget = ({ applicants = [] }) => {
             </div>
 
             <div className="space-y-5">
-                {displayApplicants.map((applicant, idx) => (
+                {displayApplicants.length > 0 ? displayApplicants.map((applicant, idx) => (
                     <div key={idx} className="flex items-center justify-between group cursor-pointer">
                         <div className="flex items-center gap-3">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${applicant.bg || 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                                {applicant.initials || applicant.name.substring(0, 2).toUpperCase()}
+                                {applicant.initials}
                             </div>
                             <div>
                                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -35,15 +46,21 @@ const RecentApplicantsWidget = ({ applicants = [] }) => {
                             </div>
                         </div>
                         <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors">
+                            {applicant.email && (
+                            <button className="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors" onClick={(e) => { e.stopPropagation(); window.location.href = `mailto:${applicant.email}`; }}>
                                 <Mail size={14} />
                             </button>
-                            <button className="p-1.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors">
+                            )}
+                            {applicant.phone && (
+                            <button className="p-1.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors" onClick={(e) => { e.stopPropagation(); window.location.href = `tel:${applicant.phone}`; }}>
                                 <Phone size={14} />
                             </button>
+                            )}
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <div className="text-sm text-slate-500 text-center py-4">No recent applicants</div>
+                )}
             </div>
         </div>
     );

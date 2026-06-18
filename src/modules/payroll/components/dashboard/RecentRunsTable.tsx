@@ -50,7 +50,7 @@ const RecentRunsTable = () => {
         const Icon = config.icon;
 
         return (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
+            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
                 <Icon size={12} />
                 {config.label}
             </span>
@@ -60,7 +60,7 @@ const RecentRunsTable = () => {
     // Loading skeleton
     if (loading) {
         return (
-            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                     <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
                     <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
@@ -77,7 +77,7 @@ const RecentRunsTable = () => {
     // Error state
     if (error) {
         return (
-            <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <div className="text-center py-8">
                     <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
                     <p className="text-red-700 mb-3">{error}</p>
@@ -93,7 +93,7 @@ const RecentRunsTable = () => {
     }
 
     return (
-        <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-gray-500" />
@@ -136,7 +136,7 @@ const RecentRunsTable = () => {
                                     transition={{ delay: index * 0.05 }}
                                     className="hover:bg-blue-50/30 transition-colors group"
                                 >
-                                    <td className="px-6 py-5">
+                                    <td className="px-4 py-2">
                                         <div>
                                             <span className="font-semibold text-gray-800">{run.period}</span>
                                             {run.payment_date && (
@@ -146,28 +146,28 @@ const RecentRunsTable = () => {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-5">
+                                    <td className="px-4 py-2">
                                         <span className="flex items-center gap-1.5 text-gray-600">
                                             <Users size={14} className="text-gray-400" />
                                             {run.employees}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-5 font-medium text-gray-700">{formatCurrency(run.gross_pay)}</td>
-                                    <td className="px-6 py-5 font-medium text-emerald-600">{formatCurrency(run.net_pay)}</td>
-                                    <td className="px-6 py-5">
+                                    <td className="px-6 py-3 font-medium text-gray-700">{formatCurrency(run.gross_pay)}</td>
+                                    <td className="px-6 py-3 font-medium text-emerald-600">{formatCurrency(run.net_pay)}</td>
+                                    <td className="px-6 py-3">
                                         {getStatusBadge(run.status)}
                                     </td>
-                                    <td className="px-6 py-5 text-right">
-                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <td className="px-6 py-3 text-right">
+                                        <div className="flex items-center justify-end gap-1">
                                             <button
                                                 onClick={() => setSelectedRun(run)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 title="View Details"
                                             >
                                                 <Eye size={16} />
                                             </button>
                                             <button
-                                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                                                 title="Print Summary"
                                             >
                                                 <Printer size={16} />

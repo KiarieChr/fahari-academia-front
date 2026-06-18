@@ -107,6 +107,7 @@ const DashboardLayout = ({ children, title }) => {
             module: 'academics',
             subItems: [
                 { label: 'Class Sessions',         path: '/dashboard/students/sessions' },
+                { label: 'Exam Schedules', path: '/dashboard/academics/exam-schedules' },
                 { label: 'Marks Inputs', path: '/dashboard/academics/marks' },
                 { label: 'Curriculum Setup', path: '/dashboard/academics/curriculum' },
                 { label: 'Subjects', path: '/dashboard/academics/subjects' },
@@ -139,7 +140,7 @@ const DashboardLayout = ({ children, title }) => {
             module: 'finance',
             subItems: [
                 { label: 'Accounts Payable', path: '/dashboard/finance/payable' },
-                { label: 'Customer Invoice', path: '/dashboard/fees/invoice' },
+                { label: 'Accounts Receivable', path: '/dashboard/finance/receivable' },
                 { label: 'Chart of Accounts', path: '/dashboard/finance/chart' },
                 { label: 'Journals', path: '/dashboard/finance/journals' },
                 { label: 'Finance Report', path: '/dashboard/finance/reports' },
@@ -374,6 +375,16 @@ const DashboardLayout = ({ children, title }) => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
+    const handleHamburgerClick = () => {
+        if (windowWidth < 768) {
+            toggleSidebar();
+        } else {
+            const next = !isCompactMode;
+            setIsCompactMode(next);
+            localStorage.setItem('fahari-compact-sidebar', next ? '1' : '0');
+        }
+    };
+
     const toggleDarkMode = () => {
         setIsDarkMode(!isDarkMode);
         document.documentElement.classList.toggle('dark-mode');
@@ -420,7 +431,7 @@ const DashboardLayout = ({ children, title }) => {
 
     return (
         <div className="dashboard-container">
-            <SystemTour run={isTourRunning} onFinish={handleTourFinish} />
+           
             {/* Mobile Overlay */}
             {isSidebarOpen && (
                 <div
@@ -648,7 +659,7 @@ const DashboardLayout = ({ children, title }) => {
                 <TopBar
                     currentUser={currentUser}
                     isDarkMode={isDarkMode}
-                    onToggleSidebar={toggleSidebar}
+                    onToggleSidebar={handleHamburgerClick}
                     onToggleDarkMode={toggleDarkMode}
                     onLogout={handleLogout}
                 />
@@ -666,11 +677,11 @@ const DashboardLayout = ({ children, title }) => {
                             <LayoutDashboard size={20} />
                             <span>Dashboard</span>
                         </Link>
-                        <Link to="/dashboard/students" className="mobile-nav-item">
+                        <Link to="/dashboard/students/admissions/overview" className="mobile-nav-item">
                             <Users size={20} />
                             <span>Students</span>
                         </Link>
-                        <Link to="/dashboard/fees" className="mobile-nav-item">
+                        <Link to="/dashboard/fees/receipts" className="mobile-nav-item">
                             <CreditCard size={20} />
                             <span>Fees</span>
                         </Link>
@@ -692,7 +703,7 @@ const DashboardLayout = ({ children, title }) => {
                 aria-label="Open appearance settings"
                 style={{
                     position: 'fixed',
-                    bottom: '28px',
+                    bottom: '40px',
                     right: '28px',
                     zIndex: 1200,
                     width: '48px',

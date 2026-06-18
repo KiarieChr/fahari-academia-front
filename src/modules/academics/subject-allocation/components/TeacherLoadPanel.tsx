@@ -3,7 +3,7 @@ import { User, AlertCircle, CheckCircle } from 'lucide-react';
 
 const TeacherLoadPanel = ({ teachers }) => {
     return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden h-fit sticky top-24">
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden h-fit sticky top-24 mr-3">
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
                 <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
                     <User size={18} className="text-blue-600" />
@@ -17,7 +17,7 @@ const TeacherLoadPanel = ({ teachers }) => {
                     const isNearLimit = teacher.currentLoad >= teacher.maxLoad && !isOverloaded;
 
                     return (
-                        <div key={teacher.id} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <div key={teacher.id} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-700 mr-4">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-800 dark:text-white">{teacher.name}</h4>

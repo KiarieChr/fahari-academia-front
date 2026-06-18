@@ -26,18 +26,39 @@ const StaffAttendanceDashboard = ({ noLayout = false }) => {
 
     const fetchData = async () => {
         try {
-            const [summaryRes, recordsRes] = await Promise.all([
-                api.get('/workforce/api/attendance/daily_summary/'),
-                api.get('/workforce/api/attendance/')
-            ]);
+            let recordsData = [];
+            try {
+                const recordsRes = await api.get('/workforce/api/attendance/');
+                recordsData = recordsRes.results || recordsRes || [];
+                setRecords(recordsData);
+            } catch (err) {
+                console.error("Failed to fetch attendance records", err);
+            }
 
-            const summary = summaryRes;
+            let summary = null;
+            try {
+                const summaryRes = await api.get('/workforce/api/attendance/daily_summary/');
+                summary = summaryRes;
+                
+                // Sometimes APIs return an empty or undefined object if no data
+                if (!summary || typeof summary !== 'object' || Object.keys(summary).length === 0) {
+                    throw new Error("Empty summary response");
+                }
+            } catch (err) {
+                console.error("Failed to fetch daily summary, computing from records", err);
+                summary = {
+                    present: recordsData.filter(r => ['present', 'Present'].includes(r.status)).length,
+                    late: recordsData.filter(r => ['late', 'Late'].includes(r.status)).length,
+                    on_leave: recordsData.filter(r => ['on_leave', 'On Leave'].includes(r.status)).length,
+                    absent: recordsData.filter(r => ['absent', 'Absent'].includes(r.status)).length,
+                };
+            }
 
             // Update metrics based on summary
             const newMetrics = [
                 {
                     title: "Present Today",
-                    value: summary.present,
+                    value: summary.present || 0,
                     trend: "+12%", // Calculate if history available
                     trendUp: true,
                     icon: User,
@@ -46,7 +67,7 @@ const StaffAttendanceDashboard = ({ noLayout = false }) => {
                 },
                 {
                     title: "Late Arrivals",
-                    value: summary.late,
+                    value: summary.late || 0,
                     trend: "-5%",
                     trendUp: true, // actually good if down, but visual
                     icon: Clock,
@@ -55,7 +76,7 @@ const StaffAttendanceDashboard = ({ noLayout = false }) => {
                 },
                 {
                     title: "On Leave",
-                    value: summary.on_leave,
+                    value: summary.on_leave || 0,
                     trend: "0%",
                     trendUp: true,
                     icon: Calendar,
@@ -64,7 +85,7 @@ const StaffAttendanceDashboard = ({ noLayout = false }) => {
                 },
                 {
                     title: "Absent",
-                    value: summary.absent,
+                    value: summary.absent || 0,
                     trend: "+2",
                     trendUp: false,
                     icon: XCircle,
@@ -74,11 +95,10 @@ const StaffAttendanceDashboard = ({ noLayout = false }) => {
             ];
 
             setMetrics(newMetrics);
-            setRecords(recordsRes.results || recordsRes || []);
             setLoading(false);
 
         } catch (error) {
-            console.error("Failed to fetch dashboard data", error);
+            console.error("Failed to process dashboard data", error);
             setLoading(false);
         }
     };
@@ -115,19 +135,19 @@ const StaffAttendanceDashboard = ({ noLayout = false }) => {
                     </div>
 
                     {/* Metrics Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
                         {metrics.map((metric, index) => (
                             <AttendanceMetricCard key={index} {...metric} />
                         ))}
                     </div>
 
                     {/* Tabs Navigation */}
-                    <div className="flex space-x-1 bg-slate-200/50 dark:bg-slate-800 p-1 rounded-xl w-fit">
+                    <div className="flex space-x-1 bg-slate-200/50 dark:bg-slate-800 p-1 rounded-xl w-fit mb-2">
                         {['logs', 'schedules', 'policies', 'assignments', 'generate'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-2 text-sm font-semibold rounded-lg capitalize transition-all ${
+                                className={`px-4 py-2 text-sm font-semibold rounded-lg uppercase transition-all ${
                                     activeTab === tab
                                         ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/50'

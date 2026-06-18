@@ -3,8 +3,8 @@ import { AlertTriangle, Info, Bell } from 'lucide-react';
 
 const AlertsWidget = () => {
     return (
-        <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6">
+        <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm h-full flex flex-col">
+            <div className="flex justify-between items-center mb-3 p-2">
                 <div className="flex items-center gap-2">
                     <Bell className="text-gray-400" size={18} />
                     <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide">Notifications</h3>

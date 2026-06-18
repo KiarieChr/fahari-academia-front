@@ -8,6 +8,7 @@ import TeachingSchedulePanel from './TeachingSchedulePanel';
 const METHOD_LABELS = {
     biometric: 'Biometric',
     geolocation: 'On-Site',
+    on_site: 'On-Site',
     remote: 'Remote',
 };
 
@@ -94,7 +95,7 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
             location_text: selectedMethod === 'remote' ? 'Remote clocking' : 'Campus clocking',
         };
 
-        if (selectedMethod === 'geolocation') {
+        if (['geolocation', 'on_site'].includes(selectedMethod)) {
             const position = await getGeoPosition();
             payload.latitude = position.latitude;
             payload.longitude = position.longitude;
@@ -131,12 +132,12 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
     };
 
     return (
-        <div className={`relative overflow-hidden bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/20 dark:border-slate-700/30 rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] ${compact ? 'p-2' : 'p-3'} h-full flex flex-col transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)]`}>
+        <div className={`relative overflow-hidden bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/20 dark:border-slate-700/30 rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] ${compact ? 'p-2' : 'p-3'} flex flex-col transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)]`}>
             {/* High-End Ambient Backgrounds */}
             <div className="absolute -top-32 -right-32 w-72 h-150 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse" />
             <div className="absolute -bottom-32 -left-32 w-72 h-150 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse" style={{ animationDelay: '2s' }} />
 
-            <div className="relative z-10 flex flex-col h-full mb-1">
+            <div className="relative z-10 flex flex-col mb-1">
                 {/* Refined Header Section */}
                 <div className="flex items-start justify-between mb-9">
                     <div className="space-y-1">
@@ -153,7 +154,7 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
                             {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: '2-digit' })}
                         </div>
                         <div className="text-xs font-bold text-slate-300 mt-1">{currentTime.getFullYear()}</div>
@@ -168,7 +169,7 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
                             <circle
                                 cx="90"
                                 cy="90"
-                                r="82"
+                                r="80"
                                 stroke="currentColor"
                                 strokeWidth="2"
                                 fill="transparent"
@@ -177,7 +178,7 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
                             <motion.circle
                                 cx="90"
                                 cy="90"
-                                r="82"
+                                r="80"
                                 stroke="url(#terminalGradient)"
                                 strokeWidth="4"
                                 fill="transparent"
@@ -200,7 +201,7 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
                         {/* Centered Clock Content */}
                         <div className="relative z-10 text-center">
                             <div className="flex items-baseline justify-center gap-1">
-                                <div className={`${compact ? 'text-5xl' : 'text-6xl'} font-black text-slate-900 dark:text-white tracking-tighter tabular-nums leading-none`}>
+                                <div className={`${compact ? 'text-4xl' : 'text-5xl'} font-black text-slate-900 dark:text-white tracking-tighter tabular-nums leading-none`}>
                                     {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                                 </div>
                                 <div className="text-lg font-black text-blue-500 tabular-nums w-8">
@@ -255,7 +256,7 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => handleClockAction('clock_in')}
                                     disabled={loading}
-                                    className="flex-1 group relative h-18 overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/30 border border-white/20"
+                                    className="flex-1 group relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/30 border border-white/20"
                                 >
                                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.25),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                     <div className="relative z-10 flex flex-col items-center justify-center gap-2">
@@ -271,9 +272,9 @@ const ClockInOutWidget = ({ onClockUpdate, compact = false }) => {
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => handleClockAction('clock_out')}
                                     disabled={loading}
-                                    className="flex-1 group relative h-18 overflow-hidden rounded-[28px] bg-slate-900 dark:bg-black text-white shadow-xl shadow-black/40 border border-white/5"
+                                    className="flex-1 group relative overflow-hidden rounded-3xl bg-slate-900 dark:bg-black text-white shadow-xl shadow-black/40 border border-white/5"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
                                     <div className="relative z-10 flex flex-col items-center justify-center gap-2">
                                         <div className="p-2 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10">
                                             <LogOut size={18} strokeWidth={3} className="text-orange-500" />

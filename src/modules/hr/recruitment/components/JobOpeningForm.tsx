@@ -106,6 +106,9 @@ const JobOpeningForm = ({ isOpen, onClose, onSuccess, job = null }) => {
         if (!formData.campus) newErrors.campus = "Campus is required";
         if (!formData.opening_date) newErrors.opening_date = "Opening Date is required";
         if (!formData.closing_date) newErrors.closing_date = "Closing Date is required";
+        if (!formData.description) newErrors.description = "Description is required";
+        if (!formData.responsibilities) newErrors.responsibilities = "Responsibilities are required";
+        if (!formData.requirements) newErrors.requirements = "Requirements are required";
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -344,36 +347,39 @@ const JobOpeningForm = ({ isOpen, onClose, onSuccess, job = null }) => {
                             </div>
 
                             <div className="col-span-1 md:col-span-2 space-y-2">
-                                <label className="text-sm font-medium">Description</label>
+                                <label className="text-sm font-medium">Description *</label>
                                 <textarea
                                     name="description"
                                     value={formData.description}
                                     onChange={handleChange}
                                     rows={4}
-                                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900"
+                                    className={`w-full p-2 border rounded-lg dark:bg-slate-900 ${errors.description ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
                                 ></textarea>
+                                {errors.description && <span className="text-xs text-red-500">{errors.description}</span>}
                             </div>
 
                             <div className="col-span-1 md:col-span-2 space-y-2">
-                                <label className="text-sm font-medium">Responsibilities</label>
+                                <label className="text-sm font-medium">Responsibilities *</label>
                                 <textarea
                                     name="responsibilities"
                                     value={formData.responsibilities}
                                     onChange={handleChange}
                                     rows={4}
-                                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900"
+                                    className={`w-full p-2 border rounded-lg dark:bg-slate-900 ${errors.responsibilities ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
                                 ></textarea>
+                                {errors.responsibilities && <span className="text-xs text-red-500">{errors.responsibilities}</span>}
                             </div>
 
                             <div className="col-span-1 md:col-span-2 space-y-2">
-                                <label className="text-sm font-medium">Requirements</label>
+                                <label className="text-sm font-medium">Requirements *</label>
                                 <textarea
                                     name="requirements"
                                     value={formData.requirements}
                                     onChange={handleChange}
                                     rows={4}
-                                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900"
+                                    className={`w-full p-2 border rounded-lg dark:bg-slate-900 ${errors.requirements ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`}
                                 ></textarea>
+                                {errors.requirements && <span className="text-xs text-red-500">{errors.requirements}</span>}
                             </div>
 
                         </form>

@@ -51,9 +51,9 @@ const ChartOfAccounts = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch Accounts (Full Structure) and Trial Balance (for balances)
+            // Fetch Accounts and Trial Balance (for balances)
             const [accResult, tbResult, fyResult] = await Promise.allSettled([
-                financeService.getStructure(),
+                financeService.getAccounts(),
                 financeService.getTrialBalance(),
                 financeService.getFiscalPeriods()
             ]);

@@ -9,10 +9,10 @@ const StatCard = ({ title, count, icon: Icon, color, subtext }) => (
     >
         <div>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{count}</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{count}</h3>
             <p className="text-[10px] text-slate-400 mt-1">{subtext}</p>
         </div>
-        <div className={`p-2.5 rounded-lg ${color} bg-opacity-20 text-opacity-100`}>
+        <div className={`p-1 rounded-lg ${color} bg-opacity-20 text-opacity-100`}>
             <Icon size={20} className={color.replace('bg-', 'text-')} />
         </div>
     </motion.div>
@@ -25,7 +25,7 @@ const AllocationStats = ({ allocations, teachers }) => {
     const overloadedTeachers = teachers.filter(t => t.currentLoad > t.maxLoad).length;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-3">
             <StatCard
                 title="Allocated Subjects"
                 count={totalAllocations}

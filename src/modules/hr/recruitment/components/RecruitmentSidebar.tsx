@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 const RecruitmentSidebar = ({ activeTab, setActiveTab }) => {
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'pipeline', label: 'Recruitment pipeline', icon: Users },
+        { id: 'pipeline', label: 'Recruitment', icon: Users },
         { id: 'jobs', label: 'Job Openings', icon: FileText },
         { id: 'onboarding', label: 'Onboarding', icon: CheckCircle },
         { id: 'interviews', label: 'Calendar', icon: Calendar },

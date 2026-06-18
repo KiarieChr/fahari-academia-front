@@ -1,136 +1,178 @@
 import React from 'react';
-import { X, Printer, Download, Calendar, DollarSign, Users, Building2, FileText, PieChart } from 'lucide-react';
+import { X, Printer, Download, Calendar, DollarSign, Users, Building2, FileText, PieChart, CheckCircle2, Circle, ArrowRight } from 'lucide-react';
 
 const PayrollRunDetailsModal = ({ run, onClose }) => {
     if (!run) return null;
 
-    // Mock detailed data enrichment based on the simple run prop
+    // Derived values
+    const gross = parseFloat(run.gross_pay) || 0;
+    const net = parseFloat(run.net_pay) || 0;
+    const deductions = gross - net;
+
+    // Dynamic mock breakdown based on actual gross
     const details = {
-        ...run,
-        processedOn: '28th, ' + run.period.split(' ')[1], // e.g., 28th, 2025
-        payDate: '30th, ' + run.period.split(' ')[1],
+        payDate: run.payment_date ? new Date(run.payment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Pending',
         breakdown: [
-            { label: 'Basic Salaries', amount: 3200000, color: 'bg-indigo-500' },
-            { label: 'Allowances', amount: 900000, color: 'bg-blue-400' },
-            { label: 'Overtime & Bonuses', amount: 200000, color: 'bg-cyan-400' },
+            { label: 'Basic Salaries', amount: gross * 0.75, color: 'bg-blue-500' },
+            { label: 'Allowances', amount: gross * 0.20, color: 'bg-indigo-400' },
+            { label: 'Overtime & Bonuses', amount: gross * 0.05, color: 'bg-sky-400' },
         ],
         statutory: [
-            { name: 'PAYE (Tax)', amount: 650000, ref: 'P055112233' },
-            { name: 'NSSF', amount: 120000, ref: 'SF-99282' },
-            { name: 'SHIF / NHIF', amount: 85000, ref: 'NH-11221' },
-            { name: 'Housing Levy', amount: 105000, ref: 'HL-88332' },
+            { name: 'PAYE (Tax)', amount: deductions * 0.65, ref: 'P055112233' },
+            { name: 'NSSF', amount: deductions * 0.15, ref: 'SF-99282' },
+            { name: 'SHIF / NHIF', amount: deductions * 0.10, ref: 'NH-11221' },
+            { name: 'Housing Levy', amount: deductions * 0.10, ref: 'HL-88332' },
         ],
         departments: [
-            { name: 'Teaching Staff', count: 85, cost: 2800000 },
-            { name: 'Administration', count: 12, cost: 850000 },
-            { name: 'Support Staff', count: 38, cost: 450000 },
+            { name: 'Teaching Staff', count: Math.ceil(run.employees * 0.65), cost: gross * 0.65 },
+            { name: 'Administration', count: Math.ceil(run.employees * 0.15), cost: gross * 0.20 },
+            { name: 'Support Staff', count: Math.floor(run.employees * 0.20), cost: gross * 0.15 },
         ]
     };
 
+    const formatKES = (value) => {
+        return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(value);
+    };
+
+    // Status Timeline
+    const steps = ['calculated', 'approved', 'processing', 'paid'];
+    const currentStepIndex = steps.indexOf((run.status || '').toLowerCase());
+    
+    // Fallback if status is something else
+    const activeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
+
+    const getStatusHeaderColor = () => {
+        return 'bg-slate-900'; // Match sidebar theme color
+    };
+
     return (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                {/* Header */}
-                <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 flex-shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg shadow-sm border border-indigo-200">
-                            {run.period.split(' ')[0].substring(0, 3)}
-                        </div>
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-2 sm:p-6 animate-in fade-in duration-200">
+            <div className="bg-gray-50 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200/50">
+                
+                {/* Premium Header with Dynamic Gradient */}
+                <div className={`${getStatusHeaderColor()} px-3 py-3 text-white relative overflow-hidden flex-shrink-0`}>
+                    <div className="absolute inset-0 bg-white/10 mix-blend-overlay opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between mb-3">
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Payroll Run: {run.period}</h2>
-                            <div className="flex items-center gap-3 text-sm text-gray-500">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide ${run.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                                    }`}>
+                            <div className="flex items-center gap-3 mb-2">
+                                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border border-white/20">
                                     {run.status}
                                 </span>
-                                <span className="flex items-center gap-1"><Calendar size={12} /> Paid: {details.payDate}</span>
+                                <span className="flex items-center gap-1.5 text-sm font-medium text-white/90">
+                                    <Calendar size={14} /> Paid: {details.payDate}
+                                </span>
                             </div>
+                            <h2 className="text-3xl font-extrabold tracking-tight">Payroll: {run.period}</h2>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                            <button className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md rounded-xl transition-all font-medium text-sm">
+                                <Printer size={16} /> Print
+                            </button>
+                            <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-900 hover:bg-gray-50 shadow-lg rounded-xl transition-all font-bold text-sm">
+                                <Download size={16} /> Export CSV
+                            </button>
+                            <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors ml-2">
+                                <X size={20} />
+                            </button>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Print Report">
-                            <Printer size={20} />
-                        </button>
-                        <button className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Export CSV">
-                            <Download size={20} />
-                        </button>
-                        <div className="w-px h-6 bg-gray-200 mx-1"></div>
-                        <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
-                            <X size={24} />
-                        </button>
+
+                    {/* Status Tracker */}
+                    <div className="relative z-10 mt-3 pt-3 border-t border-white/20">
+                        <div className="flex items-center justify-between max-w-2xl">
+                            {['Calculated', 'Approved', 'Processing', 'Paid'].map((step, idx) => {
+                                const isCompleted = idx <= activeIndex;
+                                return (
+                                    <div key={step} className="flex flex-col items-center relative z-10 flex-1">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 shadow-sm border-2 transition-colors ${isCompleted ? 'bg-white border-white text-emerald-500' : 'bg-white/10 border-white/30 text-white/50 backdrop-blur-md'}`}>
+                                            {isCompleted ? <CheckCircle2 size={16} /> : <Circle size={10} fill="currentColor" />}
+                                        </div>
+                                        <span className={`text-xs font-bold uppercase tracking-wider ${isCompleted ? 'text-white' : 'text-white/60'}`}>{step}</span>
+                                        {/* Connector Line */}
+                                        {idx < 3 && (
+                                            <div className={`absolute top-4 left-[50%] w-full h-[2px] -z-10 ${idx < activeIndex ? 'bg-white' : 'bg-white/20'}`}></div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 bg-gray-50/30">
-
-                    {/* Top Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group">
-                            <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Users size={48} className="text-blue-500" />
+                {/* Content Body */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    {/* Top KPI Cards */}
+                    <div className="row g-4 mb-8">
+                        <div className="col-sm-6 col-lg-3">
+                            <div className="bg-white rounded-2xl p-4 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all h-100">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <Users size={20} />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-0">Employees</h3>
+                                </div>
+                                <p className="text-2xl font-black text-gray-800 mb-0">{run.employees}</p>
                             </div>
-                            <p className="text-sm text-gray-500 font-medium mb-1">Employees</p>
-                            <p className="text-2xl font-bold text-gray-800">{run.employees}</p>
-                            <div className="mt-2 text-xs text-green-600 flex items-center font-medium">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1"></span> 100% Processed
+                        </div>
+                        
+                        <div className="col-sm-6 col-lg-3">
+                            <div className="bg-white rounded-2xl p-4 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all h-100">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                        <DollarSign size={20} />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-0">Gross Pay</h3>
+                                </div>
+                                <p className="text-2xl font-black text-gray-800 mb-0">{formatKES(gross)}</p>
                             </div>
                         </div>
 
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group">
-                            <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <DollarSign size={48} className="text-indigo-500" />
-                            </div>
-                            <p className="text-sm text-gray-500 font-medium mb-1">Total Gross Pay</p>
-                            <p className="text-2xl font-bold text-gray-800">{run.grossPay}</p>
-                            <div className="mt-2 text-xs text-gray-400 flex items-center font-medium">
-                                Base + Allowances
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group">
-                            <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <PieChart size={48} className="text-amber-500" />
-                            </div>
-                            <p className="text-sm text-gray-500 font-medium mb-1">Deductions</p>
-                            <p className="text-2xl font-bold text-gray-800">KES 1.1M</p>
-                            <div className="mt-2 text-xs text-amber-600 flex items-center font-medium">
-                                Statutory + Voluntary
+                        <div className="col-sm-6 col-lg-3">
+                            <div className="bg-white rounded-2xl p-4 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all h-100">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                        <PieChart size={20} />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-0">Deductions</h3>
+                                </div>
+                                <p className="text-2xl font-black text-gray-800 mb-0">{formatKES(deductions)}</p>
                             </div>
                         </div>
 
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group">
-                            <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Building2 size={48} className="text-emerald-500" />
-                            </div>
-                            <p className="text-sm text-gray-500 font-medium mb-1">Net Pay Disbursed</p>
-                            <p className="text-2xl font-bold text-gray-800">{run.netPay}</p>
-                            <div className="mt-2 text-xs text-emerald-600 flex items-center font-medium">
-                                Final Payout
+                        <div className="col-sm-6 col-lg-3">
+                            <div className="bg-white rounded-2xl p-4 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all h-100">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                        <Building2 size={20} />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-500 mb-0">Net Pay</h3>
+                                </div>
+                                <p className="text-2xl font-black text-emerald-600 mb-0">{formatKES(net)}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                        {/* Breakdown Column */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Salary Breakdown */}
-                            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <FileText size={18} className="text-gray-400" /> Earnings Breakdown
+                    {/* Detailed Columns */}
+                    <div className="row g-4">
+                        {/* Left Column */}
+                        <div className="col-lg-8 space-y-6">
+                            {/* Earnings Breakdown */}
+                            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                                <h3 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+                                    <FileText className="text-blue-500" size={20} /> Earnings Breakdown
                                 </h3>
                                 <div className="space-y-4">
                                     {details.breakdown.map((item, idx) => (
                                         <div key={idx}>
-                                            <div className="flex justify-between text-sm mb-1.5">
-                                                <span className="text-gray-600 font-medium">{item.label}</span>
-                                                <span className="text-gray-900 font-bold">KES {new Intl.NumberFormat().format(item.amount)}</span>
+                                            <div className="flex justify-between items-end mb-2">
+                                                <span className="font-semibold text-gray-600">{item.label}</span>
+                                                <span className="font-bold text-gray-900">{formatKES(item.amount)}</span>
                                             </div>
                                             <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full ${item.color}`}
-                                                    style={{ width: `${(item.amount / 4300000) * 100}%` }}
+                                                <div 
+                                                    className={`h-full rounded-full ${item.color} transition-all duration-1000 ease-out`}
+                                                    style={{ width: `${(item.amount / gross) * 100}%` }}
                                                 ></div>
                                             </div>
                                         </div>
@@ -138,62 +180,67 @@ const PayrollRunDetailsModal = ({ run, onClose }) => {
                                 </div>
                             </div>
 
-                            {/* Departmental Cost */}
-                            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <Building2 size={18} className="text-gray-400" /> Departmental Cost
+                            {/* Departmental Split */}
+                            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                                <h3 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+                                    <Building2 className="text-indigo-500" size={20} /> Departmental Cost Center
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="row g-3">
                                     {details.departments.map((dept, idx) => (
-                                        <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                            <div className="text-xs text-gray-500 mb-1">{dept.name}</div>
-                                            <div className="text-sm font-bold text-gray-800 mb-1">KES {new Intl.NumberFormat().format(dept.cost)}</div>
-                                            <div className="text-xs text-indigo-500 font-medium">{dept.count} Employees</div>
+                                        <div key={idx} className="col-sm-4">
+                                            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 hover:bg-indigo-50/50 hover:border-indigo-100 transition-colors group h-100">
+                                                <p className="text-sm font-semibold text-gray-500 mb-1 group-hover:text-indigo-600 transition-colors">{dept.name}</p>
+                                                <p className="text-lg font-black text-gray-800 mb-1">{formatKES(dept.cost)}</p>
+                                                <div className="text-xs font-bold text-indigo-500 flex items-center gap-1 bg-indigo-50 inline-flex px-2 py-1 rounded-md">
+                                                    <Users size={12} /> {dept.count} Staff
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Statutory Side Column */}
-                        <div className="space-y-6">
-                            <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                                <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider">Statutory Remittances</h3>
-                                <div className="space-y-4">
+                        {/* Right Sidebar */}
+                        <div className="col-lg-4 space-y-6">
+                            {/* Statutory Remittances */}
+                            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-50 rounded-bl-full -z-0 opacity-50"></div>
+                                <h3 className="text-lg font-bold text-gray-800 mb-6 relative z-10 flex items-center gap-2">
+                                    <PieChart className="text-amber-500" size={20} /> Statutory
+                                </h3>
+                                <div className="space-y-4 relative z-10">
                                     {details.statutory.map((stat, idx) => (
-                                        <div key={idx} className="flex items-center justify-between pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                                        <div key={idx} className="flex justify-between items-center p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
                                             <div>
-                                                <div className="text-sm font-semibold text-gray-700">{stat.name}</div>
-                                                <div className="text-xs text-gray-400 font-mono">Ref: {stat.ref}</div>
+                                                <p className="text-sm font-bold text-gray-700">{stat.name}</p>
+                                                <p className="text-[10px] font-mono text-gray-400 mt-0.5">Ref: {stat.ref}</p>
                                             </div>
-                                            <div className="text-sm font-bold text-gray-900">
-                                                KES {new Intl.NumberFormat().format(stat.amount)}
-                                            </div>
+                                            <p className="font-bold text-gray-900">{formatKES(stat.amount)}</p>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-4 pt-3 border-t border-gray-100">
-                                    <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-                                        <span className="text-sm font-bold text-gray-700">Total Statutory</span>
-                                        <span className="text-sm font-bold text-indigo-600">KES 960,000</span>
+                                <div className="mt-6 pt-4 border-t border-gray-100 relative z-10">
+                                    <div className="flex justify-between items-center p-4 bg-amber-50 rounded-xl border border-amber-100/50">
+                                        <span className="font-bold text-amber-900">Total</span>
+                                        <span className="font-black text-amber-700">{formatKES(deductions)}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <button className="w-full py-3 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
-                                <FileText size={16} /> View Full Payroll Register
+                            {/* CTA Action */}
+                            <button className="w-full group relative overflow-hidden rounded-2xl bg-slate-900 p-[1px] shadow-lg shadow-slate-900/30 transition-transform active:scale-[0.98]">
+                                <div className="relative flex items-center justify-between gap-2 rounded-2xl bg-slate-900 px-6 py-4 transition-all group-hover:bg-slate-800">
+                                    <span className="font-bold text-white text-sm">View Full Payroll Register</span>
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white transition-transform group-hover:translate-x-1">
+                                        <ArrowRight size={16} />
+                                    </div>
+                                </div>
                             </button>
                         </div>
                     </div>
-
                 </div>
 
-                {/* Footer */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
-                    <button onClick={onClose} className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-white text-sm font-medium">
-                        Close
-                    </button>
-                </div>
             </div>
         </div>
     );

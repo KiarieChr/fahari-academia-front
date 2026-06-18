@@ -1,11 +1,22 @@
-import React, { useRef } from 'react'; // Fixed import
+import React, { useRef, useState, useEffect } from 'react'; // Fixed import
 import { X, Printer, Download, Share2 } from 'lucide-react';
 import { formatKES } from '../accountsPayable/utils/formatters';
+import { institutionService } from '../../../services/institutionService';
 
 const JournalVoucherModal = ({ show, onClose, entry }) => {
-    if (!show || !entry) return null;
+    const [institution, setInstitution] = useState(null);
 
     const printRef = useRef();
+
+    useEffect(() => {
+        if (show) {
+            institutionService.getProfile()
+                .then(res => setInstitution(res.data || res))
+                .catch(err => console.error("Failed to fetch institution profile:", err));
+        }
+    }, [show]);
+
+    if (!show || !entry) return null;
 
     const handlePrint = () => {
         const printContent = document.getElementById('journal-voucher-print-area');
@@ -28,7 +39,7 @@ const JournalVoucherModal = ({ show, onClose, entry }) => {
                             <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" onClick={handlePrint}>
                                 <Printer size={16} /> Print Voucher
                             </button>
-                            <button className="btn-close" onClick={onClose}></button>
+                            <button className="btn-close text-blue" onClick={onClose}></button>
                         </div>
                     </div>
 
@@ -37,9 +48,9 @@ const JournalVoucherModal = ({ show, onClose, entry }) => {
                         <div id="journal-voucher-print-area" className="p-5 bg-white">
                             {/* Institution Header (Print Only mostly) */}
                             <div className="text-center mb-5">
-                                <h2 className="fw-bold text-uppercase mb-1" style={{ letterSpacing: '1px' }}>SkyLearn Institution</h2>
-                                <p className="text-muted small mb-0">P.O. Box 12345 - 00100, Nairobi, Kenya</p>
-                                <p className="text-muted small">Tel: +254 700 000 000 | Email: finance@skylearn.ac.ke</p>
+                                <h2 className="fw-bold text-uppercase mb-1" style={{ letterSpacing: '1px' }}>{institution?.name || 'Fahari Institution'}</h2>
+                                <p className="text-muted small mb-0">{institution?.address || 'P.O. Box 12345 - 00100, Nairobi, Kenya'}</p>
+                                <p className="text-muted small">Tel: {institution?.phone || '+254 700 000 000'} | Email: {institution?.email || 'finance@skylearn.ac.ke'}</p>
                                 <hr className="my-4" />
                                 <h3 className="fw-bold text-primary mb-0">JOURNAL VOUCHER</h3>
                             </div>
@@ -128,19 +139,19 @@ const JournalVoucherModal = ({ show, onClose, entry }) => {
                             {/* Signatures */}
                             <div className="row mt-5 pt-4">
                                 <div className="col-4">
-                                    <div className="border-top border-dark border-1 pt-2">
+                                    <div className="border-top border-dark border-1 p-2">
                                         <p className="mb-0 fw-bold small text-uppercase">Prepared By</p>
                                         <p className="text-muted x-small">{entry.created_by_name || 'System User'}</p>
                                     </div>
                                 </div>
                                 <div className="col-4">
-                                    <div className="border-top border-dark border-1 pt-2">
+                                    <div className="border-top border-dark border-1 p-2">
                                         <p className="mb-0 fw-bold small text-uppercase">Approved By</p>
                                         <p className="text-muted x-small">Finance Manager</p>
                                     </div>
                                 </div>
                                 <div className="col-4">
-                                    <div className="border-top border-dark border-1 pt-2">
+                                    <div className="border-top border-dark border-1 p-2">
                                         <p className="mb-0 fw-bold small text-uppercase">Received By</p>
                                         <p className="text-muted x-small">Date: _________________</p>
                                     </div>
@@ -149,7 +160,7 @@ const JournalVoucherModal = ({ show, onClose, entry }) => {
 
                             {/* Footer */}
                             <div className="mt-5 text-center text-muted x-small">
-                                <p>Generated on {new Date().toLocaleString()} | SkyLearn ERP System</p>
+                                <p>Generated on {new Date().toLocaleString()} | Fahari Ecosystem System</p>
                             </div>
                         </div>
                     </div>

@@ -7,12 +7,14 @@ import { toast } from 'react-toastify';
 import SubjectsStats from './components/SubjectsStats';
 import SubjectsTable from './components/SubjectsTable';
 import SubjectFormModal from './components/SubjectFormModal';
+import GradeSubjectsMapping from './components/GradeSubjectsMapping';
 
 // API
 import { api } from '../../../services/apiClient';
 import { curriculumService } from '../../../services/curriculumService';
 
 const SubjectsDashboard = () => {
+    const [activeTab, setActiveTab] = useState('all-subjects');
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -100,7 +102,7 @@ const SubjectsDashboard = () => {
             <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 pb-20 relative">
 
                 {/* Header */}
-                <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-16 z-30 px-6 py-5 shadow-sm">
+                <div className="bg-transparent px-5 py-3">
                     <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -125,22 +127,51 @@ const SubjectsDashboard = () => {
                     </div>
                 </div>
 
-                <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+                <div className="max-w-[1600px] mx-auto p-4 space-y-6">
+                    <div className="flex space-x-1 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-max mb-3">
+                        <button
+                            onClick={() => setActiveTab('all-subjects')}
+                            className={`px-2 py-2 rounded-lg mr-3 text-sm font-medium transition-all ${
+                                activeTab === 'all-subjects'
+                                    ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50'
+                            }`}
+                        >
+                            All Subjects
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('grade-mappings')}
+                            className={`px-2 py-2 rounded-lg text-sm font-medium transition-all ${
+                                activeTab === 'grade-mappings'
+                                    ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50'
+                            }`}
+                        >
+                            Grade Mappings
+                        </button>
+                    </div>
+
                     {loading ? (
                         <div className="flex justify-center py-16">
                             <Loader2 className="animate-spin text-blue-600" size={28} />
                         </div>
                     ) : (
                         <>
-                            {/* Stats */}
-                            <SubjectsStats subjects={mappedSubjects} />
+                            {activeTab === 'all-subjects' ? (
+                                <>
+                                    {/* Stats */}
+                                    <SubjectsStats subjects={mappedSubjects} />
 
-                            {/* Main Table */}
-                            <SubjectsTable
-                                subjects={mappedSubjects}
-                                onEdit={handleEditSubject}
-                                onDelete={handleDeleteSubject}
-                            />
+                                    {/* Main Table */}
+                                    <SubjectsTable
+                                        subjects={mappedSubjects}
+                                        onEdit={handleEditSubject}
+                                        onDelete={handleDeleteSubject}
+                                    />
+                                </>
+                            ) : (
+                                <GradeSubjectsMapping />
+                            )}
                         </>
                     )}
                 </div>

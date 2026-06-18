@@ -147,7 +147,7 @@ const PAYETaxBandsConfig = ({ taxBands = [], taxReliefs = [], onUpdate, showToas
             <div className="flex justify-between items-center">
                 <div>
                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                        <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs p-2 mr-1">
                             PAYE
                         </div>
                         Pay As You Earn Tax Bands
@@ -180,7 +180,7 @@ const PAYETaxBandsConfig = ({ taxBands = [], taxReliefs = [], onUpdate, showToas
                 </button>
 
                 {showReliefs && (
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="mt-4 grid grid-cols-5 md:grid-cols-3 sm:grid-cols-2 gap-4">
                         {taxReliefs.length > 0 ? (
                             taxReliefs.map((relief) => (
                                 <div key={relief.id} className="bg-white p-3 rounded-lg border border-green-100">

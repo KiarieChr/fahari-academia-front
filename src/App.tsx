@@ -47,6 +47,7 @@ const TimetableDashboard = lazy(() => import('./modules/timetable/TimetableDashb
 /* --- Academics Module (Lazy loaded) --- */
 const StudentAcademics = lazy(() => import('./modules/academics/StudentAcademics'));
 const MarksInputDashboard = lazy(() => import('./modules/academics/marks-input/MarksInputDashboard'));
+const ExamSchedulesDashboard = lazy(() => import('./modules/academics/exam-schedules/ExamSchedulesDashboard'));
 const GradingSystemDashboard = lazy(() => import('./modules/academics/grading-system/GradingSystemDashboard'));
 const ReportsDashboard = lazy(() => import('./modules/academics/reports/ReportsDashboard'));
 const AssignmentsDashboard = lazy(() => import('./modules/academics/assignments/AssignmentsDashboard'));
@@ -65,6 +66,7 @@ const ArrearsDashboard = lazy(() => import('./modules/fees/arrears/ArrearsDashbo
 /* --- Finance Module (Lazy loaded) --- */
 const Finance = lazy(() => import('./modules/finance/Finance'));
 const AccountsPayableDashboard = lazy(() => import('./modules/finance/accountsPayable/AccountsPayableDashboard'));
+const AccountsReceivableDashboard = lazy(() => import('./modules/finance/accountsReceivable/AccountsReceivableDashboard'));
 const ChartOfAccounts = lazy(() => import('./modules/finance/ChartOfAccounts'));
 const Journals = lazy(() => import('./modules/finance/Journals'));
 const FinanceReports = lazy(() => import('./modules/finance/FinanceReports'));
@@ -179,6 +181,7 @@ function App() {
             {/* Academics Module */}
             <Route path="/dashboard/academics" element={<ProtectedRoute><PermissionGate module="academics"><StudentAcademics /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/academics/marks" element={<ProtectedRoute><PermissionGate module="academics"><MarksInputDashboard /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/academics/exam-schedules" element={<ProtectedRoute><PermissionGate module="academics"><ExamSchedulesDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/academics/curriculum" element={<ProtectedRoute><PermissionGate module="academics"><CurriculumSetupDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/academics/subjects" element={<ProtectedRoute><PermissionGate module="academics"><SubjectsDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/academics/allocation" element={<ProtectedRoute><PermissionGate module="academics"><SubjectAllocationDashboard /></PermissionGate></ProtectedRoute>} />
@@ -200,6 +203,7 @@ function App() {
             {/* Finance Module */}
             <Route path="/dashboard/finance" element={<ProtectedRoute><PermissionGate module="finance"><Finance /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/payable" element={<ProtectedRoute><PermissionGate module="finance"><AccountsPayableDashboard /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/finance/receivable" element={<ProtectedRoute><PermissionGate module="finance"><AccountsReceivableDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/chart" element={<ProtectedRoute><PermissionGate module="finance"><ChartOfAccounts /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/journals" element={<ProtectedRoute><PermissionGate module="finance"><Journals /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/reports" element={<ProtectedRoute><PermissionGate module="finance"><FinanceReports /></PermissionGate></ProtectedRoute>} />

@@ -108,6 +108,7 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                                         <input
                                             type="checkbox"
                                             className="rounded text-red-500 focus:ring-red-400 w-4 h-4 cursor-pointer"
+                                            
                                             checked={isAbsent}
                                             onChange={e => handleAbsentToggle(student.student_id, e.target.checked)}
                                         />
@@ -120,6 +121,7 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                                                 <input
                                                     id={`mark-input-${index}`}
                                                     type="number"
+                                                    
                                                     className={`w-20 text-center py-1.5 rounded-lg border text-sm font-bold outline-none focus:ring-2 transition-all ${
                                                         !isValid ? 'border-red-500 bg-red-50 text-red-700 focus:ring-red-500' :
                                                         hasMarks ? 'border-blue-200 bg-blue-50 text-blue-700 focus:ring-blue-500' :
@@ -157,7 +159,8 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                                         <div className="relative">
                                             <input
                                                 type="text"
-                                                className="w-full pl-7 pr-3 py-1.5 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none text-sm transition-colors"
+                                                style = {{ paddingLeft: '20px'}}
+                                                className="w-full pr-3 py-1.5 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none text-sm transition-colors"
                                                 placeholder="Add remarks..."
                                                 value={student.teacher_remark || ''}
                                                 onChange={e => onUpdateStudent(student.student_id, 'teacher_remark', e.target.value)}

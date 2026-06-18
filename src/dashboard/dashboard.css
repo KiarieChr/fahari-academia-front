@@ -110,7 +110,7 @@ body {
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-sidebar);
-    z-index: 1000;
+    z-index: 900;
     color: var(--sidebar-text);
     height: 100vh;
     height: 100dvh;

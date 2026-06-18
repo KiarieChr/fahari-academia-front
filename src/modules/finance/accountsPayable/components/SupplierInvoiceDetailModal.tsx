@@ -191,9 +191,9 @@ const SupplierInvoiceDetailModal = ({ show, invoice: initialInvoice, onClose, on
                         <h5 className="mb-1">Invoice {invoice.invoice_number}</h5>
                         <small className="text-muted">{invoice.supplier_name}</small>
                     </div>
-                    <div className="d-flex align-items-center gap-3">
+                    <div className="d-flex align-items-center gap-3 text-blue ">
                         {getStatusBadge(invoice.status)}
-                        <button className="btn-close" onClick={onClose}></button>
+                        <button className="btn-close text-gray" onClick={onClose}></button>
                     </div>
                 </div>
 

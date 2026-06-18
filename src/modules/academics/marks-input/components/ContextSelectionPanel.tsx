@@ -34,7 +34,8 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                     examService.getGradingScales(),
                     institutionService.getProfile(),
                 ]);
-                setAcademicYears(years.results || years);
+                const yearsList = years.results || years;
+                setAcademicYears(yearsList);
                 setTerms(trms.results || trms);
                 setGrades(cls.results || cls);
                 setStreams(strms.results || strms);
@@ -42,6 +43,15 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                 setAssessmentTypes(ats.results || ats);
                 setGradingScales(scales.results || scales);
                 setInstitutionProfile(instData.data || instData);
+
+                // Default to current year
+                if (!context.academicYear) {
+                    const currentYear = new Date().getFullYear().toString();
+                    const currentYrObj = yearsList.find(y => y.name === currentYear || y.name?.includes(currentYear));
+                    if (currentYrObj) {
+                        setContext(prev => ({ ...prev, academicYear: currentYrObj.id }));
+                    }
+                }
             } catch (err) {
                 toast.error('Failed to load dropdown data');
             }
@@ -96,36 +106,15 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                 const list = data.results || data;
                 setExaminations(list);
                 if (list.length === 1) {
-                    setContext(prev => ({ ...prev, examination: list[0].id }));
+                    setContext(prev => ({ ...prev, examination: list[0].id, _examObj: list[0] }));
                     setIsCollapsed(true);
                 } else if (list.length > 1) {
-                    setContext(prev => ({ ...prev, examination: list[0].id }));
+                    setContext(prev => ({ ...prev, examination: list[0].id, _examObj: list[0] }));
                     setIsCollapsed(true);
                 } else {
-                    // Auto-create the exam
-                    const session = classSessions.find(s => s.id === context.classSession);
-                    const curId = session?.curriculum;
-                    // Pick first matching grading scale
-                    const scale = gradingScales.find(s => s.curriculum === curId && s.is_active);
-                    if (!scale) {
-                        toast.warn('No grading scale found for this curriculum');
-                        setContext(prev => ({ ...prev, examination: '' }));
-                        return;
-                    }
-                    try {
-                        const newExam = await examService.createExamination({
-                            class_session: context.classSession,
-                            subject: context.subject,
-                            assessment_type: context.assessmentType,
-                            grading_scale: scale.id,
-                            status: 'marks_entry',
-                        });
-                        setContext(prev => ({ ...prev, examination: newExam.id }));
-                        toast.success('Exam created automatically');
-                        setIsCollapsed(true);
-                    } catch (err) {
-                        toast.error('Failed to create exam: ' + (err.message || ''));
-                    }
+                    // Exam not scheduled/found
+                    setContext(prev => ({ ...prev, examination: null, _examObj: null }));
+                    toast.warn('No scheduled exam found for this selection.');
                 }
             } catch {
                 setContext(prev => ({ ...prev, examination: '' }));
@@ -197,7 +186,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 relative lg:sticky lg:top-0 z-20 shadow-sm transition-all duration-300">
+        <div className="bg-transparent border-b border-slate-200 dark:border-slate-700 relative z-20 transition-all duration-300">
             <div className="max-w-[1600px] mx-auto p-4">
                 {isCollapsed && isReady ? (
                     <div className="flex items-center justify-between">

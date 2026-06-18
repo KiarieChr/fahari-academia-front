@@ -12,13 +12,13 @@ const AttendanceQuickActions = () => {
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-4 h-full mt-3">
+        <div className="grid grid-cols-2 gap-4 mt-3">
             {actions.map((action, index) => (
                 <motion.button
                     key={index}
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="quick-action-btn flex flex-col items-center justify-center p-1 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all group "
+                    className="quick-action-btn flex flex-col items-center justify-center p-2 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all group "
                 >
                     <div className={`w-10 h-10 rounded-full ${action.bg} ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                         <action.icon size={20} />

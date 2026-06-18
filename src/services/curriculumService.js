@@ -64,6 +64,10 @@ export const curriculumService = {
     // ─── Subjects ────────────────────────────────────────────────
     getSubjects: (params = {}) =>
         api.get('/api/timetable/subjects/', { params }),
+    getGradeSubjects: (params = {}) =>
+        api.get('/api/timetable/grade-subjects/', { params }),
+    bulkUpdateGradeSubjects: (data) =>
+        api.post('/api/timetable/grade-subjects/bulk-update/', data),
 
     getSubject: (id) =>
         api.get(`/api/timetable/subjects/${id}/`),

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
-import { CheckCircle, Upload, RotateCcw, BarChart2 } from 'lucide-react';
+import { CheckCircle, Upload, RotateCcw, BarChart2, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import ContextSelectionPanel from './components/ContextSelectionPanel';
@@ -318,16 +318,38 @@ const MarksInputDashboard = () => {
                             </div>
                         </div>
 
-                        {/* Marks Table */}
-                        <StudentMarksTable
-                            students={students}
-                            onUpdateStudent={handleUpdateStudent}
-                            selectedStudents={selectedStudents}
-                            onSelectStudent={handleSelectStudent}
-                            onSelectAll={handleSelectAll}
-                            maxMark={examMeta.max_mark}
-                            loading={loading}
-                        />
+                        {/* Marks Table or Warning */}
+                        {context.examination && context._examObj && (!context._examObj.exam_date && context._examObj.status === 'draft') ? (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center mt-8 shadow-sm">
+                                <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Clock size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-amber-900 mb-2">Examination Not Scheduled</h3>
+                                <p className="text-amber-700 max-w-md mx-auto">
+                                    This examination exists but has not been scheduled yet. Please go to the <strong>Exam Schedules</strong> module to schedule it before entering marks.
+                                </p>
+                            </div>
+                        ) : !context.examination ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                                    <BarChart2 size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">No Exam Selected</h3>
+                                <p className="text-slate-500 max-w-md mx-auto">
+                                    Please use the filters above to select a Class, Subject, and Assessment Type.
+                                </p>
+                            </div>
+                        ) : (
+                            <StudentMarksTable
+                                students={students}
+                                onUpdateStudent={handleUpdateStudent}
+                                selectedStudents={selectedStudents}
+                                onSelectStudent={handleSelectStudent}
+                                onSelectAll={handleSelectAll}
+                                maxMark={examMeta.max_mark}
+                                loading={loading}
+                            />
+                        )}
                     </div>
 
                     {/* Insights Panel */}

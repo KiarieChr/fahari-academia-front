@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, RefreshCw, Download, Plus, ArrowUpRight, AlertCircle, FileText, CheckCircle, Send } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { formatKES, formatDate, getStatusBadgeClass } from '../utils/formatters';
+import { formatKES, formatDate, getStatusBadgeClass } from '../../accountsPayable/utils/formatters';
 import { financeService } from '../../../../services/financeService';
 import CustomerInvoiceModal from './CustomerInvoiceModal';
 
-const CustomerInvoicesTab = ({ onCreateRefund, onCreateInvoice }) => {
+const CustomerInvoicesTab = ({
+    onCreateRefund,
+    onCreateInvoice,
+    onReceiptInvoice
+}) => {
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -270,6 +274,17 @@ const CustomerInvoicesTab = ({ onCreateRefund, onCreateInvoice }) => {
                                                         title="Issue Invoice (Convert from Proforma)"
                                                     >
                                                         <Send size={14} />
+                                                    </button>
+                                                )}
+
+                                                {/* Receipt button - only for ISSUED invoices */}
+                                                {invoice.journal_entry && invoice.status !== 'VOID' && invoice.status !== 'PAID' && invoice.status !== 'Overpaid' && (
+                                                    <button
+                                                        className="btn btn-sm btn-outline-primary"
+                                                        onClick={() => onReceiptInvoice(invoice)}
+                                                        title="Receipt Invoice"
+                                                    >
+                                                        <Plus size={14} /> Receipt
                                                     </button>
                                                 )}
 

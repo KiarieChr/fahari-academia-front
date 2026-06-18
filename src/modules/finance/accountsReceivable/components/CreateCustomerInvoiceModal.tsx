@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Save, User, Calendar, DollarSign, FileText, Zap } from 'lucide-react';
 import { financeService } from '../../../../services/financeService';
-import { formatKES } from '../utils/formatters';
-import QuickAddCustomerModal from './QuickAddCustomerModal.jsx';
+import { formatKES } from '../../accountsPayable/utils/formatters';
+import QuickAddCustomerModal from './QuickAddCustomerModal';
 
 // Income account keyword mappings for auto-suggestion (Kenyan school context)
 const INCOME_ACCOUNT_KEYWORDS = {

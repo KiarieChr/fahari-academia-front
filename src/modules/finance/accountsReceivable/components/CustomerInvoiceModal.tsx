@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, User, FileText, Calendar, DollarSign, RefreshCw, Printer } from 'lucide-react';
-import { formatKES, formatDate } from '../utils/formatters';
+import { formatKES, formatDate } from '../../accountsPayable/utils/formatters';
 
 const CustomerInvoiceModal = ({ invoice, onClose, onCreateRefund }) => {
     const handlePrint = () => {

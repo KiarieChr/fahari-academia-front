@@ -9,9 +9,10 @@ import QuickActionsPanel from './components/dashboard/QuickActionsPanel';
 import AnalyticsSection from './components/dashboard/AnalyticsSection';
 import AlertsWidget from './components/dashboard/AlertsWidget';
 import RecentRunsTable from './components/dashboard/RecentRunsTable';
-import EmployeePayProfiles from './components/dashboard/EmployeePayProfiles';
-import PayGradesSteps from './components/dashboard/PayGradesSteps';
-import PayPeriods from './components/dashboard/PayPeriods';
+
+const EmployeePayProfiles = React.lazy(() => import('./components/dashboard/EmployeePayProfiles'));
+const PayGradesSteps = React.lazy(() => import('./components/dashboard/PayGradesSteps'));
+const PayPeriods = React.lazy(() => import('./components/dashboard/PayPeriods'));
 
 const PayrollDashboard = ({ noLayout = false }) => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -56,7 +57,7 @@ const PayrollDashboard = ({ noLayout = false }) => {
     const content = (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-8rem)] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-white z-10">
+            <div className="px-2 py-3 border-b border-gray-100 flex justify-between items-center bg-white z-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Payroll</h1>
                     <p className="text-sm text-gray-500 mt-1 font-medium">Process payroll, manage pay profiles, and review analytics</p>
@@ -87,17 +88,19 @@ const PayrollDashboard = ({ noLayout = false }) => {
             <div className="flex flex-1 overflow-hidden">
                 {/* Content Area */}
                 <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-4">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeTab}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2, ease: "easeInOut" }}
-                        >
-                            {renderContent()}
-                        </motion.div>
-                    </AnimatePresence>
+                    <React.Suspense fallback={<div className="flex h-full items-center justify-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeTab}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2, ease: "easeInOut" }}
+                            >
+                                {renderContent()}
+                            </motion.div>
+                        </AnimatePresence>
+                    </React.Suspense>
                 </div>
             </div>
         </div>

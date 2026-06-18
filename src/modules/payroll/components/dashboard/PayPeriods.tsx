@@ -199,7 +199,7 @@ const PayPeriods = () => {
     return (
         <div className="space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
                 <motion.div 
                     className="mini-stat-card-premium stat-blue relative overflow-hidden group cursor-pointer"
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
@@ -259,16 +259,17 @@ const PayPeriods = () => {
                                 type="text"
                                 placeholder="Search periods..."
                                 value={search}
+                                style={{ paddingLeft: '30px' }}
                                 onChange={e => setSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                className="w-full pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                             />
                         </div>
-                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-wrap">
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 flex-wrap">
                             {['all', 'open', 'calculated', 'approved', 'paid', 'closed'].map(f => (
                                 <button
                                     key={f}
                                     onClick={() => setFilterStatus(f)}
-                                    className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-all ${filterStatus === f
+                                    className={`px-3 py-2 text-xs font-medium rounded-md transition-all ${filterStatus === f
                                         ? 'bg-white text-gray-800 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-700'
                                     }`}
@@ -362,11 +363,16 @@ const PayPeriods = () => {
                                                             title="Process Payroll"
                                                         >
                                                             {processing === period.id ? (
-                                                                <Loader2 size={12} className="animate-spin" />
+                                                                <>
+                                                                    <Loader2 size={12} className="animate-spin" />
+                                                                    Processing...
+                                                                </>
                                                             ) : (
-                                                                <Play size={12} />
+                                                                <>
+                                                                    <Play size={12} />
+                                                                    Process
+                                                                </>
                                                             )}
-                                                            Process
                                                         </button>
                                                     )}
                                                     {period.status === 'calculated' && (
@@ -526,6 +532,32 @@ const PayPeriods = () => {
                                     {saving ? 'Saving...' : editingPeriod ? 'Update' : 'Create'}
                                 </button>
                             </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Processing Overlay Modal */}
+            <AnimatePresence>
+                {processing && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"
+                        >
+                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Loader2 size={32} className="animate-spin text-blue-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Processing Payroll...</h3>
+                            <p className="text-sm text-gray-500">
+                                Please wait while salaries and deductions are being calculated. Do not close or refresh this page.
+                            </p>
                         </motion.div>
                     </div>
                 )}

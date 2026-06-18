@@ -237,8 +237,8 @@ const EmployeePayProfiles = () => {
     return (
         <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <motion.div 
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-4">
+                <motion.div
                     className="mini-stat-card-premium stat-blue relative overflow-hidden group cursor-pointer"
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 >
@@ -254,7 +254,7 @@ const EmployeePayProfiles = () => {
                     </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                     className="mini-stat-card-premium stat-emerald relative overflow-hidden group cursor-pointer"
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 >
@@ -270,7 +270,7 @@ const EmployeePayProfiles = () => {
                     </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                     className="mini-stat-card-premium stat-purple relative overflow-hidden group cursor-pointer"
                     whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 >
@@ -288,7 +288,7 @@ const EmployeePayProfiles = () => {
             </div>
 
             {/* Toolbar */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm mt-4">
                 <div className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                     <div className="flex items-center gap-3 flex-1">
                         <div className="relative flex-1 max-w-sm">
@@ -297,19 +297,20 @@ const EmployeePayProfiles = () => {
                                 type="text"
                                 placeholder="Search by name or employee no..."
                                 value={search}
+                                style={{ paddingLeft: '30px' }}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                                className="w-full pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                             />
                         </div>
-                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                             {['all', 'active', 'inactive'].map(f => (
                                 <button
                                     key={f}
                                     onClick={() => setFilterActive(f)}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterActive === f
+                                    className={`px-4 py-2 text-xs font-medium rounded-lg transition-all ${filterActive === f
                                         ? 'bg-white text-gray-800 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-700'
-                                    }`}
+                                        }`}
                                 >
                                     {f.charAt(0).toUpperCase() + f.slice(1)}
                                 </button>
@@ -383,7 +384,7 @@ const EmployeePayProfiles = () => {
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${profile.is_active
                                                 ? 'bg-green-50 text-green-700'
                                                 : 'bg-gray-100 text-gray-500'
-                                            }`}>
+                                                }`}>
                                                 {profile.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
@@ -416,7 +417,7 @@ const EmployeePayProfiles = () => {
             {/* Modal */}
             <AnimatePresence>
                 {showModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 flex z-100 items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -432,7 +433,7 @@ const EmployeePayProfiles = () => {
                             className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col"
                         >
                             {/* Modal Header */}
-                            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50/80 to-indigo-50/80">
+                            <div className="px-4 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50/80 to-indigo-50/80">
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-800">
                                         {editingProfile ? 'Edit Pay Profile' : 'Assign Pay Profile'}
@@ -468,7 +469,7 @@ const EmployeePayProfiles = () => {
                                         ) : (
                                             <>
                                                 <div className="relative" ref={empSearchRef}>
-                                                    <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                                     <input
                                                         type="text"
                                                         value={empSearch}
@@ -481,7 +482,8 @@ const EmployeePayProfiles = () => {
                                                         }}
                                                         onFocus={() => empResults.length > 0 && setShowEmpDropdown(true)}
                                                         placeholder="Search by name or employee number..."
-                                                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                                        style={{ paddingLeft: '30px' }}
+                                                        className="w-full pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
                                                     />
                                                     {empLoading && (
                                                         <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />

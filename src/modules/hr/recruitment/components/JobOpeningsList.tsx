@@ -59,19 +59,20 @@ const JobOpeningsList = ({ onEdit }) => {
     };
 
     if (loading && jobs.length === 0) {
-        return <div className="p-8 text-center text-gray-500">Loading job openings...</div>;
+        return <div className="p-3 text-center text-gray-500">Loading job openings...</div>;
     }
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
             {/* Filters Header */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row gap-4 justify-between items-center">
                 <form onSubmit={handleSearch} className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
+                        style={{ paddingLeft: '30px'}}
                         placeholder="Search jobs..."
-                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        className="pr-4 py-2 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
