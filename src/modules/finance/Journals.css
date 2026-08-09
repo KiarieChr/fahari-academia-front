@@ -1,0 +1,144 @@
+/* Journals Dashboard Styles */
+.jr-dashboard {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* KPI Cards */
+.jr-kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.jr-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.jr-kpi-card .h4 {
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+/* Status Indicators */
+.jr-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35em 0.8em;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.jr-status-draft {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.jr-status-posted {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.jr-status-cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Table Card */
+.jr-table-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* Table Styles */
+.jr-table {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.jr-table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.jr-table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.jr-table tr:hover td {
+    background-color: #fcfcfc;
+}
+
+.jr-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Search Input */
+.jr-table-card .input-group .form-control {
+    border-left: none;
+}
+
+.jr-table-card .input-group .input-group-text {
+    background-color: white;
+    border-right: none;
+}
+
+.jr-table-card .input-group .form-control:focus,
+.jr-table-card .input-group .input-group-text:focus {
+    box-shadow: none;
+    border-color: #ced4da;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+.btn-primary:hover {
+    background-color: #3a56d4;
+    border-color: #3a56d4;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.jr-dashboard {
+    animation: fadeIn 0.4s ease-out;
+}
