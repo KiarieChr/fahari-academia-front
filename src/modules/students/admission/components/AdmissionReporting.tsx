@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart, Users, CheckCircle, Search, User, BookOpen, AlertCircle, Calendar, Eye, X,
-  ChevronLeft, ChevronRight, Sparkles, TrendingUp
+  ChevronLeft, ChevronRight, Sparkles, TrendingUp, Settings
 } from 'lucide-react';
 import { api } from '../../../../services/api';
 import Swal from 'sweetalert2';
@@ -208,7 +208,7 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
     <div className="space-y-6">
       {/* Executive Header Command Card */}
       <div 
-        className="relative overflow-hidden p-6 md:p-8 rounded-[24px] border transition-all duration-300 hover:shadow-lg"
+        className="relative overflow-hidden p-4 md:p-4 rounded-[24px] border transition-all duration-300 hover:shadow-lg mt-2 mb-2"
         style={{ 
           background: 'linear-gradient(135deg, var(--primary-light) 0%, rgba(99, 102, 241, 0.04) 100%)', 
           borderColor: 'var(--border-color-light)' 
@@ -220,11 +220,11 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
 
         <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+            <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase  bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
               <Sparkles size={12} className="text-indigo-600 animate-pulse" />
               <span>Term Operations Command</span>
             </div>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>
               Student Reopening Check-in
             </h2>
             <p className="text-sm font-medium leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
@@ -280,7 +280,7 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
             <button
               onClick={onOpenModal}
               style={{ background: 'var(--primary-color)' }}
-              className="whitespace-nowrap flex-shrink-0 px-6 py-3.5 text-white font-extrabold text-sm rounded-2xl shadow-md hover:shadow-lg hover:opacity-95 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="whitespace-nowrap flex-shrink-0 px-4 py-3 text-white font-extrabold text-sm rounded-2xl shadow-md hover:shadow-lg hover:opacity-95 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <CheckCircle size={18} />
               <span>Report Student Back</span>
@@ -296,10 +296,10 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
           borderColor: 'rgba(245, 158, 11, 0.25)', 
           boxShadow: 'var(--shadow-card)' 
         }} 
-        className="rounded-[24px] border overflow-hidden transition-all duration-300"
+        className="rounded-[24px] border overflow-hidden transition-all duration-300 mt-2"
       >
         <div 
-          className="px-6 py-5 border-b flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4" 
+          className="px-4 py-3 border-b flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4" 
           style={{ 
             borderColor: 'rgba(245, 158, 11, 0.15)', 
             background: 'linear-gradient(to right, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.01))' 
@@ -333,9 +333,10 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
                   borderColor: 'rgba(245, 158, 11, 0.3)', 
                   color: 'var(--text-main)',
                   paddingLeft: '2.25rem',
+                  
                   fontSize: '0.75rem'
                 }}
-                className="w-full sm:w-48 pl-8 pr-3 py-1.5 border rounded-lg focus:ring-1 focus:ring-amber-500 outline-none font-bold"
+                className="w-full sm:w-48 pl-4 pr-3 py-2 border rounded-lg focus:ring-1 focus:ring-amber-500 outline-none font-bold"
               />
               {unreportedSearch && (
                 <button 
@@ -501,10 +502,10 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
           borderColor: 'var(--border-color-light)', 
           boxShadow: 'var(--shadow-card)' 
         }} 
-        className="rounded-[24px] border overflow-hidden transition-all duration-300"
+        className="rounded-[24px] border overflow-hidden transition-all duration-300 mt-4 p-1"
       >
         <div 
-          className="px-6 py-5 border-b flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4" 
+          className="px-4 py-3 border-b flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4" 
           style={{ 
             borderColor: 'var(--border-color-light)', 
             background: 'var(--bg-light)' 
@@ -536,7 +537,7 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
                   paddingLeft: '2.25rem',
                   fontSize: '0.75rem'
                 }}
-                className="w-full sm:w-48 pl-8 pr-3 py-1.5 border rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none font-bold"
+                className="w-full sm:w-48 pl-8 pr-3 py-2 border rounded-lg focus:ring-1 focus:ring-indigo-500 outline-none font-bold"
               />
               {reportedSearch && (
                 <button 
@@ -547,13 +548,13 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
                 </button>
               )}
             </div>
-            <span className="text-xs font-black text-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 dark:text-indigo-400 px-3 py-1.5 rounded-full text-center">
+            <span className="text-xs font-black text-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 dark:text-indigo-400 px-3 py-2 rounded-full text-center">
               {totalReportedItems} Total Verified
             </span>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto p-3">
           <table className="w-full min-w-[700px] divide-y" style={{ divideColor: 'var(--border-color-light)' }}>
             <thead style={{ background: 'var(--bg-light)' }}>
               <tr>
@@ -631,7 +632,7 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
         {/* Reported Pagination Controls Footer */}
         <div 
           style={{ borderColor: 'var(--border-color-light)', background: 'var(--bg-light)', color: 'var(--text-secondary)' }}
-          className="px-6 py-4 border-t flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-bold uppercase tracking-wider"
+          className="px-4 py-3 border-t flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-bold uppercase tracking-wider"
         >
           <div className="flex items-center gap-3">
             <span className="text-[10px] text-slate-400">Rows per page:</span>
@@ -642,7 +643,7 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
                 setReportedPage(1);
               }}
               style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-              className="px-3 py-1.5 border rounded-lg outline-none cursor-pointer focus:ring-1 focus:ring-indigo-500 text-xs font-extrabold"
+              className="px-3 py-2 border rounded-lg outline-none cursor-pointer focus:ring-1 focus:ring-indigo-500 text-xs font-extrabold"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -711,9 +712,9 @@ const ReportBackView = ({ reports, unreported, unreportedMeta, loadingUnreported
 const StudentReportingDetail = ({ student, onClose }) => {
   const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingEnrollment, setEditingEnrollment] = useState(null);
 
-  useEffect(() => {
-    const fetchTimeline = async () => {
+  const fetchTimeline = async () => {
       setLoading(true);
       try {
         const res = await api.get(`/api/settings/enrollments/timeline/?student_id=${student.student || student.student_id}`);
@@ -723,9 +724,29 @@ const StudentReportingDetail = ({ student, onClose }) => {
       } finally {
         setLoading(false);
       }
-    };
+  };
+
+  useEffect(() => {
     fetchTimeline();
   }, [student]);
+
+  const handleEditSave = async (id, data) => {
+    try {
+      if (data.is_active) {
+        const studentId = editingEnrollment.student || editingEnrollment.student_id;
+        const activeRes = await api.get(`/api/settings/enrollments/?student_id=${studentId}&is_active=true`);
+        const activeEnrs = activeRes.results || activeRes || [];
+        const others = activeEnrs.filter(e => e.id !== id);
+        await Promise.all(others.map(e => api.patch(`/api/settings/enrollments/${e.id}/`, { is_active: false })));
+      }
+      await api.patch(`/api/settings/enrollments/${id}/`, data);
+      setEditingEnrollment(null);
+      fetchTimeline(); // refresh timeline
+    } catch (e) {
+      console.error('Failed to update enrollment', e);
+      alert('Failed to update enrollment');
+    }
+  };
 
   const statusColor = (status) => {
     const map = { active: 'bg-green-100 text-green-800', promoted: 'bg-blue-100 text-blue-800', completed: 'bg-gray-100 text-gray-700', repeated: 'bg-amber-100 text-amber-800' };
@@ -788,9 +809,18 @@ const StudentReportingDetail = ({ student, onClose }) => {
                         <span style={{ color: 'var(--text-secondary)' }}>{e.term}</span>
                         {e.is_active && <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ background: 'var(--primary-light)', color: 'var(--primary-color)' }}>Current</span>}
                       </div>
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColor(e.status)}`}>
-                        {e.status_display || e.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColor(e.status)}`}>
+                          {e.status_display || e.status}
+                        </span>
+                        <button
+                          onClick={() => setEditingEnrollment(e)}
+                          className="p-1 text-slate-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors"
+                          title="Edit Enrollment (Admin Override)"
+                        >
+                          <Settings size={14} />
+                        </button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                       <div>
@@ -820,6 +850,139 @@ const StudentReportingDetail = ({ student, onClose }) => {
           </div>
         )}
       </div>
+
+      {editingEnrollment && (
+        <EditAcademicEnrollmentModal
+          enrollment={editingEnrollment}
+          onSave={handleEditSave}
+          onClose={() => setEditingEnrollment(null)}
+        />
+      )}
+    </Modal>
+  );
+};
+
+// --- Edit Academic Enrollment Modal (Admin Override) ---
+const EditAcademicEnrollmentModal = ({ enrollment, onSave, onClose }) => {
+  const [formData, setFormData] = useState({
+    grade: enrollment.grade_id || '',
+    term: enrollment.term_id || '',
+    academic_year: enrollment.academic_year_id || '',
+    status: enrollment.status || 'active',
+    is_active: enrollment.is_active !== undefined ? enrollment.is_active : true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [options, setOptions] = useState({ grades: [], terms: [], years: [] });
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [gradesRes, termsRes, yearsRes] = await Promise.all([
+          api.get('/api/settings/classes/'),
+          api.get('/api/settings/terms/'),
+          api.get('/api/settings/academic-years/')
+        ]);
+        setOptions({
+          grades: gradesRes.results || gradesRes || [],
+          terms: termsRes.results || termsRes || [],
+          years: yearsRes.results || yearsRes || []
+        });
+      } catch (e) {
+        console.error('Failed to load options', e);
+      }
+    };
+    fetchOptions();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await onSave(enrollment.id, formData);
+    setSaving(false);
+  };
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Edit Academic Enrollment" maxWidth="md" accentColor="bg-indigo-600">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-amber-50 text-amber-800 p-3 rounded text-xs">
+          <strong>Warning:</strong> This directly edits the overarching Academic Session which controls the billing context.
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Grade</label>
+            <select
+              className="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500"
+              value={formData.grade}
+              onChange={e => setFormData({ ...formData, grade: e.target.value })}
+            >
+              <option value="">-- Select Grade --</option>
+              {options.grades.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Academic Year</label>
+            <select
+              className="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500"
+              value={formData.academic_year}
+              onChange={e => setFormData({ ...formData, academic_year: e.target.value })}
+            >
+              <option value="">-- Select Year --</option>
+              {options.years.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1">Term</label>
+          <select
+            className="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500"
+            value={formData.term}
+            onChange={e => setFormData({ ...formData, term: e.target.value })}
+          >
+            <option value="">-- Select Term --</option>
+            {options.terms
+              .filter(t => !formData.academic_year || String(t.academic_year) === String(formData.academic_year))
+              .map(t => <option key={t.id} value={t.id}>{t.name} ({t.academic_year_name})</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1">Status</label>
+          <select
+            className="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500"
+            value={formData.status}
+            onChange={e => setFormData({ ...formData, status: e.target.value })}
+          >
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="promoted">Promoted</option>
+            <option value="repeated">Repeated</option>
+            <option value="transferred_out">Transferred Out</option>
+            <option value="withdrawn">Withdrawn</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2 pt-2">
+          <input
+            type="checkbox"
+            id="enrollment_is_active"
+            checked={formData.is_active}
+            onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+            className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+          />
+          <label htmlFor="enrollment_is_active" className="text-sm font-medium text-slate-700">
+            Is Active (Current Billing Session)
+          </label>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button type="submit" disabled={saving} className="px-5 py-2 text-sm bg-indigo-600 text-white rounded-lg disabled:opacity-50">
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
     </Modal>
   );
 };
@@ -1011,16 +1174,16 @@ const ReportBackModal = ({ onClose, onSuccess, preSelectedStudent }) => {
               </div>
             ) : (
               <div className="relative">
-                <Search className="absolute left-3 top-3" size={18} style={{ color: 'var(--text-muted)' }} />
+                <Search className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
                   type="text"
                   placeholder="Search by name or admission number..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className={inputClass + ' pl-10'}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.02),2px_2px_8px_rgba(0,0,0,0.04)] transition-all"
                 />
                 {searchResults.length > 0 && (
-                  <div style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }} className="absolute z-10 w-full mt-1 border rounded-xl max-h-64 overflow-y-auto">
+                  <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 rounded-xl max-h-64 overflow-y-auto shadow-[4px_4px_20px_rgba(0,0,0,0.1),-4px_-4px_20px_rgba(255,255,255,0.9)] py-1 ring-1 ring-black/5">
                     {searchResults.map(s => (
                       <button
                         key={s.id}
@@ -1030,11 +1193,10 @@ const ReportBackModal = ({ onClose, onSuccess, preSelectedStudent }) => {
                           setSearchTerm('');
                           setSearchResults([]);
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50/50 border-b last:border-0 transition-colors cursor-pointer"
-                        style={{ borderColor: 'var(--border-color-light)' }}
+                        className="w-full text-left px-4 py-3 hover:bg-indigo-50/60 border-b border-gray-50 last:border-0 transition-all cursor-pointer group"
                       >
-                        <p className="font-medium" style={{ color: 'var(--text-main)' }}>{s.text || s.name}</p>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.admission_number}</p>
+                        <p className="font-semibold text-gray-800 group-hover:text-indigo-700">{s.text || s.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{s.admission_number}</p>
                       </button>
                     ))}
                   </div>

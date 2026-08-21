@@ -222,6 +222,7 @@ const StudentManagement = () => {
     { icon: GraduationCap, title: 'Admission Records',        description: 'Enrolled students & admission history',   color: 'emerald',path: '/dashboard/students/admission/records' },
     { icon: CalendarCheck, title: 'Terms & Sessions',         description: 'Academic years, terms & class sessions',  color: 'amber',  path: '/dashboard/students/academic-sessions' },
     { icon: BookOpen,      title: 'Settings & Intakes',       description: 'Configure workflow & intake windows',     color: 'rose',   path: '/dashboard/students/settings' },
+    { icon: BarChart3,     title: 'Reports & Analytics',      description: 'Nominal rolls and demographic reports',   color: 'indigo', path: '/dashboard/students/reports' },
   ];
 
   const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } };

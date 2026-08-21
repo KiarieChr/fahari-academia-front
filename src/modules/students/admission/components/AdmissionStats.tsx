@@ -209,18 +209,15 @@ const IntakeProgressGauge = React.memo(({ admitted = 0, target = 100 }) => {
 
     return (
         <div 
-            style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
-            className=" lg:p-4 rounded-[48px] border transition-all duration-500 hover:shadow-[0_40px_80px_rgba(0,0,0,0.05)] hover:-translate-y-1 flex flex-col items-center justify-between min-h-[420px] p-3"
+            className="lg:p-6 rounded-[40px] border border-slate-200/60 dark:border-slate-800/60 transition-all duration-500 hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_40px_80px_rgba(0,0,0,0.3)] hover:-translate-y-1 flex flex-col items-center justify-between min-h-[420px] p-5 bg-white dark:bg-slate-900 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden group"
         >
-            <div className="w-full text-left mb-4">
-                <span 
-                    className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md"
-                    style={{ background: 'var(--primary-light)', color: 'var(--primary-color)' }}
-                >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 dark:bg-indigo-500/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/20 transition-colors duration-700" />
+            <div className="w-full text-left mb-6 relative z-10">
+                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/30 shadow-sm">
                     Intake Cap
                 </span>
-                <h3 className="text-xl font-black tracking-tighter mt-3" style={{ color: 'var(--text-main)' }}>Target Progress</h3>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>Capacity Yield Analysis</p>
+                <h3 className="text-2xl font-black tracking-tight mt-4 text-slate-800 dark:text-white">Target Progress</h3>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1.5 text-slate-400">Capacity Yield Analysis</p>
             </div>
             
             <div className="relative flex items-center justify-center my-2 group">
@@ -682,125 +679,125 @@ const AdmissionStats = () => {
 
     if (!stats) return null;
 
+    const NeoStatCard = ({ title, value, icon: Icon, iconBg, iconColor, trendLabel, trendData, dataKey, highlightColor, isActive, onClick }) => {
+        return (
+            <div 
+                onClick={onClick}
+                className={`relative overflow-hidden cursor-pointer transition-all duration-500 rounded-[32px] p-4 h-[160px] flex flex-col justify-between border ${
+                    isActive 
+                    ? `bg-indigo-600 border-indigo-500 shadow-[0_20px_40px_rgba(79,70,229,0.3)] scale-[1.03] z-10` 
+                    : 'bg-white dark:bg-slate-900 border-slate-200/60 dark:border-slate-800/60 hover:scale-[1.02] shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_35px_rgba(0,0,0,0.06)]'
+                }`}
+            >
+                <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-40 transition-opacity group-hover:opacity-60" style={{ background: highlightColor }} />
+                
+                <div className="relative z-10 flex items-start justify-between">
+                    <div>
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1.5 ${isActive ? 'text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>{title}</p>
+                        <h4 className={`text-4xl font-black tabular-nums tracking-tighter ${isActive ? 'text-white' : 'text-slate-800 dark:text-white'}`}>{value}</h4>
+                    </div>
+                    <div className={`p-3 rounded-[18px] shadow-sm backdrop-blur-sm ${isActive ? 'bg-white/20 text-white' : `${iconBg} ${iconColor}`}`}>
+                        <Icon size={24} />
+                    </div>
+                </div>
+                
+                <div className="relative z-10 mt-auto flex items-center justify-between">
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isActive ? 'text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>{trendLabel}</span>
+                </div>
+
+                {/* Sparkline Background */}
+                <div className="absolute bottom-0 left-0 right-0 h-20 opacity-40 pointer-events-none">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={trendData}>
+                            <defs>
+                                <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={highlightColor} stopOpacity={0.8} />
+                                    <stop offset="95%" stopColor={highlightColor} stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <Area type="monotone" dataKey={dataKey} stroke={highlightColor} strokeWidth={2} fillOpacity={1} fill={`url(#gradient-${dataKey})`} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="w-full space-y-8 py-2">
-            {/* Admissions Intelligence — Executive Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2 relative">
+            {/* Admissions Intelligence — Unified Header & Filters */}
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-3 sm:p-4 rounded-[32px] border border-slate-200/60 dark:border-slate-800/60 shadow-sm mb-4">
                 
-                <div className="flex flex-col gap-1.5">
+                {/* Header */}
+                <div className="flex flex-col gap-2 relative z-10">
                     <div className="flex items-center gap-3">
-                        <div
-                            className="flex items-center gap-2 px-2 py-0.5 rounded-lg shadow-md"
-                            style={{ background: 'var(--primary-color)' }}
-                        >
-                            <Sparkles size={12} className="text-white" />
-                            <span className="text-[8px] font-black text-white uppercase px-3 py-1 tracking-[0.2em]">Live Engine</span>
+                        <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-500/20">
+                            <Sparkles size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em]">Live Engine</span>
                         </div>
-                        <div className="h-px w-6" style={{ background: 'var(--border-color-light)' }} />
-                        <span className="text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>Module 01</span>
+                        <div className="h-4 w-px bg-slate-300 dark:bg-slate-700" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Module 01</span>
                     </div>
 
-                    <h2 className="text-3xl font-black tracking-tighter leading-none mt-1" style={{ color: 'var(--text-main)' }}>
+                    <h2 className="text-3xl sm:text-4xl font-black tracking-tighter text-slate-900 dark:text-white mt-1">
                         Admissions Intelligence
                     </h2>
                     
-                    <p className="text-[11px] font-bold uppercase tracking-widest max-w-xl leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                        Predictive metrics <span style={{ color: 'var(--primary-color)' }} className="mx-1">/</span> Real-time monitoring
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-4 mb-0.5">
-                    <div
-                        className="px-4 py-2 rounded-xl border flex items-center gap-3 transition-all hover:shadow-md group"
-                        style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    >
-                        <div className="relative">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
-                            <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-20" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest leading-none mb-0.5" style={{ color: 'var(--text-muted)' }}>Data Sync</span>
-                            <span className="text-[9px] font-black uppercase tracking-wider leading-none" style={{ color: 'var(--text-main)' }}>Optimal Status</span>
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                        <span>Predictive metrics</span>
+                        <span className="text-indigo-500">•</span>
+                        <span>Real-time monitoring</span>
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 ml-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                            <span className="text-[9px] font-black tracking-widest">Optimal Status</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Executive Controls Bar */}
-            <div 
-                style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
-                className="p-5 sm:p-6 rounded-[24px] sm:rounded-[32px] border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end relative"
-            >
-                {/* Campus Filter */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <MapPin size={12} style={{ color: 'var(--primary-color)' }} /> Campus
-                    </label>
-                    <select
-                        value={filters.campus_id}
-                        onChange={(e) => handleFilterChange('campus_id', e.target.value)}
-                        style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                        className="w-full px-4 py-2.5 border rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-xs font-semibold shadow-inner"
-                    >
-                        <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>All Campuses</option>
-                        {options.campuses.map(c => (
-                            <option key={c.id} value={c.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>{c.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Intake Filter */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <Layers size={12} style={{ color: 'var(--primary-color)' }} /> Intake Cohort
-                    </label>
-                    <select
-                        value={filters.intake_id}
-                        onChange={(e) => handleFilterChange('intake_id', e.target.value)}
-                        style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                        className="w-full px-4 py-2.5 border rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-xs font-semibold shadow-inner"
-                    >
-                        <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>All Intakes</option>
-                        {options.intakes.map(i => (
-                            <option key={i.id} value={i.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>{i.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Start Date */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <Calendar size={12} style={{ color: 'var(--primary-color)' }} /> Start Date
-                    </label>
-                    <input
-                        type="date"
-                        value={filters.date_start}
-                        onChange={(e) => handleFilterChange('date_start', e.target.value)}
-                        style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                        className="w-full px-4 py-2.5 border rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-xs font-semibold shadow-inner"
-                    />
-                </div>
-
-                {/* End Date */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-                        <Calendar size={12} style={{ color: 'var(--primary-color)' }} /> End Date
-                    </label>
-                    <div className="relative flex items-center">
+                {/* Compact Filters */}
+                <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto relative z-10">
+                    <div className="flex-1 min-w-[140px]">
+                        <select
+                            value={filters.campus_id}
+                            onChange={(e) => handleFilterChange('campus_id', e.target.value)}
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
+                        >
+                            <option value="">All Campuses</option>
+                            {options.campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[140px]">
+                        <select
+                            value={filters.intake_id}
+                            onChange={(e) => handleFilterChange('intake_id', e.target.value)}
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
+                        >
+                            <option value="">All Intakes</option>
+                            {options.intakes.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[130px]">
+                        <input
+                            type="date"
+                            value={filters.date_start}
+                            onChange={(e) => handleFilterChange('date_start', e.target.value)}
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
+                        />
+                    </div>
+                    <div className="flex-1 min-w-[130px] relative">
                         <input
                             type="date"
                             value={filters.date_end}
                             onChange={(e) => handleFilterChange('date_end', e.target.value)}
-                            style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                            className="w-full px-4 py-2.5 border rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-xs font-semibold shadow-inner"
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
                         />
                         {Object.values(filters).some(v => v !== '') && (
                             <button
                                 onClick={handleResetFilters}
-                                style={{ background: 'var(--primary-light)', color: 'var(--primary-color)', borderColor: 'var(--primary-light)' }}
-                                className="absolute -right-2 -top-12 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors flex items-center gap-1 border shadow-sm"
+                                className="absolute -top-3 -right-3 p-1.5 bg-white dark:bg-slate-700 text-slate-400 hover:text-indigo-600 rounded-full border border-slate-200 dark:border-slate-600 shadow-md"
+                                title="Reset filters"
                             >
-                                <RefreshCw size={10} /> Clear
+                                <RefreshCw size={14} />
                             </button>
                         )}
                     </div>
@@ -808,92 +805,94 @@ const AdmissionStats = () => {
             </div>
 
             {/* Metrics Grid — Clickable for interactivity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mt-3 mb-3">
-                <div 
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-5 mb-4">
+                <NeoStatCard
+                    title="Intake Pipeline"
+                    value={stats.metrics.total_apps?.toLocaleString() || '0'}
+                    icon={ClipboardList}
+                    iconBg="bg-blue-100 dark:bg-blue-900/30"
+                    iconColor="text-blue-600 dark:text-blue-400"
+                    trendLabel="Overall volume"
+                    trendData={stats.trends}
+                    dataKey="apps"
+                    highlightColor="#3b82f6"
+                    isActive={highlightMetric === 'apps'}
                     onClick={() => handleMetricClick('apps')}
-                    style={highlightMetric === 'apps' ? { outline: '2px solid var(--primary-color)', outlineOffset: '2px', borderRadius: '20px', transform: 'scale(1.04)' } : {}}
-                    className={`cursor-pointer transition-all duration-300 rounded-[20px] h-full ${
-                        highlightMetric === 'apps' ? 'shadow-lg' : 'hover:scale-[1.02]'
-                    }`}
-                >
-                    <StatCardMini
-                        title="Intake Pipeline"
-                        value={stats.metrics.total_apps?.toLocaleString() || '0'}
-                        icon="clipboard-list"
-                        color="#e3f2fd"
-                        change={derivedMetrics?.admissionChange}
-                        trendLabel="Overall volume"
-                    />
-                </div>
-                <div 
+                />
+                
+                <NeoStatCard
+                    title="Successful Admissions"
+                    value={stats.metrics.admitted?.toLocaleString() || '0'}
+                    icon={UserPlus}
+                    iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+                    iconColor="text-emerald-600 dark:text-emerald-400"
+                    trendLabel={`${derivedMetrics?.conversionRate}% yield`}
+                    trendData={stats.trends}
+                    dataKey="admitted"
+                    highlightColor="#10b981"
+                    isActive={highlightMetric === 'admitted'}
                     onClick={() => handleMetricClick('admitted')}
-                    style={highlightMetric === 'admitted' ? { outline: '2px solid #10b981', outlineOffset: '2px', borderRadius: '20px', transform: 'scale(1.04)' } : {}}
-                    className={`cursor-pointer transition-all duration-300 rounded-[20px] h-full ${
-                        highlightMetric === 'admitted' ? 'shadow-lg' : 'hover:scale-[1.02]'
-                    }`}
-                >
-                    <StatCardMini
-                        title="Successful Admissions"
-                        value={stats.metrics.admitted?.toLocaleString() || '0'}
-                        icon="user-plus"
-                        color="#e8f5e9"
-                        trendLabel={`${derivedMetrics?.conversionRate}% yield`}
-                    />
-                </div>
-                <div 
+                />
+
+                <NeoStatCard
+                    title="Awaiting Review"
+                    value={stats.metrics.pending?.toLocaleString() || '0'}
+                    icon={Users}
+                    iconBg="bg-amber-100 dark:bg-amber-900/30"
+                    iconColor="text-amber-600 dark:text-amber-400"
+                    trendLabel="Processing queue"
+                    trendData={stats.trends}
+                    dataKey="apps"
+                    highlightColor="#f59e0b"
+                    isActive={highlightMetric === 'pending'}
                     onClick={() => handleMetricClick('pending')}
-                    style={highlightMetric === 'pending' ? { outline: '2px solid #f59e0b', outlineOffset: '2px', borderRadius: '20px', transform: 'scale(1.04)' } : {}}
-                    className={`cursor-pointer transition-all duration-300 rounded-[20px] h-full ${
-                        highlightMetric === 'pending' ? 'shadow-lg' : 'hover:scale-[1.02]'
-                    }`}
-                >
-                    <StatCardMini
-                        title="Awaiting Review"
-                        value={stats.metrics.pending?.toLocaleString() || '0'}
-                        icon="users"
-                        color="#fff3e0"
-                        change={derivedMetrics?.pendingChange}
-                        trendLabel="Processing queue"
-                    />
-                </div>
-                <div className="hover:scale-[1.02] transition-transform duration-300 h-full">
-                    <StatCardMini
-                        title="Student Repeaters"
-                        value={stats.metrics.repeaters?.toLocaleString() || '0'}
-                        icon="repeat"
-                        color="#f3e5f5"
-                        trendLabel={`${derivedMetrics?.repeaterPercentage}% of intake`}
-                    />
-                </div>
-                <div className="hover:scale-[1.02] transition-transform duration-300 h-full">
-                    <StatCardMini
-                        title="Mobility Index"
-                        value={stats.metrics.transfers?.toLocaleString() || '0'}
-                        icon="arrow-right-left"
-                        color="#e3f2fd"
-                        trendLabel={stats.metrics.transfers >= 0 ? "Growth net" : "Reduction net"}
-                    />
-                </div>
+                />
+
+                <NeoStatCard
+                    title="Student Repeaters"
+                    value={stats.metrics.repeaters?.toLocaleString() || '0'}
+                    icon={Repeat}
+                    iconBg="bg-purple-100 dark:bg-purple-900/30"
+                    iconColor="text-purple-600 dark:text-purple-400"
+                    trendLabel={`${derivedMetrics?.repeaterPercentage}% of intake`}
+                    trendData={stats.trends}
+                    dataKey="apps"
+                    highlightColor="#8b5cf6"
+                    isActive={false}
+                    onClick={() => {}}
+                />
+
+                <NeoStatCard
+                    title="Mobility Index"
+                    value={stats.metrics.transfers?.toLocaleString() || '0'}
+                    icon={ArrowRightLeft}
+                    iconBg="bg-sky-100 dark:bg-sky-900/30"
+                    iconColor="text-sky-600 dark:text-sky-400"
+                    trendLabel={stats.metrics.transfers >= 0 ? "Growth net" : "Reduction net"}
+                    trendData={stats.trends}
+                    dataKey="admitted"
+                    highlightColor="#0ea5e9"
+                    isActive={false}
+                    onClick={() => {}}
+                />
             </div>
 
             {/* Analytics Engine Section */}
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 p-3">
+            <div className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-6 p-3">
                 {/* Enrollment Velocity Trends Card */}
                 <div
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    className="border rounded-[28px] shadow-[0_8px_32px_rgba(0,0,0,0.04)] lg:col-span-2 transition-all duration-500 hover:shadow-[0_20px_48px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 group overflow-hidden p-3"
+                    className="border border-slate-200/60 dark:border-slate-800/60 rounded-[40px] lg:col-span-2 transition-all duration-500 hover:shadow-[0_20px_48px_rgba(0,0,0,0.06)] hover:-translate-y-1 group overflow-hidden bg-white dark:bg-slate-900 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.3)] relative p-4"
                 >
+                    <div className="absolute -top-32 -left-10 w-96 h-96 bg-indigo-50/50 dark:bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
+                    
                     {/* Card Header */}
-                    <div className="flex items-center justify-between px-8 pt-7 pb-5">
-                        <div className="space-y-1">
-                            <h3
-                                className="text-xl font-black tracking-tighter flex items-center gap-2.5"
-                                style={{ color: 'var(--text-main)' }}
-                            >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 pt-3 pb-2 relative z-10 gap-3">
+                        <div className="space-y-1.5">
+                            <h3 className="text-xl font-black tracking-tight flex items-center gap-3 text-slate-800 dark:text-white">
                                 Enrollment Velocity
-                                <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--primary-color)', boxShadow: '0 0 10px var(--primary-color)' }} />
+                                <div className="w-2.5 h-2.5 rounded-full animate-pulse bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.6)]" />
                             </h3>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.4em]" style={{ color: 'var(--text-muted)' }}>
+                            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
                                 Real-time growth dynamics
                             </p>
                         </div>
@@ -920,7 +919,7 @@ const AdmissionStats = () => {
                                 </button>
                             </div>
 
-                            <div className="hidden sm:flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
+                            <div className="hidden sm:flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: 'var(--text-muted)' }}>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]" /> Applications
                                 </div>
@@ -953,12 +952,13 @@ const AdmissionStats = () => {
 
                 {/* Status Distribution Card */}
                 <div
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    className="border rounded-[28px] shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_48px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 overflow-hidden p-3"
+                    className="border border-slate-200/60 dark:border-slate-800/60 rounded-[40px] shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.3)] bg-white dark:bg-slate-900 transition-all duration-500 hover:shadow-[0_20px_48px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_20px_48px_rgba(0,0,0,0.3)] hover:-translate-y-1 overflow-hidden relative group p-4"
                 >
-                    <div className="px-8 pt-7 pb-5">
-                        <h3 className="text-xl font-black tracking-tighter" style={{ color: 'var(--text-main)' }}>Status Ecosystem</h3>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] mt-1" style={{ color: 'var(--text-muted)' }}>Lifecycle status spread</p>
+                    <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-emerald-50 dark:bg-emerald-500/10 blur-[60px] rounded-full pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
+                    
+                    <div className="px-3 pt-3 pb-2 relative z-10">
+                        <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">Status Ecosystem</h3>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1.5 text-slate-400">Lifecycle status spread</p>
                     </div>
                     <div className="mx-8" style={{ height: '1px', background: 'var(--border-color-light)' }} />
                     <div className="px-6 pt-5 pb-7">
@@ -980,17 +980,17 @@ const AdmissionStats = () => {
 
                 {/* Class Distribution Card */}
                 <div
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    className="border rounded-[28px] shadow-[0_8px_32px_rgba(0,0,0,0.04)] lg:col-span-2 transition-all duration-500 hover:shadow-[0_20px_48px_rgba(0,0,0,0.07)] overflow-hidden"
+                    className="border border-slate-200/60 dark:border-slate-800/60 rounded-[40px] shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.3)] bg-white dark:bg-slate-900 lg:col-span-2 transition-all duration-500 hover:shadow-[0_20px_48px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_20px_48px_rgba(0,0,0,0.3)] hover:-translate-y-1 overflow-hidden relative group p-4"
                 >
-                    <div className="px-8 pt-7 pb-6">
+                    <div className="absolute -top-20 -left-10 w-64 h-64 bg-pink-50/50 dark:bg-pink-500/10 blur-[80px] rounded-full pointer-events-none group-hover:bg-blue-50/50 dark:group-hover:bg-blue-500/10 transition-colors duration-1000" />
+                    <div className="px-3 pt-3 pb-3 relative z-10">
                         <GenderBarChart data={stats.class_distribution} />
                     </div>
                 </div>
             </div>
 
             {/* Smart Intelligence Panel */}
-            <div className="mt-8 mb-4">
+            <div className="mt-4 mb-4">
                 {/* Section Header */}
                 <div className="flex items-center gap-3 mb-5">
                     <div
@@ -1011,7 +1011,7 @@ const AdmissionStats = () => {
                 </div>
 
                 {/* Stat Card Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 md:grid-cols-2 sm:grid-cols-2 gap-5">
 
                     {/* Card 1 — Enrollment Yield */}
                     <div
@@ -1032,7 +1032,7 @@ const AdmissionStats = () => {
                                 style={{ background: 'var(--primary-light)' }}>
                                 <TrendingUp size={13} style={{ color: 'var(--primary-color)' }} strokeWidth={2.5} />
                             </div>
-                            <h3 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                            <h3 className="text-[8px] sm:text-[10px] font-black uppercase  mt-1">
                                 Enrollment Yield
                             </h3>
                         </div>
@@ -1044,7 +1044,7 @@ const AdmissionStats = () => {
                             </span>
                             <div className="flex-shrink-0">
                                 <span 
-                                    className="px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide shadow-sm"
+                                    className="px-2 py-1 rounded-full text-[9px] font-bold tracking-wide shadow-sm"
                                     style={{ background: 'var(--primary-light)', color: 'var(--primary-color)' }}
                                 >
                                     Stable
@@ -1078,7 +1078,7 @@ const AdmissionStats = () => {
                                 style={{ background: 'rgba(59,130,246,0.08)' }}>
                                 <Users size={13} style={{ color: '#3b82f6' }} strokeWidth={2.5} />
                             </div>
-                            <h3 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                            <h3 className="text-[9px] sm:text-[10px] font-black uppercase leading-none mt-0.5" >
                                 Cohort Balance
                             </h3>
                         </div>
@@ -1092,7 +1092,7 @@ const AdmissionStats = () => {
                             </span>
                             <div className="flex-shrink-0">
                                 <span 
-                                    className="px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide shadow-sm"
+                                    className="px-2 py-1 rounded-full text-[9px] font-bold tracking-wide shadow-sm"
                                     style={{ background: 'rgba(59,130,246,0.08)', color: '#3b82f6' }}
                                 >
                                     Diverse
@@ -1125,7 +1125,7 @@ const AdmissionStats = () => {
                                 style={{ background: 'rgba(16,185,129,0.08)' }}>
                                 <BookOpen size={13} style={{ color: '#10b981' }} strokeWidth={2.5} />
                             </div>
-                            <h3 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                            <h3 className="text-[9px] sm:text-[10px] font-black uppercase  leading-none mt-0.5" >
                                 Intake Leader
                             </h3>
                         </div>
@@ -1137,7 +1137,7 @@ const AdmissionStats = () => {
                             </span>
                             <div className="flex-shrink-0">
                                 <span 
-                                    className="px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide shadow-sm"
+                                    className="px-2 py-1 rounded-full text-[9px] font-bold tracking-wide shadow-sm"
                                     style={{ background: 'rgba(16,185,129,0.08)', color: '#10b981' }}
                                 >
                                     Primary

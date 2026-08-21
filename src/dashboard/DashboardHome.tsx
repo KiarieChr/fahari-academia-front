@@ -14,6 +14,7 @@ import ClockInOutWidget from '../modules/hr/attendance/components/ClockInOutWidg
 import AdminStatsGrid from './components/AdminStatsGrid';
 import RecommendationsCard from './components/RecommendationsCard';
 import DashboardCharts from './components/DashboardCharts';
+import FeesCollectionTab from './tabs/FeesCollectionTab';
 import { usePermissions } from '../auth/PermissionProvider';
 import { api } from '../services/api';
 import './dashboard.css';
@@ -69,8 +70,8 @@ const DashboardHome = () => {
             >
                 {/* 1. Institutional Stats (For Admins) */}
                 {isAdminView && (
-                    <div className="admin-overview-section mb-8">
-                        <div className="section-header mb-4 flex justify-between items-end">
+                    <div className="admin-overview-section mb-4">
+                        <div className="section-header mb-4 mt-2 flex justify-between items-end">
                             <div>
                                 <h2 className="section-title-premium flex items-center gap-2">
                                     <Sparkles size={20} className="text-amber-500" />
@@ -84,8 +85,8 @@ const DashboardHome = () => {
                                 onClick={() => setShowPersonalTools(!showPersonalTools)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                                     showPersonalTools 
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    ? 'neo-pressed text-blue-600' 
+                                    : 'neo-btn text-slate-600 hover:text-slate-800'
                                 }`}
                             >
                                 <UserCircle size={18} />
@@ -101,12 +102,12 @@ const DashboardHome = () => {
                             <div className="lg:col-span-2">
                                 <RecommendationsCard />
                             </div>
-                            <div className="ui-card">
-                                <h3 className="card-title-sm mb-4">Quick Shortcuts</h3>
+                            <div className="neo-card p-6 border-none">
+                                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Quick Shortcuts</h3>
                                 <div className="space-y-2">
                                     <button className="w-full p-3 text-left rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg neo-pressed">
                                                 <Users size={18} />
                                             </div>
                                             <span className="text-sm font-medium text-slate-700">Staff Directory</span>
@@ -115,7 +116,7 @@ const DashboardHome = () => {
                                     </button>
                                     <button className="w-full p-3 text-left rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg neo-pressed">
                                                 <DollarSign size={18} />
                                             </div>
                                             <span className="text-sm font-medium text-slate-700">Financial Reports</span>
@@ -141,7 +142,7 @@ const DashboardHome = () => {
                         </div>
 
                         <div className="overview-top-layout">
-                            <div className="ui-card attendance-terminal-card">
+                            <div className="neo-card p-6 attendance-terminal-card border-none">
                                 <div className="card-header-flex">
                                     <div className="terminal-badge">
                                         <span className="badge-dot"></span>
@@ -257,70 +258,6 @@ const DashboardHome = () => {
         );
     };
 
-    const FeesTab = () => {
-        const stats = [
-            { label: 'Total Billed', value: 'KSh 24K', icon: DollarSign, color: '#e3f2fd', iconColor: '#1976d2' },
-            { label: 'Collected', value: 'KSh 16K', icon: ArrowUpRight, color: '#e8f5e9', iconColor: '#2e7d32', trend: '64.6% rate', trendColor: 'trend-up' },
-            { label: 'Outstanding', value: 'KSh 9K', icon: FileText, color: '#fff3e0', iconColor: '#ef6c00' },
-            { label: 'Defaulters', value: '3', icon: AlertTriangle, color: '#ffebee', iconColor: '#d32f2f', trend: 'KSh 17K total', trendColor: 'trend-down' },
-            { label: 'Receipts Today', value: '0', icon: Clock, color: '#f3e5f5', iconColor: '#7b1fa2' },
-            { label: 'Receipts Term', value: '0', icon: TrendingUp, color: '#e0f2f1', iconColor: '#00796b' },
-            { label: 'Invoicing Rate', value: '38%', icon: User, color: '#eceff1', iconColor: '#455a64', trend: '3/8 students' },
-            { label: 'Avg Arrears', value: 'KSh 4K', icon: DollarSign, color: '#f1f8e9', iconColor: '#689f38' },
-        ];
-
-        return (
-            <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="tab-content-fade"
-            >
-                <div className="stat-grid-hd">
-                    {stats.map((stat, i) => (
-                        <div key={i} className="mini-stat-card-premium">
-                            <div className="card-top">
-                                <div className="stat-icon-glow" style={{ '--icon-color': stat.iconColor, '--icon-bg': stat.color }}>
-                                    <stat.icon size={16} />
-                                </div>
-                                <span className="stat-label-modern">{stat.label}</span>
-                            </div>
-                            
-                            <div className="card-bottom">
-                                <div className="stat-value-large">{stat.value}</div>
-                                {stat.trend && (
-                                    <div className={`stat-trend-badge ${stat.trendColor || ''}`}>
-                                        {stat.trend}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="two-col-grid">
-                    <div className="ui-card">
-                        <div className="card-header-between">
-                            <h3 className="card-title-sm">Arrears by Class</h3>
-                            <button className="view-all-link">View All <ArrowRight size={14} /></button>
-                        </div>
-                        <div className="card-placeholder-content">
-                            {/* Chart or table would go here */}
-                            <div className="empty-state-simple">Loading class data...</div>
-                        </div>
-                    </div>
-                    <div className="ui-card">
-                        <div className="card-header-between">
-                            <h3 className="card-title-sm">Collection by Payment Method</h3>
-                            <button className="view-all-link">View All <ArrowRight size={14} /></button>
-                        </div>
-                        <div className="card-placeholder-content">
-                            <div className="empty-state-simple">Loading payment data...</div>
-                        </div>
-                    </div>
-                </div>
-            </motion.div>
-        );
-    };
 
     const PayablesTab = () => {
         const [payablesData, setPayablesData] = useState(null);
@@ -364,9 +301,9 @@ const DashboardHome = () => {
             >
                 {/* 1. Key Metrics */}
                 <div className="grid lg:grid-cols-3 sm:grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="ui-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="neo-card p-6 border-none">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg neo-pressed">
                                 <Wallet size={20} />
                             </div>
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Outstanding</span>
@@ -377,9 +314,9 @@ const DashboardHome = () => {
                         <p className="text-xs text-slate-500 mt-2">Combined balance across all suppliers</p>
                     </div>
 
-                    <div className="ui-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="neo-card p-6 border-none">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                            <div className="p-2 bg-rose-50 text-rose-600 rounded-lg neo-pressed">
                                 <AlertCircle size={20} />
                             </div>
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Overdue Amount</span>
@@ -390,9 +327,9 @@ const DashboardHome = () => {
                         <p className="text-xs text-slate-500 mt-2">{payablesData?.overdue?.count || 0} invoices are past due date</p>
                     </div>
 
-                    <div className="ui-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                    <div className="neo-card p-6 border-none">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg neo-pressed">
                                 <Clock size={20} />
                             </div>
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Due Next 7 Days</span>
@@ -406,7 +343,7 @@ const DashboardHome = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* 2. Aging Chart */}
-                    <div className="lg:col-span-2 ui-card bg-white p-6 rounded-2xl border border-slate-200">
+                    <div className="lg:col-span-2 neo-card p-6 border-none">
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-800">Payables Aging Analysis</h3>
@@ -441,7 +378,7 @@ const DashboardHome = () => {
                     </div>
 
                     {/* 3. Top Suppliers */}
-                    <div className="ui-card bg-white p-6 rounded-2xl border border-slate-200">
+                    <div className="neo-card p-6 border-none">
                         <h3 className="text-sm font-bold text-slate-800 mb-6">Top Payables by Vendor</h3>
                         <div className="space-y-4">
                             {(payablesData?.top_suppliers?.length > 0 ? payablesData.top_suppliers : [
@@ -449,7 +386,7 @@ const DashboardHome = () => {
                             ]).map((vendor, i) => (
                                 <div key={i} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-lg bg-${vendor.color}-50 text-${vendor.color}-600 flex items-center justify-center text-xs font-bold`}>
+                                        <div className={`w-8 h-8 rounded-lg bg-${vendor.color}-50 text-${vendor.color}-600 flex items-center justify-center text-xs font-bold neo-pressed`}>
                                             {vendor.name.charAt(0)}
                                         </div>
                                         <div>
@@ -461,7 +398,7 @@ const DashboardHome = () => {
                                 </div>
                             ))}
                         </div>
-                        <button className="w-full mt-8 py-2 bg-slate-50 text-slate-500 text-xs font-bold rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors">
+                        <button className="w-full mt-8 py-2 neo-btn text-slate-600 text-xs font-bold transition-colors">
                             Manage All Suppliers
                         </button>
                     </div>
@@ -496,8 +433,8 @@ const DashboardHome = () => {
             >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                        <div className="ui-card">
-                            <div className="card-header-between">
+                        <div className="neo-card p-6 border-none">
+                            <div className="flex justify-between items-center mb-4">
                                 <h3 className="card-title-sm">Recent Examinations</h3>
                                 <button className="view-all-link">Manage Exams <ArrowRight size={14} /></button>
                             </div>
@@ -527,7 +464,7 @@ const DashboardHome = () => {
                         </div>
                     </div>
                     <div className="lg:col-span-1">
-                        <div className="ui-card bg-indigo-600 text-white border-none shadow-lg shadow-indigo-200">
+                        <div className="neo-card p-6 bg-indigo-600 text-white border-none shadow-lg shadow-indigo-200">
                             <h3 className="text-lg font-bold mb-2">Results Compute</h3>
                             <p className="text-indigo-100 text-xs mb-4 leading-relaxed">
                                 Ensure all marks are entered before computing final term rankings.
@@ -572,8 +509,8 @@ const DashboardHome = () => {
                 className="tab-content-fade"
             >
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="ui-card">
-                        <h3 className="card-title-sm mb-4">Payroll Status</h3>
+                    <div className="neo-card p-6 border-none">
+                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Payroll Status</h3>
                         {loading ? (
                             <div className="p-4 text-center text-slate-500 text-sm font-medium">Loading payroll data...</div>
                         ) : (
@@ -592,8 +529,8 @@ const DashboardHome = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm py-2 border-b border-slate-50">
+                                <div className="neo-card p-6 border-none">
+                                    <div className="flex items-center justify-between mb-4">
                                         <span className="text-slate-500">Total Staff Processed</span>
                                         <span className="font-bold">{payrollData?.stats?.employees || hrStats?.total_employees || 0}</span>
                                     </div>
@@ -607,8 +544,8 @@ const DashboardHome = () => {
                             </>
                         )}
                     </div>
-                    <div className="ui-card">
-                        <h3 className="card-title-sm mb-4">Workforce Overview</h3>
+                    <div className="neo-card p-6 border-none">
+                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Workforce Overview</h3>
                         {loading ? (
                             <div className="p-4 text-center text-slate-500 text-sm font-medium">Loading workforce stats...</div>
                         ) : (
@@ -639,61 +576,61 @@ const DashboardHome = () => {
 
     return (
         <DashboardLayout>
-            <div className="dashboard-page-container">
-                {/* Unified Dashboard Header - Progressive */}
-                <header className="analytics-header-container">
-                    {/* Hero Section (Scrolls away) */}
-                    <div className="analytics-hero-section">
-                        <div className="title-section">
-                            <h1 className="dashboard-main-title">Fahari Analytics</h1>
-                            <p className="dashboard-main-subtitle">
+            <div className="dashboard-page-container neo-bg">
+                {/* Unified Dashboard Header - Neomorphic */}
+                <div className="neo-card p-3 border-none mb-3 flex flex-col md:flex-row justify-between md:items-center bg-white/40 relative z-20">
+                    <div className="flex items-center gap-4 mb-4 md:mb-0">
+                        <div className="p-4 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl text-white shadow-lg shadow-blue-500/30">
+                            <LayoutDashboard size={28} />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-1">Fahari Analytics</h1>
+                            <p className="text-sm font-semibold text-slate-500">
                                 {isAdminView ? "Institutional performance & administrative insights" : "Real-time overview of your personal work performance"}
                             </p>
                         </div>
                     </div>
 
-                    {/* Sticky Nav Row */}
-                    <div className="analytics-sticky-nav">
-                        {/* Integrated Tab Navigation */}
-                        <div className="dashboard-tabs-wrapper">
-                            <div className="horizontal-tabs">
-                                {tabs.map((tab) => (
-                                    <button
-                                        key={tab}
-                                        className={`h-tab ${activeTab === tab ? 'active' : ''}`}
-                                        onClick={() => setActiveTab(tab)}
-                                    >
-                                        {tab}
-                                    </button>
-                                ))}
-                            </div>
+                    <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 py-2">
+                        <div className="neo-pressed px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap">
+                            <Clock size={16} className="text-slate-400" />
+                            <span className="text-xs font-bold text-slate-600">Updated just now</span>
                         </div>
-
-                        {/* Actions integrated into the sticky nav */}
-                        <div className="sticky-nav-actions">
-                            <div className="last-sync compact-sync">
-                                <Clock size={14} />
-                                <span className="hidden sm:inline text-xs font-medium">Updated just now</span>
-                            </div>
-                            {isAdminView && (
-                                <button className="premium-action-btn compact-action bg-slate-900 text-white border-none hover:bg-slate-800">
-                                    <Sparkles size={14} className="text-amber-400" />
-                                    <span className="hidden md:inline text-xs">AI Insights</span>
-                                </button>
-                            )}
-                            <button className="premium-action-btn compact-action">
-                                <FileText size={14} />
-                                <span className="hidden md:inline text-xs">Export</span>
+                        {isAdminView && (
+                            <button className="neo-btn-accent px-4 py-2 flex items-center gap-2 whitespace-nowrap">
+                                <Sparkles size={16} className="text-amber-300" />
+                                <span>AI Insights</span>
                             </button>
-                        </div>
+                        )}
+                        <button className="neo-btn px-4 py-2 flex items-center gap-2 whitespace-nowrap">
+                            <FileText size={16} className="text-slate-500" />
+                            <span>Export</span>
+                        </button>
                     </div>
-                </header>
+                </div>
+
+                {/* Integrated Tab Navigation (Neomorphic style) */}
+                <div className="flex overflow-x-auto gap-3 px-3 mb-3 pb-2 no-scrollbar">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${
+                                activeTab === tab
+                                    ? 'neo-pressed text-blue-600'
+                                    : 'text-slate-500 hover:text-slate-700 bg-white/40 hover:bg-white/70'
+                            }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
 
                 {/* Content Area */}
                 <div className="dashboard-view-content-modern">
                     <AnimatePresence mode="wait">
                         {activeTab === 'Overview' && <OverviewTab key="overview" />}
-                        {activeTab === 'Fees & Collection' && <FeesTab key="fees" />}
+                        {activeTab === 'Fees & Collection' && <FeesCollectionTab key="fees" />}
                         {activeTab === 'Payables & Finance' && <PayablesTab key="payables" />}
                         {activeTab === 'Examinations' && <ExaminationsTab key="exam" />}
                         {activeTab === 'HR & Payroll' && <HRTab key="hr" />}

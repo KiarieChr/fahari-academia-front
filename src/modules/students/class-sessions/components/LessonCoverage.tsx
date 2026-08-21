@@ -28,7 +28,7 @@ const LessonCoverage = ({ analytics = null }) => {
     });
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="neo-card overflow-hidden">
             <div className="p-4 border-b border-gray-100 flex items-center gap-2">
                 <BookOpen size={18} className="text-indigo-600" />
                 <h3 className="text-lg font-bold text-gray-900">Syllabus Coverage</h3>
@@ -61,7 +61,7 @@ const LessonCoverage = ({ analytics = null }) => {
                                         <td className="px-6 py-4">{sub.cls}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                <div className="flex-1 h-2 neo-pressed rounded-full overflow-hidden">
                                                     <div
                                                         className={`h-full rounded-full transition-all duration-500 ${bar}`}
                                                         style={{ width: `${sub.pct}%` }}

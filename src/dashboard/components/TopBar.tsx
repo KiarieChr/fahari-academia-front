@@ -6,7 +6,7 @@ import {
     Zap, FileText, Users, CreditCard, DollarSign,
     ShoppingCart, Briefcase, LayoutDashboard, ChevronRight,
     Clock, CheckCircle2, AlertCircle, Info, TrendingUp,
-    Command, ArrowRight, Star, Wifi, WifiOff
+    Command, ArrowRight, Star, Wifi, WifiOff, Sparkles
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { toast } from 'react-toastify';
@@ -60,7 +60,7 @@ const BREADCRUMB_MAP = [
     { path: '/dashboard/payroll',                  crumbs: [{ label: 'Payroll', icon: DollarSign }] },
     { path: '/dashboard/users',                    crumbs: [{ label: 'Users', icon: UserCog }] },
     { path: '/dashboard/users/account',            crumbs: [{ label: 'Users', icon: UserCog }, { label: 'My Account' }] },
-    { path: '/dashboard/settings',                 crumbs: [{ label: 'Settings', icon: Settings }] },
+    { path: '/dashboard/general-settings',                 crumbs: [{ label: 'Settings', icon: Settings }] },
 ];
 
 /* ─── Command Palette items ──────────────────────────────────── */
@@ -86,7 +86,7 @@ const COMMAND_ITEMS = [
     { label: 'Leave Management',   path: '/dashboard/hr/leave',              icon: Briefcase,       category: 'Navigate' },
     { label: 'Payroll',            path: '/dashboard/payroll/process',       icon: DollarSign,      category: 'Navigate' },
     { label: 'My Account',         path: '/dashboard/users/account',         icon: UserCog,         category: 'Account' },
-    { label: 'Settings',           path: '/dashboard/settings',              icon: Settings,        category: 'Account' },
+    { label: 'Settings',           path: '/dashboard/general-settings',              icon: Settings,        category: 'Account' },
 ];
 
 /* ─── Mock Notifications ─────────────────────────────────────── */
@@ -147,6 +147,13 @@ const TopBar = ({
     const [showCommandPalette, setShowCommandPalette] = useState(false);
     const [cmdQuery, setCmdQuery]                     = useState('');
     const [cmdIndex, setCmdIndex]                     = useState(0);
+    const [institutionName, setInstitutionName]       = useState('');
+
+    useEffect(() => {
+        api.get('/api/institution/')
+            .then(res => setInstitutionName(res.name))
+            .catch(() => {});
+    }, []);
 
     const [showNotifications, setShowNotifications]   = useState(false);
     const [notifications, setNotifications]           = useState(MOCK_NOTIFICATIONS);
@@ -347,25 +354,32 @@ const TopBar = ({
             <header className="tb-bar">
 
                 {/* LEFT: hamburger + breadcrumbs */}
-                <div className="tb-left">
-                    <button className="tb-hamburger" onClick={onToggleSidebar} aria-label="Toggle sidebar" data-tour="menu-toggle">
+                <div className="tb-left flex items-center gap-3">
+                    <button className="tb-hamburger flex-shrink-0" onClick={onToggleSidebar} aria-label="Toggle sidebar" data-tour="menu-toggle">
                         <Menu size={20} />
                     </button>
 
-                    <nav className="tb-breadcrumb" aria-label="breadcrumb">
-                        {breadcrumbs.map((crumb, idx) => {
-                            const Icon = crumb.icon;
-                            return (
-                                <React.Fragment key={idx}>
-                                    {idx > 0 && <ChevronRight size={13} className="tb-crumb-sep" />}
-                                    <span className={`tb-crumb ${idx === breadcrumbs.length - 1 ? 'current' : 'ancestor'}`}>
-                                        {Icon && <Icon size={14} className="tb-crumb-icon" />}
-                                        {crumb.label}
-                                    </span>
-                                </React.Fragment>
-                            );
-                        })}
-                    </nav>
+                    <div className="flex flex-col justify-center h-full">
+                        {institutionName && (
+                            <span className="text-[11px] font-bold text-gray-800 uppercase tracking-widest leading-none mb-1 text-indigo-700 dark:text-indigo-400">
+                                {institutionName}
+                            </span>
+                        )}
+                        <nav className="tb-breadcrumb flex items-center h-auto" aria-label="breadcrumb">
+                            {breadcrumbs.map((crumb, idx) => {
+                                const Icon = crumb.icon;
+                                return (
+                                    <React.Fragment key={idx}>
+                                        {idx > 0 && <ChevronRight size={13} className="tb-crumb-sep" />}
+                                        <span className={`tb-crumb ${idx === breadcrumbs.length - 1 ? 'current' : 'ancestor'}`}>
+                                            {Icon && <Icon size={14} className="tb-crumb-icon" />}
+                                            {crumb.label}
+                                        </span>
+                                    </React.Fragment>
+                                );
+                            })}
+                        </nav>
+                    </div>
                 </div>
 
                 {/* CENTER: command palette trigger */}
@@ -395,6 +409,16 @@ const TopBar = ({
                         <span className="tb-dot">·</span>
                         <LiveClock />
                     </div>
+
+                    {/* AI Chat Trigger */}
+                    <button
+                        className="tb-icon-btn ai-chat group relative overflow-hidden"
+                        onClick={() => window.dispatchEvent(new Event('open-ai-chat'))}
+                        title="Ask Fahari AI"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-600/20 group-hover:from-indigo-500/30 group-hover:to-purple-600/30 transition-all duration-300"></div>
+                        <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400 group-hover:animate-pulse relative z-10" />
+                    </button>
 
                     {/* Dark mode toggle */}
                     <button
@@ -433,7 +457,7 @@ const TopBar = ({
                             </div>
                             <div className="tb-user-info compact-hide">
                                 <span className="tb-user-name">
-                                    {currentUser?.firstName || 'User'} {currentUser?.lastName || ''}
+                                    {currentUser?.firstName || 'User'}
                                 </span>
                                 <span
                                     className="tb-role-badge"
@@ -472,7 +496,7 @@ const TopBar = ({
                                     <span>My Profile</span>
                                     <kbd className="tb-um-shortcut">P</kbd>
                                 </button>
-                                <button className="tb-um-item" onClick={() => { setShowUserMenu(false); navigate('/dashboard/settings'); }}>
+                                <button className="tb-um-item" onClick={() => { setShowUserMenu(false); navigate('/dashboard/general-settings'); }}>
                                     <Settings size={16} />
                                     <span>Settings</span>
                                 </button>

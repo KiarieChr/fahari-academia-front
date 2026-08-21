@@ -4,6 +4,8 @@ import { Search, Filter, MoreHorizontal, Edit, Trash2, Copy, Eye, CheckCircle, X
 const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const filtered = subjects.filter(s => {
         const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.code.toLowerCase().includes(searchTerm.toLowerCase());
@@ -11,21 +13,32 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
         return matchesSearch && matchesFilter;
     });
 
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterCategory]);
+
+    const paginatedSubjects = filtered.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     const getStatusColor = (status) => {
         return status === 'Active' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' : 'text-slate-500 bg-slate-100 dark:bg-slate-800';
     };
 
     return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
+        <div className="neo-card border-none overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
             {/* Toolbar */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center bg-transparent">
                 <div className="relative w-full md:w-96">
                     <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         style={{ paddingLeft: '30px'}}
                         placeholder="Search subjects by name or code..."
-                        className="w-full pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full pr-4 py-2 neo-pressed border-none rounded-xl text-sm focus:outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -36,7 +49,7 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
                         <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <select
                             style= {{paddingLeft: '30px'}}
-                            className=" pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-medium"
+                            className="pr-3 py-2 px-2 neo-pressed border-none rounded-xl text-sm focus:outline-none appearance-none font-medium"
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
                         >
@@ -52,7 +65,7 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900 text-xs uppercase text-slate-500 font-bold border-b border-slate-200 dark:border-slate-700">
+                    <thead className="bg-transparent text-xs uppercase text-slate-500 font-bold border-b border-gray-100">
                         <tr>
                             <th className="px-6 py-4">Subject</th>
                             <th className="px-6 py-4">Category</th>
@@ -63,8 +76,8 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {filtered.length > 0 ? (
-                            filtered.map((subject) => (
+                        {paginatedSubjects.length > 0 ? (
+                            paginatedSubjects.map((subject) => (
                                 <tr key={subject.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
@@ -73,7 +86,7 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${subject.category === 'Core' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${subject.category === 'Core' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                                 subject.category === 'Optional' ? 'bg-amber-50 text-amber-700 border-amber-100' :
                                                     'bg-purple-50 text-purple-700 border-purple-100'
                                             }`}>
@@ -88,29 +101,29 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
                                         {subject.type}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(subject.status)}`}>
+                                        <span className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold ${getStatusColor(subject.status)}`}>
                                             <span className={`w-1.5 h-1.5 rounded-full ${subject.status === 'Active' ? 'bg-green-600' : 'bg-slate-500'}`}></span>
                                             {subject.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => onEdit(subject)}
-                                                className="p-2 text-blue-200 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                className="p-2 text-slate-500 hover:text-blue-600 neo-btn transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit size={16} />
                                             </button>
                                             <button
-                                                className="p-1.5 text-blue-400 hover:text-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+                                                className="p-2 text-slate-500 hover:text-blue-600 neo-btn transition-colors"
                                                 title="Duplicate"
                                             >
                                                 <Copy size={16} />
                                             </button>
                                             <button
                                                 onClick={() => onDelete(subject.id)}
-                                                className="p-1.5 text-blue-200 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                className="p-2 text-slate-500 hover:text-red-600 neo-btn transition-colors"
                                                 title="Delete/Deactivate"
                                             >
                                                 <Trash2 size={16} />
@@ -132,11 +145,19 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
                     </tbody>
                 </table>
             </div>
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-between items-center text-xs text-slate-500">
-                <span>Showing {filtered.length} of {subjects.length} subjects</span>
+            <div className="p-4 border-t border-gray-100 bg-transparent flex justify-between items-center text-xs font-bold text-slate-500">
+                <span>
+                    Showing {filtered.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} subjects
+                </span>
                 <div className="flex gap-2">
-                    <button className="px-3 py-1 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50">Previous</button>
-                    <button className="px-3 py-1 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50">Next</button>
+                    <button 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 neo-btn rounded-lg hover:text-slate-800 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed">Previous</button>
+                    <button 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className="px-3 py-1 neo-btn rounded-lg hover:text-slate-800 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed">Next</button>
                 </div>
             </div>
         </div>

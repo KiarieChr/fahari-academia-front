@@ -38,12 +38,12 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
         try {
             const [studentData, intakesData, classesData, streamsData, yearsData, curricData, levelsData] = await Promise.all([
                 studentManagementService.getAdmission(studentId),
-                studentManagementService.getIntakes(),
-                studentManagementService.getClasses(),
-                studentManagementService.getStreams(),
+                studentSettingsService.getIntakes(),
+                studentSettingsService.getClasses(),
+                studentSettingsService.getStreams(),
                 studentSettingsService.getAcademicYears(),
-                studentManagementService.getCurriculums(),
-                studentManagementService.getCurriculumLevels()
+                studentSettingsService.getCurricula(),
+                studentSettingsService.getCurriculumLevels()
             ]);
 
             setStudent(studentData);
@@ -128,27 +128,19 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
             onClose={onClose}
             title={student ? `Edit ${student.student_name}` : 'Edit Student'}
             size="lg"
+            accentColor="bg-indigo-600"
             footer={
                 <div className="flex justify-end gap-3 w-full">
                     <button
                         onClick={onClose}
-                        style={{
-                            background: 'var(--card-bg)',
-                            borderColor: 'var(--border-color-light)',
-                            color: 'var(--text-main)'
-                        }}
-                        className="px-6 py-2.5 border rounded-xl hover:opacity-90 active:scale-95 transition-all font-bold cursor-pointer"
+                        className="px-4 py-2 rounded-xl font-extrabold uppercase tracking-widest text-[11px] text-slate-500 bg-[#f8f9fa] shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-white cursor-pointer"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving || loading}
-                        style={{
-                            background: 'var(--primary-color)',
-                            color: '#fff'
-                        }}
-                        className="px-6 py-2.5 rounded-xl hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all font-bold flex items-center gap-2 cursor-pointer"
+                        className="px-4 py-2 rounded-xl font-extrabold uppercase tracking-widest text-[11px] text-white bg-indigo-600 shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer border border-indigo-500"
                     >
                         <Save className="w-4 h-4" />
                         {saving ? 'Saving...' : 'Save Changes'}
@@ -156,105 +148,82 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                 </div>
             }
         >
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full bg-[#f8f9fa] rounded-2xl p-2">
                 {/* Tabs */}
-                <div className="flex mb-6" style={{ borderBottom: '1px solid var(--border-color-light)' }}>
+                <div className="flex gap-4 mb-6 px-2">
                     <button
-                        style={{
-                            borderBottom: activeTab === 'details' ? '2px solid var(--primary-color)' : '2px solid transparent',
-                            color: activeTab === 'details' ? 'var(--primary-color)' : 'var(--text-secondary)'
-                        }}
-                        className="py-2.5 px-4 text-sm font-bold transition-all bg-transparent border-0 cursor-pointer flex items-center gap-2"
+                        className={`py-2 px-5 rounded-xl text-[11px] font-extrabold uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 border ${
+                            activeTab === 'details'
+                            ? 'bg-[#f8f9fa] text-indigo-600 shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border-white'
+                            : 'bg-[#f8f9fa] text-slate-500 shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border-white'
+                        }`}
                         onClick={() => setActiveTab('details')}
                     >
-                        <User className="w-4 h-4" />
+                        <User className="w-3.5 h-3.5" />
                         Details
                     </button>
                     <button
-                        style={{
-                            borderBottom: activeTab === 'enrollment' ? '2px solid var(--primary-color)' : '2px solid transparent',
-                            color: activeTab === 'enrollment' ? 'var(--primary-color)' : 'var(--text-secondary)'
-                        }}
-                        className="py-2.5 px-4 text-sm font-bold transition-all bg-transparent border-0 cursor-pointer flex items-center gap-2"
+                        className={`py-2 px-5 rounded-xl text-[11px] font-extrabold uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 border ${
+                            activeTab === 'enrollment'
+                            ? 'bg-[#f8f9fa] text-indigo-600 shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border-white'
+                            : 'bg-[#f8f9fa] text-slate-500 shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border-white'
+                        }`}
                         onClick={() => setActiveTab('enrollment')}
                     >
-                        <BookOpen className="w-4 h-4" />
+                        <BookOpen className="w-3.5 h-3.5" />
                         Enrollment
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-8">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-t-transparent" style={{ borderColor: 'var(--primary-color)', borderTopColor: 'transparent' }}></div>
-                        <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+                    <div className="text-center py-12">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-100 border-t-indigo-600"></div>
+                        <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading Records...</p>
                     </div>
                 ) : (
-                    <>
+                    <div className="px-2">
                         {activeTab === 'details' && student && (
-                            <div className="space-y-4 animate-in fade-in duration-300">
-                                <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                <div className="grid grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Admission Number</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Admission Number</label>
                                         <input
                                             type="text"
                                             value={student.admission_number || 'N/A'}
                                             disabled
-                                            style={{
-                                                background: 'var(--bg-light)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-secondary)',
-                                                cursor: 'not-allowed'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none"
+                                            className="w-full px-4 py-3 bg-gray-50/80 rounded-2xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 text-sm font-bold text-slate-400 cursor-not-allowed outline-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Student Name</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Student Name</label>
                                         <input
                                             type="text"
                                             value={student.student_name || ''}
                                             disabled
-                                            style={{
-                                                background: 'var(--bg-light)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-secondary)',
-                                                cursor: 'not-allowed'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none"
+                                            className="w-full px-4 py-3 bg-gray-50/80 rounded-2xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 text-sm font-bold text-slate-400 cursor-not-allowed outline-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Admission Date</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Admission Date</label>
                                         <input
                                             type="text"
                                             value={student.admission_date || ''}
                                             disabled
-                                            style={{
-                                                background: 'var(--bg-light)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-secondary)',
-                                                cursor: 'not-allowed'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none"
+                                            className="w-full px-4 py-3 bg-gray-50/80 rounded-2xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 text-sm font-bold text-slate-400 cursor-not-allowed outline-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Status</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Status</label>
                                         <select
                                             name="status"
                                             value={formData.status}
                                             onChange={handleChange}
-                                            style={{
-                                                background: 'var(--card-bg)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-main)'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none cursor-pointer"
+                                            className="w-full px-4 py-3 bg-[#f8f9fa] rounded-2xl shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border border-white focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] outline-none text-sm font-black text-slate-700 cursor-pointer transition-all"
                                         >
-                                            <option value="active" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Active</option>
-                                            <option value="withdrawn" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Withdrawn</option>
-                                            <option value="transferred" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Transferred</option>
-                                            <option value="graduated" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Graduated</option>
+                                            <option value="active">Active</option>
+                                            <option value="withdrawn">Withdrawn</option>
+                                            <option value="transferred">Transferred</option>
+                                            <option value="graduated">Graduated</option>
                                         </select>
                                     </div>
                                 </div>
@@ -263,132 +232,103 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
 
                         {activeTab === 'enrollment' && (
                             <div className="space-y-6 animate-in fade-in duration-300">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Academic Year</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Academic Year</label>
                                         <select
                                             name="academic_year_id"
                                             value={formData.academic_year_id}
                                             onChange={handleChange}
-                                            style={{
-                                                background: 'var(--card-bg)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-main)'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none cursor-pointer"
+                                            className="w-full px-4 py-3 bg-[#f8f9fa] rounded-2xl shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border border-white focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] outline-none text-sm font-black text-slate-700 cursor-pointer transition-all"
                                         >
-                                            <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Academic Year</option>
+                                            <option value="">Select Academic Year</option>
                                             {academicYears.map(year => (
-                                                <option key={year.id} value={year.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>
+                                                <option key={year.id} value={year.id}>
                                                     {year.name}{year.is_current ? ' (Current)' : ''}
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Intake/Cohort</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Intake/Cohort</label>
                                         <select
                                             name="intake"
                                             value={formData.intake}
                                             onChange={handleChange}
-                                            style={{
-                                                background: 'var(--card-bg)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-main)'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none cursor-pointer"
+                                            className="w-full px-4 py-3 bg-[#f8f9fa] rounded-2xl shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border border-white focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] outline-none text-sm font-black text-slate-700 cursor-pointer transition-all"
                                         >
-                                            <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Intake</option>
+                                            <option value="">Select Intake</option>
                                             {intakes.map(intake => (
-                                                <option key={intake.id} value={intake.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>
+                                                <option key={intake.id} value={intake.id}>
                                                     {intake.name}
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Curriculum</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Curriculum</label>
                                         <select
                                             name="curriculum_id"
                                             value={formData.curriculum_id}
                                             onChange={handleChange}
-                                            style={{
-                                                background: 'var(--card-bg)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-main)'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none cursor-pointer"
+                                            className="w-full px-4 py-3 bg-[#f8f9fa] rounded-2xl shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border border-white focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] outline-none text-sm font-black text-slate-700 cursor-pointer transition-all"
                                         >
-                                            <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Curriculum</option>
+                                            <option value="">Select Curriculum</option>
                                             {curricula.map(c => (
-                                                <option key={c.id} value={c.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>
+                                                <option key={c.id} value={c.id}>
                                                     {c.name || c.code}
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Curriculum Level</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Curriculum Level</label>
                                         <select
                                             name="curriculum_level_id"
                                             value={formData.curriculum_level_id}
                                             onChange={handleChange}
-                                            style={{
-                                                background: 'var(--card-bg)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-main)'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none cursor-pointer"
+                                            className="w-full px-4 py-3 bg-[#f8f9fa] rounded-2xl shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border border-white focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] outline-none text-sm font-black text-slate-700 cursor-pointer transition-all"
                                         >
-                                            <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Level</option>
+                                            <option value="">Select Level</option>
                                             {curriculumLevels
                                                 .filter(l => !formData.curriculum_id || l.curriculum === parseInt(formData.curriculum_id))
                                                 .map(level => (
-                                                    <option key={level.id} value={level.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>
+                                                    <option key={level.id} value={level.id}>
                                                         {level.name}
                                                     </option>
                                                 ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Class/Grade</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Class/Grade</label>
                                         <select
                                             name="grade_id"
                                             value={formData.grade_id}
                                             onChange={handleChange}
-                                            style={{
-                                                background: 'var(--card-bg)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-main)'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none cursor-pointer"
+                                            className="w-full px-4 py-3 bg-[#f8f9fa] rounded-2xl shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border border-white focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] outline-none text-sm font-black text-slate-700 cursor-pointer transition-all"
                                         >
-                                            <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Class</option>
+                                            <option value="">Select Class</option>
                                             {classes
                                                 .filter(cls => !formData.curriculum_id || cls.curriculum === parseInt(formData.curriculum_id))
+                                                .filter(cls => !formData.curriculum_level_id || cls.curriculum_level === parseInt(formData.curriculum_level_id))
                                                 .map(cls => (
-                                                    <option key={cls.id} value={cls.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>
+                                                    <option key={cls.id} value={cls.id}>
                                                         {cls.name}
                                                     </option>
                                                 ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold mb-1.5" style={{ color: 'var(--text-main)' }}>Stream</label>
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 pl-2">Stream</label>
                                         <select
                                             name="stream_id"
                                             value={formData.stream_id}
                                             onChange={handleChange}
-                                            style={{
-                                                background: 'var(--card-bg)',
-                                                borderColor: 'var(--border-color-light)',
-                                                color: 'var(--text-main)'
-                                            }}
-                                            className="w-full px-3 py-2 border rounded-xl font-medium outline-none cursor-pointer"
+                                            className="w-full px-4 py-3 bg-[#f8f9fa] rounded-2xl shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border border-white focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] outline-none text-sm font-black text-slate-700 cursor-pointer transition-all"
                                         >
-                                            <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Stream</option>
+                                            <option value="">Select Stream</option>
                                             {streams.filter(s => s.grade === parseInt(formData.grade_id) || s.grade_id === parseInt(formData.grade_id)).map(stream => (
-                                                <option key={stream.id} value={stream.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>
+                                                <option key={stream.id} value={stream.id}>
                                                     {stream.name}
                                                 </option>
                                             ))}
@@ -396,23 +336,18 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                                     </div>
                                 </div>
 
-                                <div className="border-t pt-4" style={{ borderColor: 'var(--border-color-light)' }}>
+                                <div className="pt-6 mt-4 border-t border-slate-200/50">
                                     <button
                                         onClick={handleRepeat}
                                         disabled={saving}
-                                        style={{
-                                            background: 'rgba(245, 158, 11, 0.08)',
-                                            borderColor: 'rgba(245, 158, 11, 0.2)',
-                                            color: 'rgb(217, 119, 6)'
-                                        }}
-                                        className="px-6 py-2.5 border rounded-xl hover:opacity-90 active:scale-95 transition-all font-bold w-full sm:w-auto cursor-pointer"
+                                        className="px-6 py-3 rounded-xl font-extrabold uppercase tracking-widest text-[11px] text-amber-600 bg-amber-50 shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-amber-100 cursor-pointer w-full sm:w-auto"
                                     >
                                         Mark as Repeater
                                     </button>
                                 </div>
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
             </div>
         </Modal>

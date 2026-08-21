@@ -133,8 +133,9 @@ const AdmissionLetterPDF = ({ admission = {}, institution = {} }) => {
 
     const studentName = admission.student_name || admission.applicant_name || 'Student';
     const guardianName = admission.guardian_name || 'Parent/Guardian';
-    const admNo = admission.admission_number || '—';
+    const admNo = admission.admission_number || `APP-${admission.id}` || '—';
     const className = admission.class_name || admission.applying_for_grade_name || '—';
+    const intakeName = admission.intake_name || '—';
     const admDate = admission.admission_date
         ? new Date(admission.admission_date).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })
         : today();
@@ -230,7 +231,7 @@ const AdmissionLetterPDF = ({ admission = {}, institution = {} }) => {
                 <Text style={styles.bodyText}>
                     We are pleased to inform you that, following a careful review of the application submitted on behalf
                     of <Text style={styles.bodyBold}>{studentName}</Text>, the School Admissions Committee has resolved
-                    to <Text style={styles.bodyBold}>offer admission</Text> to {institution.name || 'this institution'} with
+                    to <Text style={styles.bodyBold}>offer admission</Text> to {institution.name || 'this institution'} for the <Text style={styles.bodyBold}>{intakeName}</Text> intake, with
                     effect from <Text style={styles.bodyBold}>{admDate}</Text>.
                 </Text>
                 <Text style={styles.bodyText}>

@@ -31,7 +31,7 @@ const SponsorReceiptForm = ({ data, onChange, disabled }) => {
     }, []);
 
     const handleChange = (field, value) => {
-        onChange({ ...data, [field]: value, receiptType: 'Sponsor' });
+        onChange(prev => ({ ...prev, [field]: value, receiptType: 'Sponsor' }));
     };
 
     // Transform data for FilterDropdown
@@ -58,16 +58,17 @@ const SponsorReceiptForm = ({ data, onChange, disabled }) => {
                     options={sponsorOptions}
                     onChange={(val) => {
                         const sponsorship = sponsorships.find(s => s.id === val);
-                        onChange({
-                            ...data,
+                        onChange(prev => ({
+                            ...prev,
                             sponsorId: val,
                             sponsorshipId: val,
                             payerName: sponsorship ? sponsorship.name : '',
-                            sponsorshipType: sponsorship ? sponsorship.sponsor_type_name : '', // Auto-prefill Sponsor Type classification
+                            sponsorshipType: sponsorship ? sponsorship.sponsor_type_name : '',
                             receiptType: 'Sponsor'
-                        });
+                        }));
                     }}
                     searchable={true}
+                    variant="neo"
                     disabled={disabled}
                     className="w-100"
                 />
@@ -78,7 +79,7 @@ const SponsorReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Sponsor Classification</label>
                 <input
                     type="text"
-                    className="form-control bg-light"
+                    className="form-control bg-light neo-input border-none"
                     value={data.sponsorshipType || ''}
                     readOnly
                     placeholder="Auto-populated classification"
@@ -92,7 +93,7 @@ const SponsorReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Amount (KES) <span className="text-danger">*</span></label>
                 <input
                     type="number"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.amount || ''}
                     onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
                     placeholder="0.00"
@@ -115,14 +116,15 @@ const SponsorReceiptForm = ({ data, onChange, disabled }) => {
                     options={paymentMethodOptions}
                     onChange={(val) => {
                         const method = paymentMethods.find(m => String(m.id) === String(val));
-                        onChange({
-                            ...data,
+                        onChange(prev => ({
+                            ...prev,
                             paymentMethodId: val,
                             paymentMethod: method ? method.name : '',
                             receiptType: 'Sponsor'
-                        });
+                        }));
                     }}
                     disabled={disabled || isLoadingData}
+                    variant="neo"
                     className="w-100"
                 />
             </div>
@@ -134,7 +136,7 @@ const SponsorReceiptForm = ({ data, onChange, disabled }) => {
                 </label>
                 <input
                     type="text"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.reference || ''}
                     onChange={(e) => handleChange('reference', e.target.value)}
                     placeholder="Reference number"
@@ -147,7 +149,7 @@ const SponsorReceiptForm = ({ data, onChange, disabled }) => {
             <div className="col-md-12">
                 <label className="form-label">Notes / Remarks</label>
                 <textarea
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     rows="2"
                     value={data.notes || ''}
                     onChange={(e) => handleChange('notes', e.target.value)}

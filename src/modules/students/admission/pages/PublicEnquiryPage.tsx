@@ -172,14 +172,18 @@ const PublicEnquiryPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 md:p-8 relative overflow-hidden font-sans">
+        <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 md:p-8 relative overflow-hidden font-sans">
             <ToastContainer position="top-right" autoClose={4000} />
             
-            {/* Background design elements */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[120px] bg-indigo-500/10 pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[45vw] h-[45vw] rounded-full blur-[100px] bg-indigo-500/5 pointer-events-none" />
+            {/* Dynamic Glassmorphic Background Blobs */}
+            <div className="absolute top-[-10%] left-[-10%] w-[45vw] h-[45vw] rounded-full blur-[130px] bg-indigo-600/40 pointer-events-none mix-blend-screen animate-pulse duration-10000" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[55vw] h-[55vw] rounded-full blur-[150px] bg-fuchsia-600/30 pointer-events-none mix-blend-screen animate-pulse duration-[12000ms]" />
+            <div className="absolute top-[30%] left-[60%] w-[30vw] h-[30vw] rounded-full blur-[100px] bg-blue-500/30 pointer-events-none mix-blend-screen" />
+            
+            {/* Grid overlay for texture */}
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50 pointer-events-none" />
 
-            <div className="w-full max-w-2xl relative z-10">
+            <div className="w-full max-w-2xl relative z-10 my-8">
                 {/* ── Title / Header ── */}
                 <div className="text-center mb-8">
                     <div className="inline-flex p-3 bg-indigo-600 rounded-3xl shadow-[0_15px_30px_-5px_rgba(79,70,229,0.5)] mb-4 ring-4 ring-indigo-500/10 animate-bounce duration-[3000ms]">
@@ -195,21 +199,22 @@ const PublicEnquiryPage = () => {
 
                 {/* ── Success view ── */}
                 {submitted ? (
-                    <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl p-8 md:p-12 rounded-[32px] shadow-2xl text-center space-y-6 animate-in fade-in zoom-in duration-300">
-                        <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
-                            <CheckCircle size={32} />
+                    <div className="bg-white/5 border border-white/10 backdrop-blur-2xl p-8 md:p-12 rounded-[32px] shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] text-center space-y-6 animate-in fade-in zoom-in duration-500 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+                        <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(16,185,129,0.3)] relative z-10">
+                            <CheckCircle size={40} className="animate-bounce" />
                         </div>
-                        <div className="space-y-2">
-                            <h3 className="text-xl md:text-2xl font-black text-white leading-none">Thank you for your enquiry!</h3>
-                            <p className="text-xs font-bold text-slate-400 leading-relaxed max-w-sm mx-auto">
-                                We have successfully received your details. A member of our admissions committee will reach out to you at <span className="text-indigo-400">{formData.email}</span> shortly.
+                        <div className="space-y-3 relative z-10">
+                            <h3 className="text-2xl md:text-3xl font-black text-white leading-none">Registration Received!</h3>
+                            <p className="text-sm font-medium text-slate-300 leading-relaxed max-w-sm mx-auto">
+                                Thank you for your enquiry. Our admissions team will reach out to <span className="text-emerald-400 font-bold">{formData.email}</span> shortly.
                             </p>
                         </div>
                         
-                        <div className="pt-4 border-t border-slate-800/80 max-w-xs mx-auto">
+                        <div className="pt-6 border-t border-white/10 max-w-xs mx-auto relative z-10">
                             <button 
                                 onClick={() => setSubmitted(false)}
-                                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-sm"
+                                className="w-full py-3.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg backdrop-blur-md hover:scale-105"
                             >
                                 Submit another enquiry
                             </button>
@@ -219,187 +224,195 @@ const PublicEnquiryPage = () => {
                     /* ── Form view ── */
                     <form 
                         onSubmit={handleSubmit}
-                        className="bg-slate-900/30 border border-slate-800/80 backdrop-blur-xl p-6 md:p-10 rounded-[32px] shadow-2xl space-y-6 text-left animate-in fade-in slide-in-from-bottom-4 duration-300"
+                        className="bg-white/5 border border-white/10 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] p-6 md:p-10 rounded-[32px] space-y-6 text-left animate-in fade-in slide-in-from-bottom-4 duration-500 relative"
                     >
-                        {/* Parent Details section */}
-                        <div className="space-y-4">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 leading-none">
-                                <User size={13} /> 1. Contact Information
+                        {/* Decorative inner glow */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-[32px] pointer-events-none" />
+                        <div className="space-y-4 relative z-10">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-300 flex items-center gap-2 leading-none mb-4">
+                                <span className="p-1.5 bg-indigo-500/20 rounded-md text-indigo-400"><User size={14} /></span>
+                                1. Contact Information
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Your Full Name (Parent/Guardian) *</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Your Full Name (Parent/Guardian) *</label>
                                     <input
                                         type="text"
                                         name="full_name"
                                         value={formData.full_name}
                                         onChange={handleChange}
                                         placeholder="John Doe"
-                                        className={`w-full px-4 py-3 text-xs font-bold border rounded-xl bg-slate-950/20 text-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all ${errors.full_name ? 'border-rose-500' : 'border-slate-800'}`}
+                                        className={`w-full px-4 py-3.5 text-sm font-medium border rounded-xl bg-white/5 text-white placeholder:text-white/30 outline-none focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all backdrop-blur-sm ${errors.full_name ? 'border-rose-400/50 focus:border-rose-400' : 'border-white/10'}`}
                                     />
-                                    {errors.full_name && <p className="text-[10px] text-rose-500 mt-1">{errors.full_name}</p>}
+                                    {errors.full_name && <p className="text-[10px] text-rose-400 mt-1.5 font-bold">{errors.full_name}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Child / Student's Name</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Child / Student's Name</label>
                                     <input
                                         type="text"
                                         name="child_name"
                                         value={formData.child_name}
                                         onChange={handleChange}
                                         placeholder="Kelvin Doe"
-                                        className="w-full px-4 py-3 text-xs font-bold border border-slate-800 rounded-xl bg-slate-950/20 text-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all"
+                                        className="w-full px-4 py-3.5 text-sm font-medium border border-white/10 rounded-xl bg-white/5 text-white placeholder:text-white/30 outline-none focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all backdrop-blur-sm"
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Mobile Phone Number *</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Mobile Phone Number *</label>
                                     <input
                                         type="text"
                                         name="phone_number"
                                         value={formData.phone_number}
                                         onChange={handleChange}
                                         placeholder="e.g. +254 712 345678"
-                                        className={`w-full px-4 py-3 text-xs font-bold border rounded-xl bg-slate-950/20 text-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all ${errors.phone_number ? 'border-rose-500' : 'border-slate-800'}`}
+                                        className={`w-full px-4 py-3.5 text-sm font-medium border rounded-xl bg-white/5 text-white placeholder:text-white/30 outline-none focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all backdrop-blur-sm ${errors.phone_number ? 'border-rose-400/50 focus:border-rose-400' : 'border-white/10'}`}
                                     />
-                                    {errors.phone_number && <p className="text-[10px] text-rose-500 mt-1">{errors.phone_number}</p>}
+                                    {errors.phone_number && <p className="text-[10px] text-rose-400 mt-1.5 font-bold">{errors.phone_number}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Email Address *</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Email Address *</label>
                                     <input
                                         type="email"
                                         name="email"
                                         value={formData.email}
                                         onChange={handleChange}
                                         placeholder="parent@example.com"
-                                        className={`w-full px-4 py-3 text-xs font-bold border rounded-xl bg-slate-950/20 text-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all ${errors.email ? 'border-rose-500' : 'border-slate-800'}`}
+                                        className={`w-full px-4 py-3.5 text-sm font-medium border rounded-xl bg-white/5 text-white placeholder:text-white/30 outline-none focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all backdrop-blur-sm ${errors.email ? 'border-rose-400/50 focus:border-rose-400' : 'border-white/10'}`}
                                     />
-                                    {errors.email && <p className="text-[10px] text-rose-500 mt-1">{errors.email}</p>}
+                                    {errors.email && <p className="text-[10px] text-rose-400 mt-1.5 font-bold">{errors.email}</p>}
                                 </div>
                             </div>
                         </div>
 
+                        <hr className="border-white/10" />
+
                         {/* Academic target targets */}
-                        <div className="space-y-4 pt-2">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 leading-none">
-                                <BookOpen size={13} /> 2. Placement Details
+                        <div className="space-y-4 pt-2 relative z-10">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-300 flex items-center gap-2 leading-none mb-4">
+                                <span className="p-1.5 bg-indigo-500/20 rounded-md text-indigo-400"><BookOpen size={14} /></span>
+                                2. Placement Details
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Target Intake Cycle *</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Target Intake Cycle *</label>
                                     <select
                                         name="intake"
                                         value={formData.intake}
                                         onChange={handleChange}
                                         disabled={!!intakeId}
-                                        className={`w-full px-3 py-3 text-xs font-bold border rounded-xl text-white bg-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all ${intakeId ? 'opacity-75 cursor-not-allowed border-indigo-900' : 'border-slate-800 cursor-pointer'}`}
+                                        className={`w-full px-4 py-3.5 text-sm font-medium border rounded-xl text-white outline-none focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all ${intakeId ? 'bg-white/5 opacity-80 cursor-not-allowed border-indigo-400/30 text-indigo-200' : 'bg-white/5 focus:bg-slate-900 border-white/10 cursor-pointer backdrop-blur-sm'} ${errors.intake ? 'border-rose-400/50' : ''}`}
                                     >
-                                        <option value="">Choose Intake Cycle...</option>
+                                        <option value="" className="bg-slate-900 text-slate-300">Choose Intake Cycle...</option>
                                         {intakes.map(i => (
-                                            <option key={i.id} value={i.id}>{i.name}</option>
+                                            <option key={i.id} value={i.id} className="bg-slate-900">{i.name}</option>
                                         ))}
                                     </select>
-                                    {errors.intake && <p className="text-[10px] text-rose-500 mt-1">{errors.intake}</p>}
+                                    {errors.intake && <p className="text-[10px] text-rose-400 mt-1.5 font-bold">{errors.intake}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Curriculum Interest *</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Curriculum Interest *</label>
                                     <select
                                         name="curriculum"
                                         value={formData.curriculum}
                                         onChange={handleChange}
-                                        className={`w-full px-3 py-3 text-xs font-bold border rounded-xl text-white bg-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all cursor-pointer ${errors.curriculum ? 'border-rose-500' : 'border-slate-800'}`}
+                                        className={`w-full px-4 py-3.5 text-sm font-medium border rounded-xl text-white outline-none focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all cursor-pointer bg-white/5 focus:bg-slate-900 backdrop-blur-sm ${errors.curriculum ? 'border-rose-400/50 focus:border-rose-400' : 'border-white/10'}`}
                                     >
-                                        <option value="">Choose Curriculum...</option>
+                                        <option value="" className="bg-slate-900 text-slate-300">Choose Curriculum...</option>
                                         {curriculums.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                            <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
                                         ))}
                                     </select>
-                                    {errors.curriculum && <p className="text-[10px] text-rose-500 mt-1">{errors.curriculum}</p>}
+                                    {errors.curriculum && <p className="text-[10px] text-rose-400 mt-1.5 font-bold">{errors.curriculum}</p>}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Grade / Class Level *</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Grade / Class Level *</label>
                                     <select
                                         name="grade"
                                         value={formData.grade}
                                         onChange={handleChange}
-                                        className={`w-full px-3 py-3 text-xs font-bold border rounded-xl text-white bg-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all cursor-pointer ${errors.grade ? 'border-rose-500' : 'border-slate-800'}`}
+                                        className={`w-full px-4 py-3.5 text-sm font-medium border rounded-xl text-white outline-none focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all cursor-pointer bg-white/5 focus:bg-slate-900 backdrop-blur-sm ${errors.grade ? 'border-rose-400/50 focus:border-rose-400' : 'border-white/10'}`}
                                     >
-                                        <option value="">Choose Class Level...</option>
+                                        <option value="" className="bg-slate-900 text-slate-300">Choose Class Level...</option>
                                         {grades
                                             .filter(g => !formData.curriculum || String(g.curriculum) === String(formData.curriculum))
                                             .map(g => (
-                                                <option key={g.id} value={g.id}>{g.name}</option>
+                                                <option key={g.id} value={g.id} className="bg-slate-900">{g.name}</option>
                                             ))}
                                     </select>
-                                    {errors.grade && <p className="text-[10px] text-rose-500 mt-1">{errors.grade}</p>}
+                                    {errors.grade && <p className="text-[10px] text-rose-400 mt-1.5 font-bold">{errors.grade}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Preferred Campus</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Preferred Campus</label>
                                     <select
                                         name="campus"
                                         value={formData.campus}
                                         onChange={handleChange}
-                                        className="w-full px-3 py-3 text-xs font-bold border border-slate-800 rounded-xl text-white bg-slate-900 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all cursor-pointer"
+                                        className="w-full px-4 py-3.5 text-sm font-medium border border-white/10 rounded-xl text-white outline-none focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all cursor-pointer bg-white/5 focus:bg-slate-900 backdrop-blur-sm"
                                     >
-                                        <option value="">Choose Campus...</option>
+                                        <option value="" className="bg-slate-900 text-slate-300">Choose Campus...</option>
                                         {campuses.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                            <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
                         </div>
 
+                        <hr className="border-white/10" />
+
                         {/* Additional notes */}
-                        <div className="space-y-4 pt-2">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 leading-none">
-                                <Send size={13} /> 3. Discovery & Notes
+                        <div className="space-y-4 pt-2 relative z-10">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-300 flex items-center gap-2 leading-none mb-4">
+                                <span className="p-1.5 bg-indigo-500/20 rounded-md text-indigo-400"><Sparkles size={14} /></span>
+                                3. Discovery & Notes
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">How Did You Hear About Us? *</label>
+                                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">How Did You Hear About Us? *</label>
                                     <select
                                         name="source"
                                         value={formData.source}
                                         onChange={handleChange}
-                                        className="w-full px-3 py-3 text-xs font-bold border border-slate-800 rounded-xl text-white bg-slate-900 outline-none cursor-pointer"
+                                        className="w-full px-4 py-3.5 text-sm font-medium border border-white/10 rounded-xl text-white outline-none cursor-pointer bg-white/5 focus:bg-slate-900 backdrop-blur-sm focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
                                     >
                                         {PUBLIC_SOURCE_CHOICES.map(src => (
-                                            <option key={src.value} value={src.value}>{src.label}</option>
+                                            <option key={src.value} value={src.value} className="bg-slate-900">{src.label}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Enquiry message or comments (Optional)</label>
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-300 mb-2">Enquiry message or comments (Optional)</label>
                                 <textarea
                                     name="message"
-                                    rows={3}
+                                    rows={4}
                                     value={formData.message}
                                     onChange={handleChange}
                                     placeholder="Tell us about specific queries, child's previous reports, co-curricular interests, etc."
-                                    className="w-full px-4 py-3 text-xs font-bold border border-slate-800 rounded-xl bg-slate-950/20 text-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all"
+                                    className="w-full px-4 py-3.5 text-sm font-medium border border-white/10 rounded-xl bg-white/5 text-white placeholder:text-white/30 outline-none focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all backdrop-blur-sm resize-y"
                                 />
                             </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="pt-4 border-t border-slate-800/80 flex justify-end">
+                        <div className="pt-6 border-t border-white/10 flex justify-end relative z-10">
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-indigo-500/10 hover:translate-y-[-1px] cursor-pointer"
+                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] hover:scale-105 cursor-pointer"
                             >
-                                {submitting ? <Loader2 size={13} className="animate-spin" /> : <Send size={12} />}
-                                Submit Enquiry
+                                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                                <span>Submit Enquiry</span>
                             </button>
                         </div>
                     </form>

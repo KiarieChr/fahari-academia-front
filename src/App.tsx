@@ -21,6 +21,7 @@ const ForgotPassword = lazy(() => import('./auth/ForgotPassword'));
 const VerifyOtp = lazy(() => import('./auth/VerifyOtp'));
 const ResetPassword = lazy(() => import('./auth/ResetPassword'));
 const FirstTimeSetup = lazy(() => import('./auth/FirstTimeSetup'));
+const CreateInstitutionWizard = lazy(() => import('./modules/onboarding/CreateInstitutionWizard'));
 
 /* --- Layout & Dashboards --- */
 const DashboardHome = lazy(() => import('./dashboard/DashboardHome'));
@@ -41,6 +42,7 @@ const ClassSessionsDashboard = lazy(() => import('./modules/students/class-sessi
 const AcademicSessionsDashboard = lazy(() => import('./modules/students/academic-sessions/AcademicSessionsDashboard'));
 const CurriculumDashboard = lazy(() => import('./modules/students/curriculum/CurriculumDashboard'));
 const StudentSettingsDashboard = lazy(() => import('./modules/students/settings/StudentSettingsDashboard'));
+const StudentReportsDashboard = lazy(() => import('./modules/students/reports/StudentReportsDashboard'));
 const ClassTimesDashboard = lazy(() => import('./modules/students/class-times/ClassTimesDashboard'));
 const TimetableDashboard = lazy(() => import('./modules/timetable/TimetableDashboard'));
 
@@ -87,6 +89,14 @@ const PublicEnquiryPage = lazy(() => import('./modules/students/admission/pages/
 const FleetDashboard = lazy(() => import('./modules/fleet/FleetDashboard'));
 
 /* --- HR & Other Modules (Lazy loaded) --- */
+/* --- CRM Module (Lazy loaded) --- */
+const CrmDashboard = lazy(() => import('./modules/crm/components/CrmDashboard').then(m => ({ default: m.CrmDashboard })));
+const ParentList = lazy(() => import('./modules/crm/components/ParentList').then(m => ({ default: m.ParentList })));
+const CampaignWizard = lazy(() => import('./modules/crm/components/CampaignWizard').then(m => ({ default: m.CampaignWizard })));
+const UnifiedInbox = lazy(() => import('./modules/crm/components/UnifiedInbox').then(m => ({ default: m.UnifiedInbox })));
+const MessageTemplates = lazy(() => import('./modules/crm/components/MessageTemplates').then(m => ({ default: m.MessageTemplates })));
+const ProviderSettings = lazy(() => import('./modules/crm/components/ProviderSettings').then(m => ({ default: m.ProviderSettings })));
+
 // Use new modern HR Dashboard
 const HumanResource = lazy(() => import('./modules/hr/HumanResourceDashboard'));
 // Use new modern Staff Register  
@@ -98,7 +108,13 @@ const StaffPerformanceDashboard = lazy(() => import('./modules/hr/performance/St
 const Payroll = lazy(() => import('./modules/payroll/Payroll'));
 const RecruitmentDashboard = lazy(() => import('./modules/hr/recruitment/RecruitmentDashboard'));
 const PublicJobApplicationPage = lazy(() => import('./modules/hr/recruitment/PublicJobApplicationPage'));
-const Settings = lazy(() => import('./modules/settings/Settings'));
+const SchoolSetupPage = lazy(() => import('./modules/settings/SchoolSetupPage').then(m => ({ default: m.default })));
+const UserAccessPage = lazy(() => import('./modules/settings/UserAccessPage').then(m => ({ default: m.default })));
+const ApiConfigPage = lazy(() => import('./modules/settings/ApiConfigPage').then(m => ({ default: m.default })));
+const GeneralSettingsPage = lazy(() => import('./modules/settings/GeneralSettingsPage').then(m => ({ default: m.default })));
+const StudentSettingsPage = lazy(() => import('./modules/settings/StudentSettingsPage').then(m => ({ default: m.default })));
+const SystemLogsPage = lazy(() => import('./modules/settings/SystemLogsPage').then(m => ({ default: m.default })));
+const SystemModulesPage = lazy(() => import('./modules/settings/SystemModulesPage').then(m => ({ default: m.default })));
 const PayrollDashboard = lazy(() => import('./modules/payroll/PayrollDashboard'));
 const EmployeeDeductionsDashboard = lazy(() => import('./modules/payroll/EmployeeDeductionsDashboard'));
 const EmployeeEarningsDashboard = lazy(() => import('./modules/payroll/EmployeeEarningsDashboard'));
@@ -113,6 +129,9 @@ const MyAccount = lazy(() => import('./modules/users/MyAccount'));
 const UsersManagement = lazy(() => import('./modules/users/UsersManagement'));
 const RolesManagement = lazy(() => import('./modules/users/RolesManagement'));
 
+/* --- Intelligence Module (Lazy loaded) --- */
+const IntelligenceDashboard = lazy(() => import('./components/intelligence/IntelligenceDashboard'));
+
 /* --- Student & Parent Portal (Lazy loaded) --- */
 const StudentDashboard = lazy(() => import('./modules/student-portal/StudentDashboard'));
 const MyProfile = lazy(() => import('./modules/student-portal/MyProfile'));
@@ -123,7 +142,6 @@ const MyTimetable = lazy(() => import('./modules/student-portal/MyTimetable'));
 const MyAttendance = lazy(() => import('./modules/student-portal/MyAttendance'));
 const MyAssignments = lazy(() => import('./modules/student-portal/MyAssignments'));
 const MyFinancialStatement = lazy(() => import('./modules/student-portal/MyFinancialStatement'));
-const StudentReportsDashboard = lazy(() => import('./modules/students/reports/StudentReportsDashboard'));
 const ParentDashboard = lazy(() => import('./modules/parent-portal/ParentDashboard'));
 const ParentChildren = lazy(() => import('./modules/parent-portal/ParentChildren'));
 const ChildDetail = lazy(() => import('./modules/parent-portal/ChildDetail'));
@@ -147,7 +165,9 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/first-time-setup" element={<FirstTimeSetup />} />
-
+            
+            {/* Super Admin Registration */}
+            <Route path="/create-institution" element={<CreateInstitutionWizard />} />
 
             <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
 
@@ -190,6 +210,16 @@ function App() {
             <Route path="/dashboard/academics/assignments" element={<ProtectedRoute><PermissionGate module="academics"><AssignmentsDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/academics/settings" element={<ProtectedRoute><PermissionGate module="academics"><div>Academic Settings Placeholder</div></PermissionGate></ProtectedRoute>} />
 
+            {/* Settings Module */}
+            <Route path="/dashboard/settings" element={<Navigate to="/dashboard/general-settings" replace />} />
+            <Route path="/dashboard/school-setup" element={<ProtectedRoute><PermissionGate module="settings"><SchoolSetupPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/users-roles" element={<ProtectedRoute><PermissionGate module="settings"><UserAccessPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/api-config" element={<ProtectedRoute><PermissionGate module="settings"><ApiConfigPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/general-settings" element={<ProtectedRoute><PermissionGate module="settings"><GeneralSettingsPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/student-settings" element={<ProtectedRoute><PermissionGate module="settings"><StudentSettingsPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/system-logs" element={<ProtectedRoute><PermissionGate module="settings"><SystemLogsPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/system-modules" element={<ProtectedRoute><PermissionGate module="settings"><SystemModulesPage /></PermissionGate></ProtectedRoute>} />
+
             {/* Fees Module */}
             <Route path="/dashboard/fees" element={<ProtectedRoute><PermissionGate module="fees"><StudentFees /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/fees/receipts" element={<ProtectedRoute><PermissionGate module="fees"><ReceiptBookDashboard /></PermissionGate></ProtectedRoute>} />
@@ -227,6 +257,14 @@ function App() {
             {/* Fleet Module */}
             <Route path="/dashboard/fleet" element={<ProtectedRoute><PermissionGate module="fleet"><FleetDashboard /></PermissionGate></ProtectedRoute>} />
 
+            {/* CRM Module */}
+            <Route path="/dashboard/crm" element={<ProtectedRoute><PermissionGate module="crm"><CrmDashboard /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/crm/parents" element={<ProtectedRoute><PermissionGate module="crm"><ParentList /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/crm/inbox" element={<ProtectedRoute><PermissionGate module="crm"><UnifiedInbox /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/crm/campaigns/new" element={<ProtectedRoute><PermissionGate module="crm"><CampaignWizard /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/crm/templates" element={<ProtectedRoute><PermissionGate module="crm"><MessageTemplates /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/crm/settings" element={<ProtectedRoute><PermissionGate module="crm"><ProviderSettings /></PermissionGate></ProtectedRoute>} />
+            
             {/* HR & Other Modules */}
             <Route path="/dashboard/hr" element={<ProtectedRoute><PermissionGate module="hr"><HumanResource /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/hr/staff-register" element={<ProtectedRoute><PermissionGate module="hr"><StaffRegister /></PermissionGate></ProtectedRoute>} />
@@ -254,10 +292,10 @@ function App() {
             <Route path="/dashboard/users/list" element={<ProtectedRoute><PermissionGate module="users"><UsersManagement /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/users/account" element={<ProtectedRoute><MyAccount /></ProtectedRoute>} />
             <Route path="/dashboard/users/roles" element={<ProtectedRoute><PermissionGate module="users"><RolesManagement /></PermissionGate></ProtectedRoute>} />
-            <Route path="/dashboard/settings" element={<ProtectedRoute><PermissionGate module="settings"><Settings /></PermissionGate></ProtectedRoute>} />
+           
+            <Route path="/dashboard/intelligence" element={<ProtectedRoute><IntelligenceDashboard /></ProtectedRoute>} />
 
             {/* Legacy/Top-level Settings */}
-            <Route path="/settings" element={<ProtectedRoute><PermissionGate module="settings"><Settings /></PermissionGate></ProtectedRoute>} />
 
             {/* ─── Student Portal ─── */}
             <Route path="/student" element={

@@ -122,10 +122,10 @@ const DashboardCharts = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm"
+                className="neo-card p-6 border-none"
             >
                 <div className="flex items-center gap-2 mb-6">
-                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                    <div className="p-2 neo-pressed text-emerald-600 rounded-lg">
                         <BarChart3 size={18} />
                     </div>
                     <div>
@@ -169,10 +169,10 @@ const DashboardCharts = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm"
+                className="neo-card p-6 border-none"
             >
                 <div className="flex items-center gap-2 mb-6">
-                    <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                    <div className="p-2 neo-pressed text-amber-600 rounded-lg">
                         <TrendingUp size={18} />
                     </div>
                     <div>
@@ -216,10 +216,10 @@ const DashboardCharts = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm"
+                className="neo-card p-6 border-none"
             >
                 <div className="flex items-center gap-2 mb-6">
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                    <div className="p-2 neo-pressed text-indigo-600 rounded-lg">
                         <PieChartIcon size={18} />
                     </div>
                     <div>
@@ -262,7 +262,7 @@ const DashboardCharts = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm"
+                className="neo-card p-6 border-none"
             >
                 <div className="flex items-center gap-2 mb-6">
                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
@@ -310,10 +310,10 @@ const DashboardCharts = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm"
+                className="neo-card p-6 border-none"
             >
                 <div className="flex items-center gap-2 mb-6">
-                    <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                    <div className="p-2 neo-pressed text-rose-600 rounded-lg">
                         <CalendarCheck size={18} />
                     </div>
                     <div>
@@ -354,10 +354,10 @@ const DashboardCharts = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm"
+                className="neo-card p-6 border-none"
             >
                 <div className="flex items-center gap-2 mb-6">
-                    <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <div className="p-2 neo-pressed text-purple-600 rounded-lg">
                         <GraduationCap size={18} />
                     </div>
                     <div>

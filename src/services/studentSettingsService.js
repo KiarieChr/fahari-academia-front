@@ -18,6 +18,7 @@ const studentSettingsService = {
     createTerm: (data) => api.post('/api/settings/terms/', data),
     updateTerm: (id, data) => api.patch(`/api/settings/terms/${id}/`, data),
     deleteTerm: (id) => api.delete(`/api/settings/terms/${id}/`),
+    autoSyncTerms: () => api.post('/api/settings/terms/auto_sync_status/'),
 
     // Curricula
     getCurricula: () => api.get('/api/settings/curricula/'),

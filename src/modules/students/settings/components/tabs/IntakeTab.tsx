@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Users, Edit, Trash2, Search, Loader2, BarChart3, CheckCircle2 } from 'lucide-react';
+import { Plus, Calendar, Users, Edit, Trash2, Search, Loader2, BarChart3, CheckCircle2, Link } from 'lucide-react';
+import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../../services/studentSettingsService';
 import IntakeModal from '../../../intake/IntakeModal';
 
@@ -55,6 +56,13 @@ const IntakeTab = () => {
     const handleSuccess = () => {
         fetchIntakes();
         handleModalClose();
+    };
+
+    const handleCopyLink = (intakeId) => {
+        const link = `${window.location.origin}/enquire/${intakeId}`;
+        navigator.clipboard.writeText(link)
+            .then(() => toast.success('Registration link copied!'))
+            .catch(() => alert('Failed to copy link.'));
     };
 
     const filteredIntakes = intakes.filter(intake =>
@@ -176,14 +184,21 @@ const IntakeTab = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="inline-flex items-center gap-1">
                                                 <button
-                                                    onClick={() => handleEdit(intake)}
+                                                    onClick={(e) => { e.stopPropagation(); handleCopyLink(intake.id); }}
+                                                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                    title="Copy public registration link"
+                                                >
+                                                    <Link className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleEdit(intake); }}
                                                     className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                     title="Edit intake"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(intake.id)}
+                                                    onClick={(e) => { e.stopPropagation(); handleDelete(intake.id); }}
                                                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                                     title="Delete intake"
                                                 >

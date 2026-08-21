@@ -263,7 +263,7 @@ const ReceiptFormatSettings = ({ settings, onSave }) => {
                             <div className="card-body">
                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                     <h6 className="fw-bold mb-0 d-flex align-items-center gap-1"><Building2 size={14} /> Institution Details</h6>
-                                    <a href="/dashboard/settings" className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+                                    <a href="/dashboard/school-setup" className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
                                         <ExternalLink size={12} /> Edit in Profile
                                     </a>
                                 </div>

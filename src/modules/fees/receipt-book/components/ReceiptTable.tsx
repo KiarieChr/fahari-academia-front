@@ -76,8 +76,8 @@ const ReceiptTable = ({ receipts, onView, onPrint, onReverse, onBulkPrint, selec
         currentReceipts.every(r => selectedReceipts.includes(r.id));
 
     return (
-        <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white border-bottom">
+        <div className="neo-card p-0 overflow-hidden mb-6">
+            <div className="p-4 border-bottom">
                 <div className="d-flex justify-content-between align-items-center">
                     <h6 className="mb-0 fw-bold">
                         Receipt List ({receipts.length} receipts)
@@ -85,14 +85,14 @@ const ReceiptTable = ({ receipts, onView, onPrint, onReverse, onBulkPrint, selec
                     <div className="d-flex gap-2">
                         {selectedReceipts.length > 0 && (
                             <button
-                                className="btn btn-sm btn-primary"
+                                className="neo-btn neo-btn-accent btn-sm"
                                 onClick={() => onBulkPrint(selectedReceipts)}
                             >
                                 <Printer size={16} className="me-1" />
                                 Print Selected ({selectedReceipts.length})
                             </button>
                         )}
-                        <button className="btn btn-sm btn-outline-secondary">
+                        <button className="neo-btn btn-sm">
                             <Download size={16} className="me-1" />
                             Export
                         </button>
@@ -102,7 +102,7 @@ const ReceiptTable = ({ receipts, onView, onPrint, onReverse, onBulkPrint, selec
             <div className="card-body p-0">
                 <div className="table-responsive">
                     <table className="table table-hover mb-0">
-                        <thead className="table-light">
+                        <thead>
                             <tr>
                                 <th style={{ width: '40px' }}>
                                     <input
@@ -207,14 +207,14 @@ const ReceiptTable = ({ receipts, onView, onPrint, onReverse, onBulkPrint, selec
                                         <td>
                                             <div className="d-flex gap-1 justify-content-center">
                                                 <button
-                                                    className="btn btn-sm btn-outline-primary"
+                                                    className="neo-btn btn-sm text-primary"
                                                     onClick={() => onView(receipt)}
                                                     title="View Details"
                                                 >
                                                     <Eye size={14} />
                                                 </button>
                                                 <button
-                                                    className="btn btn-sm btn-outline-success"
+                                                    className="neo-btn btn-sm text-success"
                                                     onClick={() => onPrint(receipt)}
                                                     title={receipt.printCount > 0 ? 'Reprint' : 'Print'}
                                                     disabled={receipt.status === 'Reversed'}
@@ -223,7 +223,7 @@ const ReceiptTable = ({ receipts, onView, onPrint, onReverse, onBulkPrint, selec
                                                 </button>
                                                 {receipt.status !== 'Reversed' && receipt.status !== 'Draft' && (
                                                     <button
-                                                        className="btn btn-sm btn-outline-danger"
+                                                        className="neo-btn btn-sm text-danger"
                                                         onClick={() => onReverse(receipt)}
                                                         title="Reverse Receipt"
                                                     >

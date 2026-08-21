@@ -15,9 +15,7 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             value: safeGet(summary, 'totalReceiptsTerm'),
             subtitle: `${safeGet(summary, 'totalReceiptsToday')} today`,
             icon: Receipt,
-            color: 'primary',
-            bgClass: 'bg-primary-subtle',
-            iconClass: 'text-primary',
+            color: 'indigo',
             trend: summary.todayTrend,
             trendUp: true,
             tooltip: 'Total number of receipts issued this term'
@@ -28,9 +26,7 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             value: formatKES(safeGet(summary, 'totalAmountTerm')),
             subtitle: `${formatKES(safeGet(summary, 'totalAmountToday'))} today`,
             icon: DollarSign,
-            color: 'success',
-            bgClass: 'bg-success-subtle',
-            iconClass: 'text-success',
+            color: 'emerald',
             trend: summary.termTrend,
             trendUp: true,
             tooltip: 'Total amount collected this term'
@@ -41,9 +37,7 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             value: summary.studentFeeReceipts?.count || 0,
             subtitle: formatKES(summary.studentFeeReceipts?.amount || 0),
             icon: FileText,
-            color: 'info',
-            bgClass: 'bg-info-subtle',
-            iconClass: 'text-info',
+            color: 'blue',
             tooltip: 'Receipts for tuition, boarding, transport, etc.'
         },
         {
@@ -52,9 +46,7 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             value: summary.nonFeeReceipts?.count || 0,
             subtitle: formatKES(summary.nonFeeReceipts?.amount || 0),
             icon: BookOpen,
-            color: 'warning',
-            bgClass: 'bg-warning-subtle',
-            iconClass: 'text-warning',
+            color: 'amber',
             tooltip: 'Receipts for uniforms, trips, ID cards, etc.'
         },
         {
@@ -63,9 +55,7 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             value: summary.sponsorReceipts?.count || 0,
             subtitle: formatKES(summary.sponsorReceipts?.amount || 0),
             icon: Users,
-            color: 'success',
-            bgClass: 'bg-success-subtle',
-            iconClass: 'text-success',
+            color: 'emerald',
             tooltip: 'Sponsorship and donation receipts'
         },
         {
@@ -74,9 +64,7 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             value: summary.generalReceipts?.count || 0,
             subtitle: formatKES(summary.generalReceipts?.amount || 0),
             icon: Receipt,
-            color: 'secondary',
-            bgClass: 'bg-secondary-subtle',
-            iconClass: 'text-secondary',
+            color: 'gray',
             tooltip: 'Other income receipts (rent, events, etc.)'
         },
         {
@@ -86,8 +74,6 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             subtitle: null,
             icon: CreditCard,
             color: 'primary',
-            bgClass: 'bg-light',
-            iconClass: 'text-primary',
             isCustom: true,
             tooltip: 'Distribution by payment method'
         },
@@ -97,9 +83,7 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
             value: summary.lastReceiptNumber || '-',
             subtitle: `Next: ${summary.nextReceiptNumber || '-'}`,
             icon: Hash,
-            color: 'dark',
-            bgClass: 'bg-light',
-            iconClass: 'text-dark',
+            color: 'gray',
             tooltip: 'Most recent receipt number issued'
         }
     ];
@@ -111,76 +95,74 @@ const ReceiptSummaryCards = ({ summary = {}, onCardClick }) => {
     };
 
     return (
-        <div className="row g-2 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
             {cards.map((card) => (
-                <div key={card.id} className="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                    <div
-                        className={`card border-0 shadow-sm h-100 receipt-summary-card ${onCardClick ? 'cursor-pointer' : ''}`}
-                        onClick={() => handleCardClick(card.id)}
-                        title={card.tooltip}
-                    >
-                        <div className="card-body p-2">
-                            {card.isCustom ? (
-                                // Custom Payment Breakdown Card
-                                <div>
-                                    <div className="d-flex justify-content-between align-items-start mb-2">
-                                        <div className="flex-grow-1">
-                                            <p className="text-muted text-xxsmall mb-1" style={{ fontSize: '0.65rem' }}>{card.title}</p>
-                                        </div>
-                                        <div className={`p-2 rounded ${card.bgClass}`}>
-                                            <card.icon size={16} className={card.iconClass} />
-                                        </div>
+                <div key={card.id} 
+                     className={`neo-card p-3 border-none flex flex-col justify-between ${onCardClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+                     onClick={() => handleCardClick(card.id)}
+                     title={card.tooltip}
+                >
+                    <div>
+                        {card.isCustom ? (
+                            // Custom Payment Breakdown Card
+                            <div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-grow">
+                                        <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest mb-1">{card.title}</p>
                                     </div>
-                                    <div className="payment-breakdown">
-                                        {Object.keys(summary.paymentMethodBreakdown || {}).map((method) => {
-                                            const data = summary.paymentMethodBreakdown[method];
-                                            return (
-                                                <div key={method} className="d-flex justify-content-between align-items-center mb-1">
-                                                    <div className="d-flex align-items-center gap-1">
-                                                        <span style={{ fontSize: '0.75rem' }}>{getPaymentMethodIcon(method.charAt(0).toUpperCase() + method.slice(1))}</span>
-                                                        <span className="text-xxsmall" style={{ fontSize: '0.65rem' }}>{method.charAt(0).toUpperCase() + method.slice(1)}</span>
-                                                    </div>
-                                                    <div className="text-end">
-                                                        <div className="text-xxsmall fw-semibold" style={{ fontSize: '0.65rem' }}>{data.percentage.toFixed(1)}%</div>
-                                                        <div className="text-muted" style={{ fontSize: '0.6rem' }}>
-                                                            {formatKES(data.amount)}
-                                                        </div>
+                                    <div className={`p-3 rounded-full neo-pressed text-primary flex items-center justify-center`}>
+                                        <card.icon size={24} />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    {Object.keys(summary.paymentMethodBreakdown || {}).map((method) => {
+                                        const data = summary.paymentMethodBreakdown[method];
+                                        return (
+                                            <div key={method} className="flex justify-between items-center text-sm font-bold text-gray-700">
+                                                <div className="flex items-center gap-2">
+                                                    <span>{getPaymentMethodIcon(method.charAt(0).toUpperCase() + method.slice(1))}</span>
+                                                    <span>{method.charAt(0).toUpperCase() + method.slice(1)}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div>{data.percentage.toFixed(1)}%</div>
+                                                    <div className="text-xs text-gray-500 font-medium">
+                                                        {formatKES(data.amount)}
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : (
+                            // Standard Card
+                            <div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-grow">
+                                        <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest mb-1">{card.title}</p>
+                                        <h3 className="text-2xl font-black text-gray-700">{card.value}</h3>
+                                        {card.subtitle && (
+                                            <small className={`font-bold text-${card.color}-500`}>{card.subtitle}</small>
+                                        )}
+                                    </div>
+                                    <div className={`p-3 rounded-full neo-pressed text-${card.color}-500 flex items-center justify-center`}>
+                                        <card.icon size={24} />
                                     </div>
                                 </div>
-                            ) : (
-                                // Standard Card
-                                <div>
-                                    <div className="d-flex justify-content-between align-items-start mb-2">
-                                        <div className="flex-grow-1">
-                                            <p className="text-muted text-xxsmall mb-1" style={{ fontSize: '0.65rem' }}>{card.title}</p>
-                                            <h5 className="mb-0 fw-bold" style={{ fontSize: '0.95rem' }}>{card.value}</h5>
-                                            {card.subtitle && (
-                                                <small className={`text-${card.color}`} style={{ fontSize: '0.65rem' }}>{card.subtitle}</small>
-                                            )}
-                                        </div>
-                                        <div className={`p-2 rounded ${card.bgClass}`}>
-                                            <card.icon size={16} className={card.iconClass} />
-                                        </div>
+                                {card.trend && (
+                                    <div className="flex items-center gap-1 mt-2">
+                                        <TrendingUp
+                                            size={16}
+                                            className={card.trendUp ? 'text-emerald-500' : 'text-rose-500'}
+                                            style={{ transform: card.trendUp ? 'none' : 'rotate(180deg)' }}
+                                        />
+                                        <span className={`text-xs font-bold ${card.trendUp ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                            {card.trend}
+                                        </span>
                                     </div>
-                                    {card.trend && (
-                                        <div className="d-flex align-items-center gap-1">
-                                            <TrendingUp
-                                                size={12}
-                                                className={card.trendUp ? 'text-success' : 'text-danger'}
-                                                style={{ transform: card.trendUp ? 'none' : 'rotate(180deg)' }}
-                                            />
-                                            <span className={`text-xxsmall ${card.trendUp ? 'text-success' : 'text-danger'}`} style={{ fontSize: '0.65rem' }}>
-                                                {card.trend}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             ))}

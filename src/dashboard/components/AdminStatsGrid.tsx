@@ -9,24 +9,27 @@ import {
 import { api } from '../../services/api';
 
 const StatCard = ({ title, value, subValue, icon: Icon, iconColor, bgHex, loading }) => (
-    <div className="mini-stat-card-premium">
-        <div className="card-top">
-            <div className="stat-icon-glow" style={{ '--icon-color': iconColor, '--icon-bg': bgHex }}>
-                <Icon size={16} />
+    <div className="neo-card p-3 flex flex-col justify-between h-full border-none">
+        <div className="flex items-center gap-4 mb-4">
+            <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center neo-pressed" 
+                style={{ color: iconColor }}
+            >
+                <Icon size={20} strokeWidth={2.5} />
             </div>
-            <span className="stat-label-modern">{title}</span>
+            <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
         </div>
         
-        <div className="card-bottom mt-2">
+        <div className="mt-auto">
             {loading ? (
                 <div className="h-8 flex items-center">
-                    <Loader2 className="animate-spin text-slate-300" size={20} />
+                    <Loader2 className="animate-spin text-indigo-500" size={24} />
                 </div>
             ) : (
                 <>
-                    <div className="stat-value-large">{value}</div>
+                    <div className="text-2xl font-bold text-gray-800">{value}</div>
                     {subValue && (
-                        <div className="stat-trend-badge mt-2" style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #f1f5f9' }}>
+                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium neo-pressed text-gray-600">
                             {subValue.label}: {subValue.value}
                         </div>
                     )}

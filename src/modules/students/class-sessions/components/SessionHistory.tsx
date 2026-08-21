@@ -10,7 +10,7 @@ const SessionHistory = () => {
     ];
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="neo-card overflow-hidden">
             <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <h3 className="text-lg font-bold text-gray-900">Session History</h3>
                 <div className="flex gap-2">
@@ -18,10 +18,10 @@ const SessionHistory = () => {
                         <Calendar className="absolute left-3 top-2.5 text-gray-400" size={16} />
                         <input
                             type="date"
-                            className="pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="pl-9 pr-3 py-1.5 neo-pressed border-none rounded-lg text-sm focus:outline-none text-gray-700 bg-transparent"
                         />
                     </div>
-                    <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center gap-2 text-sm">
+                    <button className="px-3 py-1.5 neo-btn rounded-lg text-gray-600 flex items-center gap-2 text-sm">
                         <Filter size={14} /> Filter
                     </button>
                 </div>
@@ -51,13 +51,13 @@ const SessionHistory = () => {
                                 <td className="px-6 py-4">{record.duration}</td>
                                 <td className="px-6 py-4 text-center font-bold">{record.attendance}</td>
                                 <td className="px-6 py-4 text-center">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.status === 'Completed' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold neo-pressed ${record.status === 'Completed' ? 'text-green-700' : 'text-red-700'
                                         }`}>
                                         {record.status}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="text-gray-400 hover:text-indigo-600">
+                                    <button className="p-1.5 neo-btn rounded-lg text-gray-400">
                                         <FileText size={18} />
                                     </button>
                                 </td>

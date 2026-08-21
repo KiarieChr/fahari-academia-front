@@ -214,243 +214,242 @@ const GenerateInvoiceModal = ({ show, onClose, onGenerate }) => {
     if (!show) return null;
 
     return (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title d-flex align-items-center">
-                            <Settings size={20} className="me-2" />
-                            Bulk Generate Invoices
-                        </h5>
-                        <button type="button" className="btn-close" onClick={handleClose}></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
+            <div className="neo-card w-full max-w-3xl my-8">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100">
+                    <h5 className="text-xl font-bold text-gray-700 flex items-center gap-2">
+                        <Settings size={20} className="text-indigo-500" />
+                        Bulk Generate Invoices
+                    </h5>
+                    <button type="button" className="text-gray-400 hover:text-rose-500 transition-colors" onClick={handleClose}>
+                        <XCircle size={24} />
+                    </button>
+                </div>
+
+                <div className="p-6 max-h-[70vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
+                    {/* Step 1: Session Selection */}
+                    <div className="mb-6">
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Select Class Session *</label>
+                        <p className="text-sm font-bold text-gray-500 mb-4">
+                            Choose a class session to generate invoices for all enrolled students.
+                        </p>
+
+                        {loadingSessions ? (
+                            <div className="flex items-center text-gray-500 font-bold">
+                                <Loader size={16} className="mr-2 animate-spin" />
+                                Loading sessions...
+                            </div>
+                        ) : (
+                            <select
+                                className="neo-input w-full font-bold"
+                                value={selectedSessionId}
+                                onChange={(e) => handleSessionChange(e.target.value)}
+                                disabled={generating}
+                            >
+                                <option value="">Select a session...</option>
+                                {sessions.map(session => (
+                                    <option key={session.id} value={session.id}>
+                                        {session.name || `${session.grade_name} - ${session.term_name} ${session.year_name}`}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </div>
 
-                    <div className="modal-body">
-                        {/* Step 1: Session Selection */}
-                        <div className="mb-4">
-                            <label className="form-label fw-bold">Select Class Session *</label>
-                            <p className="text-muted small mb-2">
-                                Choose a class session to generate invoices for all enrolled students.
-                            </p>
+                    {/* Step 2: Additional Options */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Due Date *</label>
+                            <input
+                                type="date"
+                                className="neo-input w-full font-bold"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                disabled={generating}
+                                min={new Date().toISOString().split('T')[0]}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Remarks (Optional)</label>
+                            <input
+                                type="text"
+                                className="neo-input w-full font-bold"
+                                placeholder="e.g., Term 1 Fees 2026"
+                                value={remarks}
+                                onChange={(e) => setRemarks(e.target.value)}
+                                disabled={generating}
+                            />
+                        </div>
+                    </div>
 
-                            {loadingSessions ? (
-                                <div className="d-flex align-items-center text-muted">
-                                    <Loader size={16} className="me-2 spinner-border spinner-border-sm" />
-                                    Loading sessions...
-                                </div>
+                    {/* Preview Button */}
+                    <div className="flex mb-6">
+                        <button
+                            className="neo-btn w-full py-3 font-black text-gray-600 uppercase tracking-widest"
+                            onClick={handlePreview}
+                            disabled={!selectedSessionId || loadingPreview || generating}
+                        >
+                            {loadingPreview ? (
+                                <span className="flex items-center justify-center">
+                                    <Loader size={16} className="mr-2 animate-spin" />
+                                    Loading Preview...
+                                </span>
                             ) : (
-                                <select
-                                    className="form-select"
-                                    value={selectedSessionId}
-                                    onChange={(e) => handleSessionChange(e.target.value)}
-                                    disabled={generating}
-                                >
-                                    <option value="">Select a session...</option>
-                                    {sessions.map(session => (
-                                        <option key={session.id} value={session.id}>
-                                            {session.name || `${session.grade_name} - ${session.term_name} ${session.year_name}`}
-                                        </option>
-                                    ))}
-                                </select>
+                                'Preview Generation'
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Preview Display */}
+                    {preview && preview.error && (
+                        <div className="flex items-start gap-3 p-4 bg-rose-50 text-rose-600 rounded-lg mb-6 border border-rose-100">
+                            <AlertTriangle size={18} className="mt-0.5 flex-shrink-0" />
+                            <div className="font-bold text-sm">{preview.error}</div>
+                        </div>
+                    )}
+
+                    {preview && !preview.error && !result && (
+                        <div className="neo-pressed p-6 mb-6">
+                            <h6 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4">Generation Preview</h6>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
+                                <div className="neo-card border-none p-4">
+                                    <small className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Students to Invoice</small>
+                                    <div className="text-2xl font-black text-indigo-600 flex items-center justify-center gap-2">
+                                        <Users size={20} />
+                                        {preview.studentCount}
+                                    </div>
+                                </div>
+                                <div className="neo-card border-none p-4">
+                                    <small className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Fee Per Student</small>
+                                    <div className="text-xl font-black text-gray-700">{formatKES(preview.feePerStudent)}</div>
+                                </div>
+                                <div className="neo-card border-none p-4">
+                                    <small className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Total Invoice Value</small>
+                                    <div className="text-2xl font-black text-emerald-500">{formatKES(preview.totalAmount)}</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center text-emerald-500 text-sm font-bold mb-4">
+                                <CheckCircle size={16} className="mr-2" />
+                                <span>
+                                    Billing via: <strong className="font-black">{preview.billingSource === 'template' ? 'Fee Template' : 'Grade Fee Structure'}</strong>
+                                    {' — '}{preview.structureLabel}
+                                </span>
+                            </div>
+
+                            <div className="text-xs font-bold text-gray-500 mb-3">
+                                Only mandatory fees will be included ({preview.feeItems.length} items):
+                            </div>
+
+                            <ul className="neo-card border-none p-0 overflow-hidden text-sm">
+                                {preview.feeItems.slice(0, 4).map((item, idx) => (
+                                    <li key={idx} className="flex justify-between py-3 px-4 border-b border-gray-100 last:border-0">
+                                        <span className="font-bold text-gray-600">{item.name}</span>
+                                        <span className="font-black text-gray-700">{formatKES(parseFloat(item.amount))}</span>
+                                    </li>
+                                ))}
+                                {preview.feeItems.length > 4 && (
+                                    <li className="py-3 px-4 text-center text-gray-400 text-xs font-bold uppercase tracking-widest bg-gray-50/50">
+                                        +{preview.feeItems.length - 4} more items...
+                                    </li>
+                                )}
+                            </ul>
+
+                            {preview.studentCount === 0 && (
+                                <div className="flex items-center gap-3 p-4 bg-amber-50 text-amber-600 rounded-lg mt-4 border border-amber-100">
+                                    <AlertTriangle size={16} className="flex-shrink-0" />
+                                    <span className="font-bold text-sm">No active enrollments found for this session. Make sure students are enrolled.</span>
+                                </div>
                             )}
                         </div>
+                    )}
 
-                        {/* Step 2: Additional Options */}
-                        <div className="row g-3 mb-4">
-                            <div className="col-md-6">
-                                <label className="form-label fw-bold">Due Date *</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    value={dueDate}
-                                    onChange={(e) => setDueDate(e.target.value)}
-                                    disabled={generating}
-                                    min={new Date().toISOString().split('T')[0]}
-                                />
-                            </div>
-                            <div className="col-md-6">
-                                <label className="form-label fw-bold">Remarks (Optional)</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="e.g., Term 1 Fees 2026"
-                                    value={remarks}
-                                    onChange={(e) => setRemarks(e.target.value)}
-                                    disabled={generating}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Preview Button */}
-                        <div className="d-grid mb-4">
-                            <button
-                                className="btn btn-outline-primary"
-                                onClick={handlePreview}
-                                disabled={!selectedSessionId || loadingPreview || generating}
-                            >
-                                {loadingPreview ? (
-                                    <>
-                                        <Loader size={16} className="me-2 spinner-border spinner-border-sm" />
-                                        Loading Preview...
-                                    </>
-                                ) : (
-                                    'Preview Generation'
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Preview Display */}
-                        {preview && preview.error && (
-                            <div className="alert alert-warning d-flex align-items-start">
-                                <AlertTriangle size={18} className="me-2 mt-1 flex-shrink-0" />
-                                <div>{preview.error}</div>
-                            </div>
-                        )}
-
-                        {preview && !preview.error && !result && (
-                            <div className="card bg-light border-0">
-                                <div className="card-body">
-                                    <h6 className="fw-bold mb-3">Generation Preview</h6>
-                                    <div className="row text-center mb-3">
-                                        <div className="col-md-4">
-                                            <small className="text-muted d-block">Students to Invoice</small>
-                                            <div className="fw-bold fs-4 text-primary">
-                                                <Users size={20} className="me-1" />
-                                                {preview.studentCount}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <small className="text-muted d-block">Fee Per Student</small>
-                                            <div className="fw-bold fs-5">{formatKES(preview.feePerStudent)}</div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <small className="text-muted d-block">Total Invoice Value</small>
-                                            <div className="fw-bold fs-4 text-success">{formatKES(preview.totalAmount)}</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="d-flex align-items-center text-success mb-2">
-                                        <CheckCircle size={16} className="me-2" />
-                                        <small>
-                                            Billing via: <strong>{preview.billingSource === 'template' ? 'Fee Template' : 'Grade Fee Structure'}</strong>
-                                            {' — '}{preview.structureLabel}
-                                        </small>
-                                    </div>
-
-                                    <div className="small text-muted mb-2">
-                                        Only mandatory fees will be included ({preview.feeItems.length} items):
-                                    </div>
-
-                                    <ul className="list-group list-group-flush small border rounded">
-                                        {preview.feeItems.slice(0, 4).map((item, idx) => (
-                                            <li key={idx} className="list-group-item bg-transparent d-flex justify-content-between py-2">
-                                                <span>{item.name}</span>
-                                                <span className="fw-bold">{formatKES(parseFloat(item.amount))}</span>
-                                            </li>
-                                        ))}
-                                        {preview.feeItems.length > 4 && (
-                                            <li className="list-group-item bg-transparent text-center text-muted fst-italic py-2">
-                                                +{preview.feeItems.length - 4} more items...
-                                            </li>
-                                        )}
-                                    </ul>
-
-                                    {preview.studentCount === 0 && (
-                                        <div className="alert alert-warning mt-3 mb-0">
-                                            <AlertTriangle size={16} className="me-2" />
-                                            No active enrollments found for this session. Make sure students are enrolled.
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Result Display */}
-                        {result && !result.error && (
-                            <div className="card border-success">
-                                <div className="card-header bg-success text-white">
-                                    <CheckCircle size={18} className="me-2" />
+                    {/* Result Display */}
+                    {result && !result.error && (
+                        <div className="neo-pressed p-1 border border-emerald-500/20 mb-6 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
+                            <div className="p-6">
+                                <div className="flex items-center text-emerald-600 font-bold mb-6">
+                                    <CheckCircle size={18} className="mr-2" />
                                     Generation Complete
                                 </div>
-                                <div className="card-body">
-                                    <div className="row text-center mb-3">
-                                        <div className="col-md-4">
-                                            <div className="fw-bold fs-3 text-success">{result.success?.length || 0}</div>
-                                            <small className="text-muted">Invoices Created</small>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="fw-bold fs-3 text-warning">{result.skipped?.length || 0}</div>
-                                            <small className="text-muted">Students Skipped</small>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="fw-bold fs-3">{result.summary?.total_processed || 0}</div>
-                                            <small className="text-muted">Total Processed</small>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
+                                    <div className="neo-card border-none p-4">
+                                        <div className="text-3xl font-black text-emerald-500">{result.success?.length || 0}</div>
+                                        <small className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 block">Invoices Created</small>
+                                    </div>
+                                    <div className="neo-card border-none p-4">
+                                        <div className="text-3xl font-black text-amber-500">{result.skipped?.length || 0}</div>
+                                        <small className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 block">Students Skipped</small>
+                                    </div>
+                                    <div className="neo-card border-none p-4">
+                                        <div className="text-3xl font-black text-gray-600">{result.summary?.total_processed || 0}</div>
+                                        <small className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 block">Total Processed</small>
+                                    </div>
+                                </div>
+
+                                {result.skipped && result.skipped.length > 0 && (
+                                    <div className="mt-4">
+                                        <h6 className="text-xs font-black text-amber-500 uppercase tracking-widest mb-3">Skipped Students:</h6>
+                                        <div className="neo-pressed overflow-y-auto max-h-[150px] p-2">
+                                            <table className="w-full text-left text-sm">
+                                                <thead className="sticky top-0 bg-gray-100 z-10">
+                                                    <tr>
+                                                        <th className="p-2 text-xs font-black text-gray-500 uppercase tracking-widest">Student</th>
+                                                        <th className="p-2 text-xs font-black text-gray-500 uppercase tracking-widest">Reason</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {result.skipped.map((skip, idx) => (
+                                                        <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-white/50">
+                                                            <td className="p-2 font-bold text-gray-700">{skip.student_name || `ID: ${skip.student_id}`}</td>
+                                                            <td className="p-2 text-xs font-bold text-gray-500">{skip.reason}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-
-                                    {result.skipped && result.skipped.length > 0 && (
-                                        <div className="mt-3">
-                                            <h6 className="fw-bold text-warning">Skipped Students:</h6>
-                                            <div className="border rounded" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                                                <table className="table table-sm mb-0">
-                                                    <thead className="table-light">
-                                                        <tr>
-                                                            <th>Student</th>
-                                                            <th>Reason</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {result.skipped.map((skip, idx) => (
-                                                            <tr key={idx}>
-                                                                <td>{skip.student_name || `ID: ${skip.student_id}`}</td>
-                                                                <td className="text-muted small">{skip.reason}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        {result && result.error && (
-                            <div className="alert alert-danger d-flex align-items-start">
-                                <XCircle size={18} className="me-2 mt-1 flex-shrink-0" />
-                                <div>{result.error}</div>
-                            </div>
-                        )}
-                    </div>
+                    {result && result.error && (
+                        <div className="flex items-start gap-3 p-4 bg-rose-50 text-rose-600 rounded-lg mb-6 border border-rose-100">
+                            <XCircle size={18} className="mt-0.5 flex-shrink-0" />
+                            <div className="font-bold text-sm">{result.error}</div>
+                        </div>
+                    )}
+                </div>
 
-                    <div className="modal-footer">
+                <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
+                    <button
+                        type="button"
+                        className="neo-btn px-6 py-2"
+                        onClick={handleClose}
+                        disabled={generating}
+                    >
+                        {result ? 'Close' : 'Cancel'}
+                    </button>
+
+                    {!result && (
                         <button
                             type="button"
-                            className="btn btn-secondary"
-                            onClick={handleClose}
-                            disabled={generating}
+                            className="neo-btn neo-btn-accent px-6 py-2"
+                            disabled={!preview || preview.error || generating || preview.studentCount === 0}
+                            onClick={handleGenerate}
                         >
-                            {result ? 'Close' : 'Cancel'}
+                            {generating ? (
+                                <span className="flex items-center">
+                                    <Loader size={16} className="mr-2 animate-spin" />
+                                    Generating...
+                                </span>
+                            ) : (
+                                `Generate ${preview?.studentCount || 0} Invoices`
+                            )}
                         </button>
-
-                        {!result && (
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                disabled={!preview || preview.error || generating || preview.studentCount === 0}
-                                onClick={handleGenerate}
-                            >
-                                {generating ? (
-                                    <>
-                                        <Loader size={16} className="me-2 spinner-border spinner-border-sm" />
-                                        Generating...
-                                    </>
-                                ) : (
-                                    `Generate ${preview?.studentCount || 0} Invoices`
-                                )}
-                            </button>
-                        )}
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

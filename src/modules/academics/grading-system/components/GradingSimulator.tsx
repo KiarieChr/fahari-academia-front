@@ -17,19 +17,19 @@ const GradingSimulator = ({ scales = [], curriculumCode }) => {
     };
 
     return (
-        <div className="rounded-xl border p-6 flex flex-col gap-6 bg-slate-50 dark:bg-slate-900/10 border-slate-200 dark:border-slate-700">
+        <div className="neo-card border-none p-6 flex flex-col gap-6">
             <div className="flex items-center gap-2 mb-2">
                 <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
                     <Calculator size={20} />
                 </div>
-                <h3 className="font-bold text-slate-900 dark:text-white">Grade Simulator</h3>
+                <h3 className="font-bold text-slate-900">Grade Simulator</h3>
             </div>
 
             {scales.length > 1 && (
                 <select
                     value={selectedScaleId || activeScale?.id || ''}
                     onChange={e => setSelectedScaleId(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800"
+                    className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-sm outline-none font-bold text-slate-700"
                 >
                     {scales.map(s => (
                         <option key={s.id} value={s.id}>{s.name}</option>
@@ -39,9 +39,9 @@ const GradingSimulator = ({ scales = [], curriculumCode }) => {
 
             <div className="space-y-6">
                 <div className="space-y-2">
-                    <div className="flex justify-between text-sm font-medium">
-                        <span className="text-slate-600 dark:text-slate-400">Input Score</span>
-                        <span className="text-blue-600 font-bold">{score}%</span>
+                    <div className="flex justify-between text-sm font-bold">
+                        <span className="text-slate-600">Input Score</span>
+                        <span className="text-blue-600">{score}%</span>
                     </div>
                     <input
                         type="range"
@@ -49,29 +49,29 @@ const GradingSimulator = ({ scales = [], curriculumCode }) => {
                         max="100"
                         value={score}
                         onChange={(e) => setScore(parseInt(e.target.value))}
-                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        className="w-full h-2 neo-pressed rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
-                    <div className="flex justify-between text-xs text-slate-400">
+                    <div className="flex justify-between text-xs font-bold text-slate-400">
                         <span>0</span>
                         <span>50</span>
                         <span>100</span>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-1">
-                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="neo-card border-none p-5 text-center space-y-1">
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                         {activeScale?.name || 'No Scale'}
                     </div>
-                    <div className="text-sm text-slate-500 mt-2">
-                        Score: <span className="font-bold text-slate-900 dark:text-white">{score}%</span>
+                    <div className="text-sm font-bold text-slate-500 mt-2">
+                        Score: <span className="font-bold text-slate-900">{score}%</span>
                         {activeScale && (
                             <span className="ml-2">
                                 · Pass mark: {activeScale.pass_mark}%
                             </span>
                         )}
                     </div>
-                    <div className="mt-3">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-sm font-bold ${
+                    <div className="mt-4">
+                        <span className={`inline-flex px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${
                             score >= (activeScale?.pass_mark || 50)
                                 ? 'bg-emerald-100 text-emerald-700'
                                 : 'bg-red-100 text-red-700'

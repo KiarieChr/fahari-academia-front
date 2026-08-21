@@ -1,5 +1,13 @@
-// Use empty string to force relative URLs. Next.js rewrites will proxy /api to the backend.
-const API_URL = import.meta.env.VITE_API_URL || '';
+const getApiUrl = () => {
+    // For local development with multi-tenancy, dynamically point to the correct tenant's backend port 8000
+    if (window.location.hostname.includes('localhost')) {
+        return `http://${window.location.hostname}:8000`;
+    }
+    // Fallback to env variable for production
+    return import.meta.env.VITE_API_URL || '';
+};
+
+const API_URL = getApiUrl();
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
 
 const handleResponse = async (response, options = {}) => {
@@ -418,8 +426,17 @@ export const api = {
 
     // ─── Examinations ─────────────────────────────────────────────
     examination: {
-        getExams: (params) => api.get('/examinations/api/examinations/', { params }),
-        getAnalysis: (id) => api.get(`/examinations/api/examinations/${id}/analysis/`),
-        getClassAnalysis: (session_id) => api.get('/examinations/api/term-results/class_analysis/', { params: { class_session: session_id } }),
+        getExams: (params) => api.get('/api/examinations/examinations/', { params }),
+        getAnalysis: (id) => api.get(`/api/examinations/examinations/${id}/analysis/`),
+        getClassAnalysis: (session_id) => api.get('/api/examinations/term-results/class_analysis/', { params: { class_session: session_id } }),
+    },
+
+    // ─── CRM ─────────────────────────────────────────────────────
+    crm: {
+        getProviderConfigs: (params = {}) => api.get('/api/crm/provider-configs/', { params }),
+        getProviderConfig: (id) => api.get(`/api/crm/provider-configs/${id}/`),
+        createProviderConfig: (data) => api.post('/api/crm/provider-configs/', data),
+        updateProviderConfig: (id, data) => api.put(`/api/crm/provider-configs/${id}/`, data),
+        deleteProviderConfig: (id) => api.delete(`/api/crm/provider-configs/${id}/`),
     }
 };

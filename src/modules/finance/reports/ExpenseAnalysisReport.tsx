@@ -80,7 +80,7 @@ const ExpenseAnalysisReport = () => {
                         {/* Bar chart */}
                         <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
                             <h3 className="font-bold text-slate-800 dark:text-white mb-4">Top Expense Accounts</h3>
-                            <div className="h-64">
+                            <div className="">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={chartData} layout="vertical">
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
@@ -96,7 +96,7 @@ const ExpenseAnalysisReport = () => {
                         {/* Pie chart */}
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
                             <h3 className="font-bold text-slate-800 dark:text-white mb-4">Distribution</h3>
-                            <div className="h-64">
+                            <div className="">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={pieData} cx="50%" cy="42%" innerRadius={46} outerRadius={74} paddingAngle={3} dataKey="value">

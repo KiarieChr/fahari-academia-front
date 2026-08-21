@@ -14,6 +14,7 @@ const ExamSchedulesDashboard = () => {
     const [classSessions, setClassSessions] = useState([]);
     const [assessmentTypes, setAssessmentTypes] = useState([]);
     const [subjects, setSubjects] = useState([]);
+    const [gradeSubjects, setGradeSubjects] = useState([]);
     const [gradingScales, setGradingScales] = useState([]);
 
     const [context, setContext] = useState({
@@ -29,6 +30,20 @@ const ExamSchedulesDashboard = () => {
     const [generating, setGenerating] = useState(false);
     const [editingExamId, setEditingExamId] = useState(null);
     const [editForm, setEditForm] = useState({ exam_date: '', start_time: '', duration_minutes: 120 });
+    const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+    const [generateConfig, setGenerateConfig] = useState({
+        startDate: new Date().toISOString().split('T')[0],
+        startTime: '08:00',
+        durationMinutes: 120,
+        skipWeekends: true
+    });
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [addForm, setAddForm] = useState({
+        subject: '',
+        exam_date: new Date().toISOString().split('T')[0],
+        start_time: '08:00',
+        duration_minutes: 120
+    });
 
     useEffect(() => {
         const loadBaseData = async () => {
@@ -82,6 +97,11 @@ const ExamSchedulesDashboard = () => {
                 if (list.length > 0) {
                     setContext(prev => ({ ...prev, classSession: list[0].id }));
                 }
+
+                const mappingsRes = await api.timetable.getGradeSubjects({ grade: context.grade });
+                const mappings = mappingsRes.results || mappingsRes || [];
+                const mappedIds = mappings.map(m => m.subject);
+                setGradeSubjects(mappedIds);
             } catch {
                 toast.error('Failed to load class sessions');
             }
@@ -139,7 +159,7 @@ const ExamSchedulesDashboard = () => {
 
         setGenerating(true);
         let successCount = 0;
-        let today = new Date();
+        let today = new Date(generateConfig.startDate);
 
         try {
             // Fetch explicitly mapped subjects for this grade
@@ -162,14 +182,16 @@ const ExamSchedulesDashboard = () => {
             for (let i = 0; i < relevantSubjects.length; i++) {
                 const subject = relevantSubjects[i];
                 let examDate = new Date(today);
-                examDate.setDate(today.getDate() + i + 1); // Spread over consecutive days
-                // skip weekends
-                if (examDate.getDay() === 0) examDate.setDate(examDate.getDate() + 1);
-                if (examDate.getDay() === 6) examDate.setDate(examDate.getDate() + 2);
+                examDate.setDate(today.getDate() + i); // Spread over consecutive days starting from startDate
+                
+                if (generateConfig.skipWeekends) {
+                    if (examDate.getDay() === 0) examDate.setDate(examDate.getDate() + 1);
+                    if (examDate.getDay() === 6) examDate.setDate(examDate.getDate() + 2);
+                }
                 
                 const dateString = examDate.toISOString().split('T')[0];
-                const startTime = "08:00";
-                const duration = 120;
+                const startTime = generateConfig.startTime;
+                const duration = generateConfig.durationMinutes;
 
                 const existing = existingExams.find(e => e.subject === subject.id || e.subject?.id === subject.id);
                 
@@ -205,6 +227,7 @@ const ExamSchedulesDashboard = () => {
             toast.error('Auto-generation encountered an error.');
         } finally {
             setGenerating(false);
+            setIsGenerateModalOpen(false);
         }
     };
 
@@ -238,42 +261,87 @@ const ExamSchedulesDashboard = () => {
         }
     };
 
+    const handleAddExam = async () => {
+        if (!addForm.subject) {
+            toast.warn('Please select a subject');
+            return;
+        }
+        const session = classSessions.find(s => s.id == context.classSession);
+        if (!session) return;
+        
+        const curId = session.curriculum;
+        const scale = gradingScales.find(s => s.curriculum == curId && s.is_active);
+        if (!scale) {
+            toast.error('No active grading scale found for this curriculum.');
+            return;
+        }
+
+        setGenerating(true);
+        try {
+            await examService.createExamination({
+                class_session: context.classSession,
+                assessment_type: context.assessmentType,
+                subject: addForm.subject,
+                grading_scale: scale.id,
+                exam_date: addForm.exam_date,
+                start_time: addForm.start_time,
+                duration_minutes: addForm.duration_minutes,
+                status: 'scheduled'
+            });
+            toast.success('Exam successfully added');
+            setIsAddModalOpen(false);
+            setAddForm({ ...addForm, subject: '' });
+            loadExaminations();
+        } catch (err) {
+            toast.error('Failed to add exam');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
     return (
         <DashboardLayout title="Exam Schedules">
-            <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 pb-20">
+            <div className="min-h-screen neo-bg pb-20 relative">
                 <div className="max-w-[1600px] mx-auto p-6 space-y-6">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Calendar className="text-indigo-600" /> Exam Schedules
+                            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                <Calendar className="text-blue-600" /> Exam Schedules
                             </h1>
-                            <p className="text-slate-500 text-sm mt-1">Generate and manage examination timetables</p>
+                            <p className="text-slate-500 text-sm mt-1 font-bold">Generate and manage examination timetables</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-3">
                             <button
                                 onClick={loadExaminations}
                                 disabled={loading || !context.classSession}
-                                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2"
+                                className="px-4 py-2 neo-btn rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50"
                             >
                                 <RefreshCcw size={16} className={loading ? "animate-spin" : ""} /> Refresh
                             </button>
                             <button
-                                onClick={handleAutoGenerate}
+                                onClick={() => setIsAddModalOpen(true)}
                                 disabled={generating || !context.classSession || !context.assessmentType}
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                                className="px-5 py-2 neo-btn rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50"
+                            >
+                                <Plus size={16} /> Add Exam
+                            </button>
+                            <button
+                                onClick={() => setIsGenerateModalOpen(true)}
+                                disabled={generating || !context.classSession || !context.assessmentType}
+                                className="px-5 py-2 neo-btn-accent rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-50"
                             >
                                 {generating ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
-                                Auto-Generate Timetable
+                                Auto-Generate
                             </button>
                         </div>
                     </div>
 
                     {/* Filters */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm grid grid-cols-5 md:grid-cols-5 lg:grid-cols-5 sm:grid-cols-2 gap-4">
+                    <div className="neo-card border-none p-6 grid grid-cols-5 md:grid-cols-5 lg:grid-cols-5 sm:grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Academic Year</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Academic Year</label>
                             <select
-                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 neo-pressed border-none text-slate-900 focus:outline-none rounded-xl text-sm"
                                 value={context.academicYear}
                                 onChange={e => handleChange('academicYear', e.target.value)}
                             >
@@ -282,9 +350,9 @@ const ExamSchedulesDashboard = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Term</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Term</label>
                             <select
-                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 neo-pressed border-none text-slate-900 focus:outline-none rounded-xl text-sm"
                                 value={context.term}
                                 onChange={e => handleChange('term', e.target.value)}
                             >
@@ -293,9 +361,9 @@ const ExamSchedulesDashboard = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Grade</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Grade</label>
                             <select
-                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 neo-pressed border-none text-slate-900 focus:outline-none rounded-xl text-sm"
                                 value={context.grade}
                                 onChange={e => handleChange('grade', e.target.value)}
                             >
@@ -304,61 +372,67 @@ const ExamSchedulesDashboard = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Class Session</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Class Session</label>
                             <select
-                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 neo-pressed border-none text-slate-900 focus:outline-none rounded-xl text-sm disabled:opacity-50"
                                 value={context.classSession}
                                 onChange={e => handleChange('classSession', e.target.value)}
                                 disabled={!context.grade}
                             >
-                                <option value="">Select Class Session</option>
+                                <option value="">Select Session</option>
                                 {classSessions.map(cs => <option key={cs.id} value={cs.id}>{cs.name}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1">Assessment Type</label>
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Assessment Type</label>
                             <select
-                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 neo-pressed border-none text-slate-900 focus:outline-none rounded-xl text-sm"
                                 value={context.assessmentType}
                                 onChange={e => handleChange('assessmentType', e.target.value)}
                             >
                                 <option value="">Select Assessment</option>
-                                {assessmentTypes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                {assessmentTypes
+                                    .filter(a => {
+                                        const activeCurr = grades.find(g => g.id == context.grade)?.curriculum;
+                                        return !activeCurr || a.curriculum == activeCurr;
+                                    })
+                                    .map(a => <option key={a.id} value={a.id}>{a.name}</option>)
+                                }
                             </select>
                         </div>
                     </div>
 
                     {/* Content */}
                     {!context.classSession || !context.assessmentType ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex flex-col items-center justify-center py-20 text-center neo-card border-none">
                             <Clock size={48} className="text-slate-300 mb-4" />
-                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Select a Class and Assessment</h3>
-                            <p className="text-slate-500">Choose the context above to view or generate an exam timetable.</p>
+                            <h3 className="text-lg font-bold text-slate-800">Select a Class and Assessment</h3>
+                            <p className="text-slate-500 font-medium">Choose the context above to view or generate an exam timetable.</p>
                         </div>
                     ) : examinations.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex flex-col items-center justify-center py-20 text-center neo-card border-none">
                             <Calendar size={48} className="text-slate-300 mb-4" />
-                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">No Exams Scheduled</h3>
-                            <p className="text-slate-500 mb-6">There are no exams found for this selection.</p>
+                            <h3 className="text-lg font-bold text-slate-800">No Exams Scheduled</h3>
+                            <p className="text-slate-500 font-medium mb-6">There are no exams found for this selection.</p>
                             <button
-                                onClick={handleAutoGenerate}
+                                onClick={() => setIsGenerateModalOpen(true)}
                                 disabled={generating}
-                                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center gap-2"
+                                className="px-6 py-2.5 neo-btn-accent rounded-xl font-bold flex items-center gap-2"
                             >
                                 <Wand2 size={18} /> Auto-Generate Timetable
                             </button>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                        <div className="neo-card border-none overflow-hidden p-6">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-                                        <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-400">Subject</th>
-                                        <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-400">Date</th>
-                                        <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-400">Start Time</th>
-                                        <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-400">Duration (min)</th>
-                                        <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-400">Status</th>
-                                        <th className="py-3 px-4 font-semibold text-sm text-slate-600 dark:text-slate-400 text-right">Actions</th>
+                                    <tr className="border-b-2 border-slate-100">
+                                        <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Subject</th>
+                                        <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Date</th>
+                                        <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Start Time</th>
+                                        <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Duration (min)</th>
+                                        <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -367,56 +441,56 @@ const ExamSchedulesDashboard = () => {
                                         const subjectName = typeof exam.subject === 'object' ? exam.subject.name : (subjects.find(s => s.id == exam.subject)?.name || 'Unknown');
                                         
                                         return (
-                                            <tr key={exam.id} className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{subjectName}</td>
+                                            <tr key={exam.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                                <td className="py-4 px-4 font-bold text-slate-700">{subjectName}</td>
                                                 
-                                                <td className="py-3 px-4">
+                                                <td className="py-4 px-4">
                                                     {isEditing ? (
                                                         <input 
                                                             type="date" 
-                                                            className="w-full px-2 py-1 border rounded text-sm dark:bg-slate-900"
+                                                            className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm outline-none"
                                                             value={editForm.exam_date}
                                                             onChange={e => setEditForm({...editForm, exam_date: e.target.value})}
                                                         />
                                                     ) : (
-                                                        <span className={exam.exam_date ? "text-slate-700 dark:text-slate-300" : "text-amber-500 font-medium"}>
+                                                        <span className={exam.exam_date ? "text-slate-600 font-medium" : "text-amber-500 font-bold"}>
                                                             {exam.exam_date || 'Not set'}
                                                         </span>
                                                     )}
                                                 </td>
                                                 
-                                                <td className="py-3 px-4">
+                                                <td className="py-4 px-4">
                                                     {isEditing ? (
                                                         <input 
                                                             type="time" 
-                                                            className="w-full px-2 py-1 border rounded text-sm dark:bg-slate-900"
+                                                            className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm outline-none"
                                                             value={editForm.start_time}
                                                             onChange={e => setEditForm({...editForm, start_time: e.target.value})}
                                                         />
                                                     ) : (
-                                                        <span className="text-slate-700 dark:text-slate-300 font-mono text-sm">
+                                                        <span className="text-slate-600 font-bold font-mono text-sm bg-slate-100 px-2 py-1 rounded-md">
                                                             {exam.start_time?.slice(0,5) || '--:--'}
                                                         </span>
                                                     )}
                                                 </td>
                                                 
-                                                <td className="py-3 px-4">
+                                                <td className="py-4 px-4">
                                                     {isEditing ? (
                                                         <input 
                                                             type="number" 
-                                                            className="w-20 px-2 py-1 border rounded text-sm dark:bg-slate-900"
+                                                            className="w-24 px-3 py-2 neo-pressed border-none rounded-xl text-sm outline-none"
                                                             value={editForm.duration_minutes}
                                                             onChange={e => setEditForm({...editForm, duration_minutes: e.target.value})}
                                                         />
                                                     ) : (
-                                                        <span className="text-slate-700 dark:text-slate-300">
-                                                            {exam.duration_minutes || '--'}
+                                                        <span className="text-slate-600 font-medium">
+                                                            {exam.duration_minutes || '--'} <span className="text-slate-400 text-xs">min</span>
                                                         </span>
                                                     )}
                                                 </td>
                                                 
-                                                <td className="py-3 px-4">
-                                                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
+                                                <td className="py-4 px-4">
+                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                                                         exam.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
                                                         exam.status === 'completed' ? 'bg-green-100 text-green-700' :
                                                         'bg-slate-100 text-slate-600'
@@ -425,18 +499,18 @@ const ExamSchedulesDashboard = () => {
                                                     </span>
                                                 </td>
                                                 
-                                                <td className="py-3 px-4 text-right">
+                                                <td className="py-4 px-4 text-right">
                                                     {isEditing ? (
                                                         <div className="flex justify-end gap-2">
-                                                            <button onClick={() => setEditingExamId(null)} className="text-slate-500 hover:text-slate-700 text-sm font-medium">Cancel</button>
-                                                            <button onClick={() => handleSaveEdit(exam)} className="text-indigo-600 hover:text-indigo-700 text-sm font-bold flex items-center gap-1">
+                                                            <button onClick={() => setEditingExamId(null)} className="neo-btn px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 text-xs font-bold">Cancel</button>
+                                                            <button onClick={() => handleSaveEdit(exam)} className="neo-btn-accent px-3 py-1.5 rounded-lg text-white text-xs font-bold flex items-center gap-1">
                                                                 <Save size={14} /> Save
                                                             </button>
                                                         </div>
                                                     ) : (
                                                         <button 
                                                             onClick={() => handleEditClick(exam)}
-                                                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                                                            className="neo-btn px-4 py-2 rounded-lg text-blue-600 hover:text-blue-700 text-sm font-bold flex items-center gap-2 ml-auto"
                                                         >
                                                             Edit
                                                         </button>
@@ -450,6 +524,154 @@ const ExamSchedulesDashboard = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Auto-Generate Modal */}
+                {isGenerateModalOpen && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="neo-card p-6 w-full max-w-md border-none">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <Wand2 className="text-blue-600" /> Generate Timetable
+                            </h2>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-500 mb-2">Start Date</label>
+                                    <input 
+                                        type="date"
+                                        className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-slate-800 outline-none"
+                                        value={generateConfig.startDate}
+                                        onChange={e => setGenerateConfig({...generateConfig, startDate: e.target.value})}
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-500 mb-2">Default Start Time</label>
+                                        <input 
+                                            type="time"
+                                            className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-slate-800 outline-none"
+                                            value={generateConfig.startTime}
+                                            onChange={e => setGenerateConfig({...generateConfig, startTime: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-500 mb-2">Duration (min)</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-slate-800 outline-none"
+                                            value={generateConfig.durationMinutes}
+                                            onChange={e => setGenerateConfig({...generateConfig, durationMinutes: parseInt(e.target.value) || 120})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-2">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input 
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500"
+                                            checked={generateConfig.skipWeekends}
+                                            onChange={e => setGenerateConfig({...generateConfig, skipWeekends: e.target.checked})}
+                                        />
+                                        <span className="text-sm font-bold text-slate-700">Skip Weekends (Sat/Sun)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end gap-3 mt-8">
+                                <button 
+                                    onClick={() => setIsGenerateModalOpen(false)}
+                                    className="px-5 py-2.5 neo-btn rounded-xl font-bold text-slate-600"
+                                    disabled={generating}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleAutoGenerate}
+                                    className="px-5 py-2.5 neo-btn-accent rounded-xl font-bold flex items-center gap-2"
+                                    disabled={generating}
+                                >
+                                    {generating ? <Loader2 size={18} className="animate-spin" /> : <Wand2 size={18} />}
+                                    Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Add Manual Exam Modal */}
+                {isAddModalOpen && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="neo-card p-6 w-full max-w-md border-none">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <Plus className="text-blue-600" /> Add Exam manually
+                            </h2>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-500 mb-2">Subject</label>
+                                    <select 
+                                        className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-slate-800 outline-none"
+                                        value={addForm.subject}
+                                        onChange={e => setAddForm({...addForm, subject: e.target.value})}
+                                    >
+                                        <option value="">Select Subject</option>
+                                        {subjects.filter(s => gradeSubjects.includes(s.id)).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-500 mb-2">Date</label>
+                                    <input 
+                                        type="date"
+                                        className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-slate-800 outline-none"
+                                        value={addForm.exam_date}
+                                        onChange={e => setAddForm({...addForm, exam_date: e.target.value})}
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-500 mb-2">Start Time</label>
+                                        <input 
+                                            type="time"
+                                            className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-slate-800 outline-none"
+                                            value={addForm.start_time}
+                                            onChange={e => setAddForm({...addForm, start_time: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-500 mb-2">Duration (min)</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full px-4 py-3 neo-pressed border-none rounded-xl text-slate-800 outline-none"
+                                            value={addForm.duration_minutes}
+                                            onChange={e => setAddForm({...addForm, duration_minutes: parseInt(e.target.value) || 120})}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end gap-3 mt-8">
+                                <button 
+                                    onClick={() => setIsAddModalOpen(false)}
+                                    className="px-5 py-2.5 neo-btn rounded-xl font-bold text-slate-600"
+                                    disabled={generating}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleAddExam}
+                                    className="px-5 py-2.5 neo-btn-accent rounded-xl font-bold flex items-center gap-2"
+                                    disabled={generating}
+                                >
+                                    {generating ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                    Save Exam
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     );

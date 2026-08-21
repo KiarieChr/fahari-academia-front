@@ -116,21 +116,21 @@ const CurriculumSetupDashboard = () => {
 
     return (
         <DashboardLayout title="Curriculum Setup">
-            <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 pb-20 relative">
+            <div className="min-h-screen neo-bg pb-20 relative">
 
                 {/* Header Actions */}
-                <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-16 z-30 px-6 py-4 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="neo-card z-30 px-3 py-4 mx-2 mt-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex items-center gap-4">
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Curriculum Setup</h1>
-                            <p className="text-sm text-slate-500">Define education structure, subjects, and assessment rules.</p>
+                            <h1 className="text-md font-bold text-gray-700">Curriculum Setup</h1>
+                            <p className="text-sm text-gray-500">Define education structure, subjects, and assessment rules.</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
                         {/* Curriculum selector */}
                         <select
-                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium"
+                            className="neo-input font-medium p-2"
                             value={selectedCurriculum?.id || ''}
                             onChange={(e) => {
                                 const c = curricula.find(x => String(x.id) === e.target.value);
@@ -141,7 +141,7 @@ const CurriculumSetupDashboard = () => {
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
+                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
                             status === 'draft' ? 'bg-amber-100 text-amber-700' :
                             status === 'active' ? 'bg-green-100 text-green-700' :
                             'bg-slate-100 text-slate-600'
@@ -149,18 +149,18 @@ const CurriculumSetupDashboard = () => {
                             {status}
                         </span>
                         <button onClick={loadData}
-                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
+                            className="neo-btn px-4 py-2 flex items-center gap-2">
                             <RefreshCw size={16} /> Refresh
                         </button>
                     </div>
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-16">
-                        <Loader2 className="animate-spin text-blue-600" size={28} />
+                    <div className="flex justify-center py-5">
+                        <Loader2 className="animate-spin text-indigo-600" size={28} />
                     </div>
                 ) : (
-                    <div className="max-w-[1200px] mx-auto p-6 space-y-6">
+                    <div className="max-w-[1200px] mx-auto p-4 space-y-4">
                         {/* Profile Section */}
                         <CurriculumProfile
                             profile={{
@@ -174,8 +174,8 @@ const CurriculumSetupDashboard = () => {
                         />
 
                         {/* Navigation Tabs */}
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                            <div className="flex border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
+                        <div className="neo-card overflow-hidden">
+                            <div className="flex px-4 pt-4 gap-2 overflow-x-auto hide-scrollbar pb-2">
                                 {TABS.map(tab => {
                                     const Icon = tab.icon;
                                     const isActive = activeTab === tab.id;
@@ -183,9 +183,9 @@ const CurriculumSetupDashboard = () => {
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
-                                            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${isActive
-                                                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
-                                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                            className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors whitespace-nowrap ${isActive
+                                                ? 'neo-pressed neo-text-accent font-bold'
+                                                : 'neo-btn font-medium'
                                             }`}
                                         >
                                             <Icon size={18} />
@@ -195,7 +195,7 @@ const CurriculumSetupDashboard = () => {
                                 })}
                             </div>
 
-                            <div className="p-6 min-h-[500px]">
+                            <div className="p-4 min-h-[500px]">
                                 {activeTab === 'levels' && (
                                     <EducationLevelsManager
                                         levels={levelsWithClasses}
@@ -216,6 +216,7 @@ const CurriculumSetupDashboard = () => {
                                 {activeTab === 'assessment' && (
                                     <AssessmentMapping
                                         isReadOnly={isReadOnly}
+                                        curriculum={selectedCurriculum}
                                     />
                                 )}
                             </div>

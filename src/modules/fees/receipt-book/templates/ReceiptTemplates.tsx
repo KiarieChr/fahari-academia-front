@@ -16,7 +16,6 @@ const getInst = (profile, settings, field, profileField) => profile?.[profileFie
 const SchoolHeader = ({ settings, institutionProfile, compact = false }) => {
     const logo = getLogoUrl(settings, institutionProfile);
     const coat = getCoatUrl(settings, institutionProfile);
-    const style = settings?.receipt_header_style || 'LOGO_ONLY';
     const name = institutionProfile?.name || settings?.receipt_institution_name || 'INSTITUTION NAME';
     const address = getInst(institutionProfile, settings, 'receipt_institution_address', 'address_line_1');
     const phone = getInst(institutionProfile, settings, 'receipt_institution_phone', 'phone');
@@ -26,39 +25,26 @@ const SchoolHeader = ({ settings, institutionProfile, compact = false }) => {
 
     const imgSize = compact ? 48 : 64;
 
-    const renderImages = () => {
-        if (style === 'LOGO_ONLY' && logo) return <img src={logo} alt="Logo" style={{ height: imgSize, objectFit: 'contain' }} />;
-        if (style === 'COAT_ONLY' && coat) return <img src={coat} alt="Coat of Arms" style={{ height: imgSize, objectFit: 'contain' }} />;
-        if (style === 'BOTH_SIDE') return (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                {logo && <img src={logo} alt="Logo" style={{ height: imgSize, objectFit: 'contain' }} />}
-                <div style={{ flex: 1 }} />
-                {coat && <img src={coat} alt="Coat of Arms" style={{ height: imgSize, objectFit: 'contain' }} />}
-            </div>
-        );
-        if (style === 'COAT_LEFT_LOGO_RIGHT') return (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                {coat && <img src={coat} alt="Coat of Arms" style={{ height: imgSize, objectFit: 'contain' }} />}
-                <div style={{ flex: 1 }} />
-                {logo && <img src={logo} alt="Logo" style={{ height: imgSize, objectFit: 'contain' }} />}
-            </div>
-        );
-        if (style === 'BOTH_CENTER') return (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, alignItems: 'center' }}>
-                {coat && <img src={coat} alt="Coat of Arms" style={{ height: imgSize, objectFit: 'contain' }} />}
-                {logo && <img src={logo} alt="Logo" style={{ height: imgSize, objectFit: 'contain' }} />}
-            </div>
-        );
-        return null;
-    };
-
     return (
-        <div style={{ textAlign: 'center', marginBottom: compact ? 8 : 16 }}>
-            {renderImages()}
-            <div style={{ fontSize: compact ? 16 : 20, fontWeight: 'bold', color: primary, marginTop: 4 }}>{name}</div>
-            {address && <div style={{ fontSize: compact ? 10 : 12, color: '#555' }}>{address}</div>}
-            {(phone || email) && <div style={{ fontSize: compact ? 10 : 12, color: '#555' }}>{[phone, email].filter(Boolean).join(' | ')}</div>}
-            {motto && <div style={{ fontSize: compact ? 9 : 11, fontStyle: 'italic', color: '#777', marginTop: 2 }}>{motto}</div>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? 8 : 16 }}>
+            {/* Left: Coat of Arms (Government Emblem) */}
+            <div style={{ width: imgSize + 20, display: 'flex', justifyContent: 'flex-start' }}>
+                {coat && <img src={coat} alt="Government Emblem" style={{ height: imgSize, objectFit: 'contain' }} />}
+            </div>
+
+            {/* Center: Text Details */}
+            <div style={{ flex: 1, textAlign: 'center', padding: '0 10px' }}>
+                <div style={{ fontSize: compact ? 12 : 14, fontWeight: 'bold', color: '#000', marginBottom: 2 }}>MINISTRY OF EDUCATION</div>
+                <div style={{ fontSize: compact ? 16 : 20, fontWeight: 'bold', color: primary, marginTop: 2 }}>{name}</div>
+                {address && <div style={{ fontSize: compact ? 10 : 12, color: '#555' }}>{address}</div>}
+                {(phone || email) && <div style={{ fontSize: compact ? 10 : 12, color: '#555' }}>{[phone, email].filter(Boolean).join(' | ')}</div>}
+                {motto && <div style={{ fontSize: compact ? 9 : 11, fontStyle: 'italic', color: '#777', marginTop: 4 }}>"{motto}"</div>}
+            </div>
+
+            {/* Right: Institution Logo */}
+            <div style={{ width: imgSize + 20, display: 'flex', justifyContent: 'flex-end' }}>
+                {logo && <img src={logo} alt="Institution Logo" style={{ height: imgSize, objectFit: 'contain' }} />}
+            </div>
         </div>
     );
 };
@@ -344,35 +330,37 @@ export const Thermal80mmReceipt = ({ receipt, settings, institutionProfile, copy
     const instName = institutionProfile?.name || settings?.receipt_institution_name || 'INSTITUTION NAME';
     const instAddress = getInst(institutionProfile, settings, 'receipt_institution_address', 'address_line_1');
     const instPhone = getInst(institutionProfile, settings, 'receipt_institution_phone', 'phone');
+    const instEmail = getInst(institutionProfile, settings, 'receipt_institution_email', 'email');
     const instMotto = getInst(institutionProfile, settings, 'receipt_institution_motto', 'motto');
     const footer = settings?.receipt_footer_message || 'Thank you!';
 
     const s = {
-        container: { width: '80mm', fontFamily: '"Courier New", monospace', fontSize: 12, background: '#fff', padding: 10, margin: '0 auto', border: '1px dashed #ccc' },
+        container: { width: '80mm', fontFamily: '"Courier New", monospace', fontSize: 12, background: '#fff', padding: 10, margin: '0 auto', border: '1px dashed #ccc', color: '#000' },
         center: { textAlign: 'center' },
         bold: { fontWeight: 'bold' },
-        sep: { borderTop: '1px dashed #333', margin: '6px 0' },
-        row: { display: 'flex', justifyContent: 'space-between', marginBottom: 2, fontSize: 11 },
+        sep: { borderTop: '1px dashed #000', margin: '8px 0' },
+        row: { display: 'flex', justifyContent: 'space-between', marginBottom: 3, fontSize: 11 },
     };
 
     return (
         <div style={s.container}>
-            {copyLabel && <div style={{ textAlign: 'right', fontSize: 9, color: '#999' }}>{copyLabel}</div>}
+            {copyLabel && <div style={{ textAlign: 'right', fontSize: 9, color: '#666' }}>{copyLabel}</div>}
 
-            {/* Header with Logo */}
-            {logo && (
-                <div style={s.center}>
-                    <img src={logo} alt="Logo" style={{ height: 40, objectFit: 'contain', marginBottom: 4 }} />
+            {/* Smart Header */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8 }}>
+                {logo && <img src={logo} alt="Logo" style={{ height: 45, objectFit: 'contain', marginBottom: 4 }} />}
+                <div style={{ ...s.bold, fontSize: 16, textAlign: 'center', textTransform: 'uppercase' }}>{instName}</div>
+                {instMotto && <div style={{ fontSize: 10, fontStyle: 'italic', textAlign: 'center', marginTop: 2, marginBottom: 4 }}>"{instMotto}"</div>}
+                
+                <div style={{ fontSize: 10, textAlign: 'center', lineHeight: 1.3, marginTop: 4 }}>
+                    {instAddress && <div>{instAddress}</div>}
+                    {instPhone && <div>Tel: {instPhone}</div>}
+                    {instEmail && <div>{instEmail}</div>}
                 </div>
-            )}
-            <div style={{ ...s.center, ...s.bold, fontSize: 14 }}>
-                {instName}
             </div>
-            {instAddress && <div style={s.center}>{instAddress}</div>}
-            {instPhone && <div style={s.center}>Tel: {instPhone}</div>}
 
             <div style={s.sep} />
-            <div style={{ ...s.center, ...s.bold, fontSize: 13 }}>OFFICIAL RECEIPT</div>
+            <div style={{ ...s.center, ...s.bold, fontSize: 14, letterSpacing: 1 }}>OFFICIAL RECEIPT</div>
             <div style={s.sep} />
 
             <div style={s.row}><span>Receipt No:</span><span style={s.bold}>{rcptNo}</span></div>
@@ -380,8 +368,8 @@ export const Thermal80mmReceipt = ({ receipt, settings, institutionProfile, copy
 
             <div style={s.sep} />
 
-            <div style={{ ...s.bold, fontSize: 11, marginBottom: 4 }}>PAYER</div>
-            <div style={s.row}><span>Name:</span><span>{r.payerName || r.payer_name}</span></div>
+            <div style={{ ...s.bold, fontSize: 11, marginBottom: 4, textTransform: 'uppercase' }}>Payer Details</div>
+            <div style={s.row}><span>Name:</span><span style={s.bold}>{r.payerName || r.payer_name}</span></div>
             {(r.studentName || r.student_name) && (
                 <>
                     <div style={s.row}><span>Student:</span><span>{r.studentName || r.student_name}</span></div>
@@ -390,19 +378,22 @@ export const Thermal80mmReceipt = ({ receipt, settings, institutionProfile, copy
             )}
 
             <div style={s.sep} />
-
+            
             <div style={s.row}><span>Method:</span><span>{r.paymentMethod || r.payment_method?.name || 'Cash'}</span></div>
             {r.reference && <div style={s.row}><span>Ref:</span><span>{r.reference}</span></div>}
 
             <div style={s.sep} />
 
-            {/* Allocations */}
+            {/* Allocations Table */}
             {r.allocations && r.allocations.length > 0 && (
                 <>
-                    <div style={{ ...s.bold, fontSize: 11, marginBottom: 2 }}>BREAKDOWN</div>
+                    <div style={{ ...s.row, ...s.bold, borderBottom: '1px solid #000', paddingBottom: 2, marginBottom: 4 }}>
+                        <span>DESCRIPTION</span>
+                        <span>AMOUNT</span>
+                    </div>
                     {r.allocations.map((a, i) => (
                         <div key={i} style={s.row}>
-                            <span>{a.fee_category || a.fee_item}</span>
+                            <span style={{ maxWidth: '65%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.fee_category || a.fee_item}</span>
                             <span>{formatKES(a.amount)}</span>
                         </div>
                     ))}
@@ -411,38 +402,49 @@ export const Thermal80mmReceipt = ({ receipt, settings, institutionProfile, copy
             )}
 
             {/* Total */}
-            <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 'bold', margin: '8px 0' }}>
-                {formatKES(amount)}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0' }}>
+                <span style={{ fontSize: 14, fontWeight: 'bold' }}>TOTAL:</span>
+                <span style={{ fontSize: 20, fontWeight: 'bold' }}>{formatKES(amount)}</span>
             </div>
 
-            <div style={s.sep} />
+            {/* Amount in Words */}
+            <div style={{ fontSize: 10, textAlign: 'center', padding: '4px 0', borderTop: '1px dotted #666', borderBottom: '1px dotted #666', marginBottom: 8, fontStyle: 'italic' }}>
+                Amount in Words: {numberToWords(Number(amount))} Only
+            </div>
 
-            {r.notes && <div style={{ fontSize: 10, marginBottom: 4 }}>Note: {r.notes}</div>}
-
-            {/* Balance Summary */}
-            {settings?.receipt_show_balance && r.balance_info && (
+            {/* Remaining Balance - Always Show if available to be "smart" */}
+            {r.balance_info && (
                 <>
-                    <div style={s.sep} />
-                    <div style={{ ...s.bold, fontSize: 11, marginBottom: 2 }}>BALANCE</div>
-                    <div style={s.row}><span>Prev Bal:</span><span>{formatKES(r.balance_info.previous_balance)}</span></div>
-                    <div style={s.row}><span>This Pay:</span><span>({formatKES(r.balance_info.this_payment)})</span></div>
-                    <div style={{ ...s.row, ...s.bold }}><span>Cur Bal:</span><span>{formatKES(r.balance_info.current_balance)}</span></div>
+                    <div style={{ ...s.bold, fontSize: 11, marginBottom: 2, marginTop: 8 }}>ACCOUNT BALANCE</div>
+                    <div style={s.row}><span>Previous Balance:</span><span>{formatKES(r.balance_info.previous_balance)}</span></div>
+                    <div style={s.row}><span>Amount Paid:</span><span>({formatKES(r.balance_info.this_payment)})</span></div>
+                    <div style={{ ...s.row, ...s.bold, borderTop: '1px solid #000', paddingTop: 2, marginTop: 2 }}>
+                        <span>Remaining Balance:</span>
+                        <span>{formatKES(r.balance_info.current_balance)}</span>
+                    </div>
                 </>
             )}
+
+            {r.notes && (
+                <>
+                    <div style={s.sep} />
+                    <div style={{ fontSize: 10, marginBottom: 4 }}><strong>Note:</strong> {r.notes}</div>
+                </>
+            )}
+
+            <div style={s.sep} />
 
             <div style={{ ...s.center, fontSize: 10 }}>
                 Served by: {r.issuedBy || r.received_by || 'System'}
             </div>
-            <div style={{ ...s.center, fontSize: 8, color: '#666' }}>on behalf of {instName}</div>
-
+            
             <div style={s.sep} />
 
             {settings?.receipt_show_qr_code !== false && <QRPlaceholder receipt={r} size={60} />}
 
-            <div style={{ ...s.center, ...s.bold, fontSize: 12 }}>THANK YOU!</div>
-            {instMotto && <div style={{ ...s.center, fontSize: 9, fontStyle: 'italic' }}>{instMotto}</div>}
+            <div style={{ ...s.center, ...s.bold, fontSize: 13, marginTop: 8 }}>THANK YOU!</div>
             <div style={{ ...s.center, fontSize: 10, marginTop: 4 }}>{footer}</div>
-            <div style={{ ...s.center, fontSize: 8, color: '#aaa', marginTop: 6 }}>Powered by Fahari School ERP</div>
+            <div style={{ ...s.center, fontSize: 8, color: '#666', marginTop: 8 }}>Powered by Fahari School ERP</div>
         </div>
     );
 };
@@ -457,61 +459,95 @@ export const Thermal58mmReceipt = ({ receipt, settings, institutionProfile, copy
     const logo = getLogoUrl(settings, institutionProfile);
     const instName = institutionProfile?.name || settings?.receipt_institution_name || 'INSTITUTION';
     const instPhone = getInst(institutionProfile, settings, 'receipt_institution_phone', 'phone');
+    const instMotto = getInst(institutionProfile, settings, 'receipt_institution_motto', 'motto');
     const footer = settings?.receipt_footer_message || 'Thank you!';
 
     const s = {
-        container: { width: '58mm', fontFamily: '"Courier New", monospace', fontSize: 10, background: '#fff', padding: 6, margin: '0 auto', border: '1px dashed #ccc' },
+        container: { width: '58mm', fontFamily: '"Courier New", monospace', fontSize: 10, background: '#fff', padding: 6, margin: '0 auto', border: '1px dashed #ccc', color: '#000' },
         center: { textAlign: 'center' },
         bold: { fontWeight: 'bold' },
-        sep: { borderTop: '1px dashed #333', margin: '4px 0' },
-        row: { display: 'flex', justifyContent: 'space-between', marginBottom: 1, fontSize: 9 },
+        sep: { borderTop: '1px dashed #000', margin: '6px 0' },
+        row: { display: 'flex', justifyContent: 'space-between', marginBottom: 2, fontSize: 9 },
     };
 
     return (
         <div style={s.container}>
-            {logo && <div style={s.center}><img src={logo} alt="" style={{ height: 28, objectFit: 'contain' }} /></div>}
-            <div style={{ ...s.center, ...s.bold, fontSize: 11 }}>{instName}</div>
-            {instPhone && <div style={{ ...s.center, fontSize: 8 }}>Tel: {instPhone}</div>}
+            {copyLabel && <div style={{ textAlign: 'right', fontSize: 8, color: '#666' }}>{copyLabel}</div>}
+
+            {/* Smart Header */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 6 }}>
+                {logo && <img src={logo} alt="Logo" style={{ height: 35, objectFit: 'contain', marginBottom: 2 }} />}
+                <div style={{ ...s.bold, fontSize: 13, textAlign: 'center', textTransform: 'uppercase' }}>{instName}</div>
+                {instMotto && <div style={{ fontSize: 8, fontStyle: 'italic', textAlign: 'center', marginTop: 1, marginBottom: 2 }}>"{instMotto}"</div>}
+                
+                {instPhone && <div style={{ fontSize: 8, textAlign: 'center', marginTop: 2 }}>Tel: {instPhone}</div>}
+            </div>
 
             <div style={s.sep} />
-            <div style={{ ...s.center, ...s.bold, fontSize: 10 }}>RECEIPT</div>
+            <div style={{ ...s.center, ...s.bold, fontSize: 11, letterSpacing: 1 }}>RECEIPT</div>
             <div style={s.sep} />
 
-            <div style={s.row}><span>No:</span><span>{rcptNo}</span></div>
+            <div style={s.row}><span>No:</span><span style={s.bold}>{rcptNo}</span></div>
             <div style={s.row}><span>Date:</span><span>{new Date(rcptDate).toLocaleDateString()}</span></div>
-            <div style={s.row}><span>From:</span><span>{(r.payerName || r.payer_name || '').substring(0, 18)}</span></div>
+            
+            <div style={s.sep} />
+            
+            <div style={{ ...s.bold, fontSize: 9, marginBottom: 2, textTransform: 'uppercase' }}>Payer</div>
+            <div style={s.row}><span>From:</span><span style={s.bold}>{(r.payerName || r.payer_name || '').substring(0, 18)}</span></div>
             {(r.studentName || r.student_name) && <div style={s.row}><span>Stud:</span><span>{(r.studentName || r.student_name).substring(0, 16)}</span></div>}
-            <div style={s.row}><span>Method:</span><span>{r.paymentMethod || r.payment_method?.name || 'Cash'}</span></div>
+            <div style={s.row}><span>Pay By:</span><span>{r.paymentMethod || r.payment_method?.name || 'Cash'}</span></div>
 
             <div style={s.sep} />
 
+            {/* Allocations Table */}
             {r.allocations && r.allocations.length > 0 && (
                 <>
+                    <div style={{ ...s.row, ...s.bold, borderBottom: '1px solid #000', paddingBottom: 1, marginBottom: 2 }}>
+                        <span>DESC</span>
+                        <span>AMT</span>
+                    </div>
                     {r.allocations.map((a, i) => (
-                        <div key={i} style={s.row}><span>{(a.fee_category || a.fee_item || '').substring(0, 14)}</span><span>{formatKES(a.amount)}</span></div>
+                        <div key={i} style={s.row}>
+                            <span style={{ maxWidth: '65%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(a.fee_category || a.fee_item || '').substring(0, 14)}</span>
+                            <span>{formatKES(a.amount)}</span>
+                        </div>
                     ))}
                     <div style={s.sep} />
                 </>
             )}
 
-            <div style={{ textAlign: 'center', fontSize: 16, fontWeight: 'bold', margin: '4px 0' }}>{formatKES(amount)}</div>
+            {/* Total */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '4px 0' }}>
+                <span style={{ fontSize: 11, fontWeight: 'bold' }}>TOTAL:</span>
+                <span style={{ fontSize: 15, fontWeight: 'bold' }}>{formatKES(amount)}</span>
+            </div>
+            
+            {/* Amount in Words */}
+            <div style={{ fontSize: 8, textAlign: 'center', padding: '2px 0', borderTop: '1px dotted #666', borderBottom: '1px dotted #666', marginBottom: 6, fontStyle: 'italic' }}>
+                {numberToWords(Number(amount))} Only
+            </div>
 
             {/* Balance Summary */}
-            {settings?.receipt_show_balance && r.balance_info && (
+            {r.balance_info && (
                 <>
-                    <div style={s.sep} />
-                    <div style={{ ...s.bold, fontSize: 9, marginBottom: 1 }}>BALANCE</div>
+                    <div style={{ ...s.bold, fontSize: 9, marginBottom: 2, marginTop: 4 }}>BALANCE</div>
                     <div style={s.row}><span>Prev:</span><span>{formatKES(r.balance_info.previous_balance)}</span></div>
                     <div style={s.row}><span>Paid:</span><span>({formatKES(r.balance_info.this_payment)})</span></div>
-                    <div style={{ ...s.row, ...s.bold }}><span>Bal:</span><span>{formatKES(r.balance_info.current_balance)}</span></div>
+                    <div style={{ ...s.row, ...s.bold, borderTop: '1px solid #000', paddingTop: 1, marginTop: 1 }}>
+                        <span>Bal:</span>
+                        <span>{formatKES(r.balance_info.current_balance)}</span>
+                    </div>
                 </>
             )}
 
             <div style={s.sep} />
             <div style={{ ...s.center, fontSize: 8 }}>Served by: {(r.issuedBy || r.received_by || 'System').substring(0, 20)}</div>
-            <div style={{ ...s.center, fontSize: 7, color: '#666' }}>on behalf of {instName}</div>
+            
+            <div style={s.sep} />
+            
             {settings?.receipt_show_qr_code !== false && <QRPlaceholder receipt={r} size={40} />}
-            <div style={{ ...s.center, ...s.bold, fontSize: 9 }}>THANK YOU!</div>
+            
+            <div style={{ ...s.center, ...s.bold, fontSize: 10, marginTop: 4 }}>THANK YOU!</div>
             <div style={{ ...s.center, fontSize: 7, color: '#aaa', marginTop: 4 }}>Fahari ERP</div>
         </div>
     );
@@ -536,16 +572,8 @@ export const DuplicateBookReceipt = ({ receipt, settings, institutionProfile, co
         <div style={{ width: '180mm', padding: '12mm', fontFamily: 'Georgia, serif', fontSize: 12, background: '#fffef5', border: '2px solid #b89a5e', position: 'relative', boxSizing: 'border-box' }}>
             {copyLabel && <CopyLabel label={copyLabel} />}
 
-            {/* Header Row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12 }}>
-                {coat && <img src={coat} alt="Coat of Arms" style={{ height: 50, objectFit: 'contain' }} />}
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{instName}</div>
-                    {instAddress && <div style={{ fontSize: 10, color: '#666' }}>{instAddress}</div>}
-                    {instPhone && <div style={{ fontSize: 10, color: '#666' }}>Tel: {instPhone}</div>}
-                </div>
-                {logo && <img src={logo} alt="Logo" style={{ height: 50, objectFit: 'contain' }} />}
-            </div>
+            {/* Standard Header */}
+            <SchoolHeader settings={settings} institutionProfile={institutionProfile} compact={false} />
 
             {/* Receipt Number Band */}
             <div style={{ background: '#b89a5e', color: '#fff', textAlign: 'center', padding: '4px 0', fontWeight: 'bold', letterSpacing: 2, marginBottom: 12, fontSize: 13 }}>
@@ -568,6 +596,23 @@ export const DuplicateBookReceipt = ({ receipt, settings, institutionProfile, co
                 </tbody>
             </table>
 
+            {/* Allocations Table (Breakdown) */}
+            {r.allocations && r.allocations.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 'bold', borderBottom: '1px solid #ccc', marginBottom: 6, paddingBottom: 4 }}>PAYMENT BREAKDOWN</div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                        <tbody>
+                            {r.allocations.map((a, i) => (
+                                <tr key={i}>
+                                    <td style={{ padding: '4px 0', borderBottom: '1px dotted #e5e7eb', color: '#555' }}>{a.fee_category || a.fee_item}</td>
+                                    <td style={{ padding: '4px 0', borderBottom: '1px dotted #e5e7eb', textAlign: 'right', fontWeight: 500 }}>{formatKES(a.amount)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
             {/* Amount Box */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
                 <div style={{ border: '2px solid #333', padding: '8px 20px', fontSize: 18, fontWeight: 'bold' }}>
@@ -575,8 +620,24 @@ export const DuplicateBookReceipt = ({ receipt, settings, institutionProfile, co
                 </div>
             </div>
 
-            {/* Balance Summary */}
-            <BalanceSummary receipt={r} settings={settings} compact />
+            {/* Balance Pad */}
+            {r.balance_info && (
+                <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 6, padding: '10px 16px', marginBottom: 20 }}>
+                    <div style={{ fontSize: 11, fontWeight: 'bold', color: '#475569', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Account Balance</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
+                        <span style={{ color: '#64748b' }}>Previous Balance:</span>
+                        <span style={{ fontWeight: 600 }}>{formatKES(r.balance_info.previous_balance)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
+                        <span style={{ color: '#64748b' }}>This Payment:</span>
+                        <span style={{ fontWeight: 600 }}>({formatKES(r.balance_info.this_payment)})</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: '1px solid #cbd5e1', fontSize: 12 }}>
+                        <span style={{ fontWeight: 'bold', color: '#334155' }}>Remaining Balance:</span>
+                        <span style={{ fontWeight: 'bold', color: '#0f172a' }}>{formatKES(r.balance_info.current_balance)}</span>
+                    </div>
+                </div>
+            )}
 
             {/* Signatures */}
             {settings?.receipt_signature_enabled !== false && (

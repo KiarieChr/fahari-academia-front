@@ -102,7 +102,7 @@ const PaymentSummaryReport = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                         <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
                             <h3 className="font-bold text-slate-800 dark:text-white mb-4">Collections Trend</h3>
-                            <div className="h-64">
+                            <div className="">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={chartData}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -117,7 +117,7 @@ const PaymentSummaryReport = () => {
                         </div>
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
                             <h3 className="font-bold text-slate-800 dark:text-white mb-4">By Payment Method</h3>
-                            <div className="h-64">
+                            <div className="">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={methodChart} cx="50%" cy="42%" innerRadius={50} outerRadius={75} paddingAngle={4} dataKey="value">

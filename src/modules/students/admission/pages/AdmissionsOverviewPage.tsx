@@ -75,13 +75,13 @@ const AdmissionsOverviewPage = () => {
 
             {/* ── Intelligence Layer ───────────────────────────────────── */}
             {/* Row 1: Funnel + Alerts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-2 gap-6">
                 <IntakeFunnel stats={stats} />
                 <ActionAlerts stats={stats} />
             </div>
 
             {/* Row 2: Activity Feed + Deadline Calendar */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-2 gap-6">
                 <ActivityFeed filters={filters} />
                 <DeadlineCalendar />
             </div>
@@ -102,7 +102,7 @@ const AdmissionsOverviewPage = () => {
                     <div className="h-px flex-1" style={{ background: 'var(--border-color-light)' }} />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {QUICK_NAV.map((item) => {
                         const Icon = item.icon;
                         return (

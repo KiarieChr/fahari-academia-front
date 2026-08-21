@@ -73,10 +73,10 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
     const scaleTypeLabel = scale.scale_type === 'rubric' ? 'Rubric' : scale.scale_type === 'points' ? 'Points' : 'Percentage';
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="neo-card border-none overflow-hidden mt-4">
             {/* Header */}
             <div
-                className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                className="p-4 border-b-2 border-slate-100 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
                 onClick={() => setExpanded(!expanded)}
             >
                 <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
                 <>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                            <thead className="border-b-2 border-slate-100">
                                 <tr>
                                     <th className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Grade</th>
                                     <th className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Label</th>
@@ -116,9 +116,9 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
                                     <th className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">Status</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                            <tbody className="divide-y divide-slate-100">
                                 {(editing ? editLevels : levels).map((item, idx) => (
-                                    <tr key={item.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                    <tr key={item.id || idx} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-4 py-3">
                                             <span
                                                 className="inline-flex items-center justify-center w-10 h-8 rounded-lg font-bold text-white text-sm"
@@ -132,7 +132,7 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
                                                 <input
                                                     value={item.label}
                                                     onChange={e => updateLevel(idx, 'label', e.target.value)}
-                                                    className="w-full px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm bg-white dark:bg-slate-700"
+                                                    className="w-full px-3 py-2 neo-pressed border-none rounded-lg text-sm outline-none"
                                                 />
                                             ) : item.label}
                                         </td>
@@ -143,14 +143,14 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
                                                         type="number"
                                                         value={item.min_mark}
                                                         onChange={e => updateLevel(idx, 'min_mark', e.target.value)}
-                                                        className="w-16 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm bg-white dark:bg-slate-700"
+                                                        className="w-16 px-3 py-2 neo-pressed border-none rounded-lg text-sm outline-none"
                                                     />
                                                     <span>-</span>
                                                     <input
                                                         type="number"
                                                         value={item.max_mark}
                                                         onChange={e => updateLevel(idx, 'max_mark', e.target.value)}
-                                                        className="w-16 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm bg-white dark:bg-slate-700"
+                                                        className="w-16 px-3 py-2 neo-pressed border-none rounded-lg text-sm outline-none"
                                                     />
                                                 </div>
                                             ) : (
@@ -163,7 +163,7 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
                                                     type="number"
                                                     value={item.points}
                                                     onChange={e => updateLevel(idx, 'points', e.target.value)}
-                                                    className="w-16 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm bg-white dark:bg-slate-700"
+                                                    className="w-16 px-3 py-2 neo-pressed border-none rounded-lg text-sm outline-none"
                                                 />
                                             ) : item.points}
                                         </td>
@@ -183,17 +183,17 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
                     </div>
 
                     {editing && (
-                        <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                        <div className="p-4 border-t border-slate-100 flex justify-end gap-2">
                             <button
                                 onClick={cancelEdit}
-                                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1"
+                                className="neo-btn px-4 py-2 rounded-lg text-slate-500 hover:text-slate-700 text-sm font-bold flex items-center gap-1"
                             >
                                 <X size={16} /> Cancel
                             </button>
                             <button
                                 onClick={saveEdit}
                                 disabled={saving}
-                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1 disabled:opacity-50"
+                                className="neo-btn-accent px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1 disabled:opacity-50"
                             >
                                 <Save size={16} /> {saving ? 'Saving...' : 'Save Changes'}
                             </button>
@@ -201,7 +201,7 @@ const GradingScaleTable = ({ scale, onUpdate }) => {
                     )}
 
                     {!editing && (
-                        <div className="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                        <div className="p-3 border-t border-slate-100 bg-slate-50/50">
                             <div className="flex items-center gap-2 text-xs text-slate-500">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                                 <span>{levels.length} levels defined &middot; Code: {scale.code}</span>

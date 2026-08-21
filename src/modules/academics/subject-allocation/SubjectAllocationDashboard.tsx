@@ -24,16 +24,24 @@ const SubjectAllocationDashboard = () => {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [allocData, subData, csData, teacherData] = await Promise.all([
+            const [allocData, subData, csData, teacherData, hrData] = await Promise.all([
                 api.timetable.getAllocations(),
                 api.timetable.getSubjects(),
                 api.academics.getActiveSessions(),
                 api.timetable.getTeachers(),
+                api.get('/workforce/api/employees/', { params: { page_size: 500 } }),
             ]);
             const allocs = (allocData.results || allocData) || [];
             const subs = (subData.results || subData) || [];
             const sessions = (csData.results || csData) || [];
-            const teacherList = (teacherData.results || teacherData) || [];
+            
+            // Filter out teachers who are NOT linked to an HR employee record
+            const employees = (hrData.results || hrData) || [];
+            const allUsers = (teacherData.results || teacherData) || [];
+            
+            // Link HR record to user account: only include teachers who have a valid HR employee record
+            const linkedTeacherIds = new Set(employees.map(emp => emp.user).filter(Boolean));
+            const teacherList = allUsers.filter(t => linkedTeacherIds.has(t.id));
 
             setAllocations(allocs);
             setSubjects(subs);
@@ -119,41 +127,48 @@ const SubjectAllocationDashboard = () => {
 
     return (
         <DashboardLayout title="Subject Allocation">
-            <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 pb-20 relative">
-
-                {/* Header */}
-                <div className="bg-transparent px-6 py-4">
-                    <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Grid className="text-blue-600" />
-                                Subject & Teacher Allocation
+            <div className="min-h-screen neo-bg pb-20 relative">
+                <div className="p-3 space-y-6 max-w-[1600px] mx-auto">
+                    {/* Header */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 neo-card border-none p-3 mt-3 mb-4">
+                        <div className="space-y-1">
+                            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                                <span className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                                    <Grid size={24} />
+                                </span>
+                                Subject Allocation
                             </h1>
-                            <p className="text-sm text-slate-500 mt-1">Assign subjects to teachers and class sessions</p>
+                            <p className="text-slate-500 font-bold text-sm">Allocate subjects to teachers and manage workload.</p>
                         </div>
-
                         <div className="flex gap-2">
-                            <button onClick={loadData}
-                                className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                                <RefreshCw size={16} /> Refresh
+                            <button
+                                onClick={loadData}
+                                className="px-4 py-2 neo-btn rounded-xl text-sm font-bold flex items-center gap-2"
+                            >
+                                <RefreshCw size={16} /> <span className="hidden sm:inline">Refresh</span>
+                            </button>
+                            <button
+                                onClick={() => {}}
+                                className="px-4 py-2 neo-btn rounded-xl text-sm font-bold flex items-center gap-2"
+                            >
+                                <Download size={16} /> <span className="hidden sm:inline">Export</span>
                             </button>
                             <button
                                 onClick={handleAddAllocation}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30 flex items-center gap-2 transition-transform active:scale-95"
+                                className="px-5 py-2 neo-btn-accent rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all"
                             >
-                                <Plus size={18} /> Allocate Subject
+                                <Plus size={16} /> Allocate Subject
                             </button>
                         </div>
                     </div>
-                </div>
 
-                <div className="max-w-[1600px] mx-auto p-6">
                     {loading ? (
-                        <div className="flex justify-center py-16">
-                            <Loader2 className="animate-spin text-blue-600" size={28} />
+                        <div className="flex flex-col items-center justify-center p-20 neo-card border-none">
+                            <Loader2 className="animate-spin text-indigo-500 mb-4" size={32} />
+                            <p className="text-slate-500 font-bold text-sm">Loading allocations...</p>
                         </div>
                     ) : (
-                        <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex flex-col lg:flex-row gap-6 ">
                             {/* Main Content */}
                             <div className="flex-1 space-y-6">
                                 <AllocationStats allocations={mappedAllocations} teachers={teachers} />

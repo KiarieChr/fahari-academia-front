@@ -99,10 +99,10 @@ const ReceiptPrintManager = ({ receipt, settings, institutionProfile, onClose, o
                     )}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#2563eb', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>
+                    <button onClick={handlePrint} className="neo-btn neo-btn-accent" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', cursor: 'pointer', fontWeight: 600 }}>
                         <Printer size={16} /> Print {copies > 1 ? `(${copies} copies)` : ''}
                     </button>
-                    <button onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#4b5563', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer' }}>
+                    <button onClick={onClose} className="neo-btn" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px', cursor: 'pointer' }}>
                         <X size={16} /> Close
                     </button>
                 </div>

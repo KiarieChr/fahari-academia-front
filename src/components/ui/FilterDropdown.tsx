@@ -15,6 +15,7 @@ const FilterDropdown = ({
     disabled = false,
     size = 'md', // sm, md, lg
     className = '',
+    variant = 'default', // default, neo
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -78,8 +79,10 @@ const FilterDropdown = ({
                 className={`
                     ${sizeClasses[size]}
                     w-full flex items-center justify-between gap-2
-                    bg-white border border-gray-200 rounded-lg
-                    hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500
+                    ${variant === 'neo' 
+                        ? 'neo-input border-none' 
+                        : 'bg-white border border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'}
+                    rounded-lg focus:outline-none 
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-colors
                 `}
@@ -116,7 +119,7 @@ const FilterDropdown = ({
                         transition={{ duration: 0.15 }}
                         className="
                             absolute z-50 top-full left-0 right-0 mt-1
-                            bg-white border border-gray-200 rounded-lg shadow-lg
+                            ${variant === 'neo' ? 'neo-card border-none' : 'bg-white border border-gray-200'} rounded-lg shadow-lg
                             max-h-64 overflow-hidden
                         "
                     >

@@ -1,18 +1,42 @@
-import React, { useState } from 'react';
-import { Save, CheckCircle, XCircle, Clock, UserCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, CheckCircle, XCircle, Clock, UserCheck, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Modal from '../../../../../components/common/Modal';
+import { api } from '../../../../../services/apiClient';
 
 const AttendanceModal = ({ isOpen, onClose, session }) => {
-    // Mock Students Data
-    const [students, setStudents] = useState([
-        { id: 101, name: 'Alice Wambui', admNo: 'ADM-001', status: 'Present', remarks: '' },
-        { id: 102, name: 'Brian Njoroge', admNo: 'ADM-002', status: 'Absent', remarks: 'Sick' },
-        { id: 103, name: 'Charity Mutua', admNo: 'ADM-003', status: 'Present', remarks: '' },
-        { id: 104, name: 'David Otieno', admNo: 'ADM-004', status: 'Late', remarks: 'Bus delay' },
-        { id: 105, name: 'Esther Kimani', admNo: 'ADM-005', status: 'Present', remarks: '' },
-        { id: 106, name: 'Francis Ouma', admNo: 'ADM-006', status: 'Present', remarks: '' },
-    ]);
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && session?.id) {
+            fetchAttendance();
+        }
+    }, [isOpen, session]);
+
+    const fetchAttendance = async () => {
+        setLoading(true);
+        try {
+            const data = await api.lessonSessions.getAttendance(session.id);
+            // Map the API structure to the UI structure if needed, or use directly
+            // Backend provides: { id, student_name, student (student ID), status, notes, ... }
+            const formatted = data.map(record => ({
+                id: record.id,
+                studentId: record.student,
+                name: record.student_name || 'Unknown Student',
+                admNo: `STU-${record.student}`, // We don't have admNo in the serializer, mock for now
+                status: record.status || 'present', // fallback
+                remarks: record.notes || ''
+            }));
+            setStudents(formatted);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to load attendance records.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleStatusChange = (id, newStatus) => {
         setStudents(students.map(s => s.id === id ? { ...s, status: newStatus } : s));
@@ -23,12 +47,26 @@ const AttendanceModal = ({ isOpen, onClose, session }) => {
     };
 
     const markAllPresent = () => {
-        setStudents(students.map(s => ({ ...s, status: 'Present' })));
+        setStudents(students.map(s => ({ ...s, status: 'present' })));
     };
 
-    const handleSave = () => {
-        toast.success(`Attendance saved for ${session?.class || 'Class'}`);
-        onClose();
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const payload = students.map(s => ({
+                student_id: s.studentId, // Backend expects student_id
+                status: s.status,
+                notes: s.remarks
+            }));
+            await api.lessonSessions.markAttendance(session.id, payload);
+            toast.success(`Attendance saved for ${session?.class_session_name || 'Class'}`);
+            onClose();
+        } catch (err) {
+            console.error(err);
+            toast.error(err.data?.detail || "Failed to save attendance.");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -51,7 +89,7 @@ const AttendanceModal = ({ isOpen, onClose, session }) => {
             {/* Toolbar */}
             <div className="px-6 py-3 border-b border-gray-100 bg-white flex justify-between items-center">
                 <div className="text-sm font-medium text-gray-600">
-                    {students.filter(s => s.status === 'Present').length} Present • {students.filter(s => s.status === 'Absent').length} Absent • {students.filter(s => s.status === 'Late').length} Late
+                    {students.filter(s => s.status === 'present').length} Present • {students.filter(s => s.status === 'absent').length} Absent • {students.filter(s => s.status === 'late').length} Late
                 </div>
                 <button
                     onClick={markAllPresent}
@@ -61,8 +99,20 @@ const AttendanceModal = ({ isOpen, onClose, session }) => {
                 </button>
             </div>
 
-            {/* Student List */}
+            {/* Loading State */}
+            {loading ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-16 bg-gray-50/30">
+                    <Loader2 size={32} className="animate-spin text-indigo-500 mb-4" />
+                    <p className="text-sm font-medium text-gray-500">Loading student list...</p>
+                </div>
+            ) : students.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-16 bg-gray-50/30">
+                    <UserCheck size={48} className="text-gray-300 mb-4" />
+                    <p className="text-sm font-medium text-gray-500">No students enrolled in this class session.</p>
+                </div>
+            ) : (
             <div className="flex-1 overflow-auto p-0">
+                {/* Student List */}
                 <table className="w-full text-sm text-left text-gray-600">
                     <thead className="bg-gray-50/50 text-gray-700 uppercase font-bold text-xs sticky top-0 z-10 backdrop-blur-md">
                         <tr>
@@ -81,8 +131,8 @@ const AttendanceModal = ({ isOpen, onClose, session }) => {
                                 <td className="px-6 py-3 text-center">
                                     <div className="flex justify-center gap-1">
                                         <button
-                                            onClick={() => handleStatusChange(student.id, 'Present')}
-                                            className={`p-2 rounded-lg transition-all ${student.status === 'Present'
+                                            onClick={() => handleStatusChange(student.id, 'present')}
+                                            className={`p-2 rounded-lg transition-all ${student.status === 'present'
                                                     ? 'bg-green-100 text-green-700 shadow-sm ring-1 ring-green-200'
                                                     : 'text-gray-300 hover:bg-gray-50 hover:text-gray-500'
                                                 }`}
@@ -91,8 +141,8 @@ const AttendanceModal = ({ isOpen, onClose, session }) => {
                                             <CheckCircle size={20} />
                                         </button>
                                         <button
-                                            onClick={() => handleStatusChange(student.id, 'Absent')}
-                                            className={`p-2 rounded-lg transition-all ${student.status === 'Absent'
+                                            onClick={() => handleStatusChange(student.id, 'absent')}
+                                            className={`p-2 rounded-lg transition-all ${student.status === 'absent'
                                                     ? 'bg-red-100 text-red-700 shadow-sm ring-1 ring-red-200'
                                                     : 'text-gray-300 hover:bg-gray-50 hover:text-gray-500'
                                                 }`}
@@ -101,9 +151,9 @@ const AttendanceModal = ({ isOpen, onClose, session }) => {
                                             <XCircle size={20} />
                                         </button>
                                         <button
-                                            onClick={() => handleStatusChange(student.id, 'Late')}
-                                            className={`p-2 rounded-lg transition-all ${student.status === 'Late'
-                                                    ? 'bg-yellow-100 text-yellow-700 shadow-sm ring-1 ring-yellow-200'
+                                            onClick={() => handleStatusChange(student.id, 'late')}
+                                            className={`p-2 rounded-lg transition-all ${student.status === 'late'
+                                                    ? 'bg-amber-100 text-amber-700 shadow-sm ring-1 ring-amber-200'
                                                     : 'text-gray-300 hover:bg-gray-50 hover:text-gray-500'
                                                 }`}
                                             title="Late"
@@ -126,6 +176,7 @@ const AttendanceModal = ({ isOpen, onClose, session }) => {
                     </tbody>
                 </table>
             </div>
+            )}
         </Modal>
     );
 };

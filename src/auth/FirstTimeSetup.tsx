@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, EyeOff, Loader2, X, Check, AlertCircle,
-  User, Mail, Phone, MapPin, Key, Shield, ChevronRight
+  User, Mail, Phone, MapPin, Key, Shield, ChevronRight, ArrowLeft
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
@@ -14,21 +14,19 @@ const STEPS = [
   { id: 'security', label: 'Set Password', icon: Key },
 ];
 
-// ── Hoisted helpers ─────────────────────────────────────────────────────────
-// IMPORTANT: These must live at MODULE SCOPE, not inside the parent component.
-// Defining components inside another component causes React to treat them as
-// new types on every render, which unmounts/remounts them and drops focus.
-
 const FieldError = ({ errors, name }) => {
   const err = errors[name];
   if (!err) return null;
   const msg = Array.isArray(err) ? err[0] : err;
-  return <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} />{msg}</p>;
+  return <p className="mt-1 text-xs text-red-300 flex items-center gap-1"><AlertCircle size={12} />{msg}</p>;
 };
 
+const inputClasses = "w-full bg-[#e0e5ec] rounded-xl py-3 px-4 pl-11 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]";
+const labelClasses = "block text-[13px] font-semibold text-gray-600 mb-2";
+
 const InputWrapper = ({ icon: Icon, children, error }) => (
-  <div className={`group relative flex items-center rounded-xl border-2 ${error ? 'border-red-300 bg-red-50/30 ring-2 ring-red-100' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/30'} focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 focus-within:bg-white focus-within:shadow-sm transition-all duration-200`}>
-    {Icon && <Icon size={18} className="absolute left-3.5 text-gray-400 group-focus-within:text-indigo-500 transition-colors duration-200 pointer-events-none" />}
+  <div className="relative">
+    {Icon && <Icon size={18} className={`absolute left-3.5 top-3.5 pointer-events-none ${error ? 'text-red-400' : 'text-indigo-400'}`} />}
     {children}
   </div>
 );
@@ -52,7 +50,6 @@ const FirstTimeSetup = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [emailConflict, setEmailConflict] = useState(false);
 
-  // â”€â”€ Password strength â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const getPasswordStrength = (pw) => {
     let s = 0;
     const checks = [
@@ -68,7 +65,6 @@ const FirstTimeSetup = () => {
   const strength = getPasswordStrength(formData.password);
   const strengthLabel = strength.score <= 2 ? 'Weak' : strength.score <= 3 ? 'Fair' : 'Strong';
 
-  // â”€â”€ Load user data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const loadUserData = async () => {
       setIsLoadingUser(true);
@@ -116,7 +112,6 @@ const FirstTimeSetup = () => {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
-  // â”€â”€ Step validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const validateStep = (s) => {
     const e = {};
     if (s === 0) {
@@ -142,7 +137,6 @@ const FirstTimeSetup = () => {
     setStep(step + 1);
   };
 
-  // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validateStep(1);
@@ -194,15 +188,12 @@ const FirstTimeSetup = () => {
     }
   };
 
-
-
-  // â”€â”€ Loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isLoadingUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 size={36} className="animate-spin text-indigo-500 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">Loading your information...</p>
+        <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden bg-[#e0e5ec]">
+        <div className="text-center z-10 relative">
+          <Loader2 size={48} className="animate-spin text-indigo-500 mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading your information...</p>
         </div>
       </div>
     );
@@ -210,30 +201,26 @@ const FirstTimeSetup = () => {
   if (!currentUser) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12">
+    <div className="min-h-screen flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-[#e0e5ec]">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-2xl lg:max-w-[680px] mx-auto"
+        className="w-full max-w-2xl mx-auto relative z-10"
       >
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100/80 overflow-hidden">
+        <div className="bg-[#e0e5ec] shadow-[8px_8px_16px_#c3c8ce,-8px_-8px_16px_#ffffff] rounded-2xl overflow-hidden relative">
 
-          {/* â”€â”€ Top accent bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-400" />
-
-          {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-          <div className="px-8 sm:px-12 md:px-16 pt-8 sm:pt-10 pb-4 text-center">
-            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm">
-              <Shield size={30} className="text-indigo-600" />
+          {/* Header */}
+          <div className="px-6 sm:px-12 pt-8 sm:pt-10 pb-4 text-center">
+            <div className="w-16 h-16 bg-[#e0e5ec] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-[6px_6px_12px_#c3c8ce,-6px_-6px_12px_#ffffff]">
+              <Shield size={30} className="text-indigo-500" />
             </div>
-            <h1 className="text-2xl sm:text-[1.65rem] font-bold text-gray-900">Welcome, {formData.firstName || 'there'}!</h1>
-            <p className="text-sm sm:text-[0.9rem] text-gray-500 mt-1.5 leading-relaxed">Let's get your account set up in just a moment.</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 drop-shadow-sm">Welcome, {formData.firstName || 'there'}!</h1>
+            <p className="text-sm sm:text-base text-gray-500 mt-2 font-medium">Let's get your account set up in just a moment.</p>
           </div>
 
-          {/* â”€â”€ Step indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-          <div className="px-8 sm:px-12 md:px-16 pb-2">
+          {/* Step indicator */}
+          <div className="px-6 sm:px-12 pb-2">
             <div className="flex items-center justify-center gap-2">
               {STEPS.map((s, i) => {
                 const StepIcon = s.icon;
@@ -242,15 +229,15 @@ const FirstTimeSetup = () => {
                 return (
                   <React.Fragment key={s.id}>
                     {i > 0 && (
-                      <div className={`w-12 h-0.5 rounded-full transition-colors ${isDone ? 'bg-indigo-500' : 'bg-gray-200'}`} />
+                      <div className={`w-12 h-[2px] rounded-full transition-colors shadow-[inset_1px_1px_2px_#c3c8ce,inset_-1px_-1px_2px_#ffffff] ${isDone ? 'bg-indigo-400' : 'bg-transparent'}`} />
                     )}
                     <button
                       type="button"
                       onClick={() => { if (isDone) setStep(i); }}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                        ${isActive ? 'bg-indigo-100 text-indigo-700' : isDone ? 'bg-emerald-50 text-emerald-600 cursor-pointer' : 'text-gray-400'}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all
+                        ${isActive ? 'bg-[#e0e5ec] text-indigo-600 shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]' : isDone ? 'bg-[#e0e5ec] text-indigo-500 cursor-pointer shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff]' : 'bg-[#e0e5ec] text-gray-400 shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff]'}`}
                     >
-                      {isDone ? <Check size={14} /> : <StepIcon size={14} />}
+                      {isDone ? <Check size={16} /> : <StepIcon size={16} />}
                       <span className="hidden sm:inline">{s.label}</span>
                     </button>
                   </React.Fragment>
@@ -259,10 +246,9 @@ const FirstTimeSetup = () => {
             </div>
           </div>
 
-          {/* â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-          <form onSubmit={handleSubmit} className="px-8 sm:px-12 md:px-16 pb-10 sm:pb-12 pt-6 m-3">
+          <form onSubmit={handleSubmit} className="px-6 sm:px-12 pb-10 sm:pb-12 pt-6">
             <AnimatePresence mode="wait">
-              {/* â•â•â•â•â•â•â•â•â•â•â• STEP 0: Personal â•â•â•â•â•â•â•â•â•â•â• */}
+              {/* STEP 0: Personal */}
               {step === 0 && (
                 <motion.div
                   key="personal"
@@ -272,99 +258,93 @@ const FirstTimeSetup = () => {
                   transition={{ duration: 0.25 }}
                   className="space-y-5 sm:space-y-6"
                 >
-                  {/* Name row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                     <div>
-                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">First Name <span className="text-red-400">*</span></label>
+                      <label className={labelClasses}>First Name <span className="text-red-400">*</span></label>
                       <InputWrapper error={errors.firstName}>
                         <input name="firstName" value={formData.firstName} onChange={handleChange}
-                          className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="John" />
+                          className={`${inputClasses} ${errors.firstName ? 'border-red-400/50 focus:ring-red-400' : ''}`} placeholder="John" style={{ paddingLeft: '1rem' }} />
                       </InputWrapper>
                       <FieldError errors={errors} name="firstName" />
                     </div>
                     <div>
-                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">Last Name <span className="text-red-400">*</span></label>
+                      <label className={labelClasses}>Last Name <span className="text-red-400">*</span></label>
                       <InputWrapper error={errors.lastName}>
                         <input name="lastName" value={formData.lastName} onChange={handleChange}
-                          className="w-full bg-transparent pl-4 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="Doe" />
+                          className={`${inputClasses} ${errors.lastName ? 'border-red-400/50 focus:ring-red-400' : ''}`} placeholder="Doe" style={{ paddingLeft: '1rem' }} />
                       </InputWrapper>
                       <FieldError errors={errors} name="lastName" />
                     </div>
                   </div>
 
-                  {/* Email */}
                   <div>
-                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Email Address</label>
+                    <label className={labelClasses}>Email Address</label>
                     <InputWrapper icon={Mail} error={errors.email}>
                       <input name="email" type="email" value={formData.email} onChange={handleChange}
-                        className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="john@institution.edu" />
+                        className={`${inputClasses} ${errors.email ? 'border-red-400/50 focus:ring-red-400' : ''}`} placeholder="john@institution.edu" />
                     </InputWrapper>
                     <FieldError errors={errors} name="email" />
                     {emailConflict && (
-                      <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
-                        <AlertCircle size={12} /> A suggested email was generated because the original is used by another account. You can edit it.
+                      <p className="mt-1.5 text-xs text-amber-300 flex items-center gap-1 font-medium">
+                        <AlertCircle size={12} /> A suggested email was generated because the original is used by another account.
                       </p>
                     )}
                   </div>
 
-                  {/* Username */}
                   <div>
-                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Username <span className="text-red-400">*</span></label>
+                    <label className={labelClasses}>Username <span className="text-red-400">*</span></label>
                     <InputWrapper icon={User} error={errors.username}>
                       <input name="username" value={formData.username} onChange={handleChange}
-                        className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="johndoe" />
+                        className={`${inputClasses} ${errors.username ? 'border-red-400/50 focus:ring-red-400' : ''}`} placeholder="johndoe" />
                     </InputWrapper>
                     <FieldError errors={errors} name="username" />
                   </div>
 
-                  {/* Phone & Gender */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                     <div>
-                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">Phone Number</label>
+                      <label className={labelClasses}>Phone Number</label>
                       <InputWrapper icon={Phone}>
                         <input name="phone" type="tel" value={formData.phone} onChange={handleChange}
-                          className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="+254 700 000000" />
+                          className={inputClasses} placeholder="+1 234 567 890" />
                       </InputWrapper>
                     </div>
                     <div>
-                      <label className="block text-[13px] font-semibold text-gray-600 mb-2">Gender</label>
-                      <InputWrapper>
+                      <label className={labelClasses}>Gender</label>
+                      <div className="relative">
                         <select name="gender" value={formData.gender} onChange={handleChange}
-                          className="w-full bg-transparent pl-4 pr-10 py-3 text-sm sm:text-[15px] text-gray-800 outline-none rounded-xl appearance-none cursor-pointer">
+                          className="w-full bg-[#e0e5ec] rounded-xl py-3 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] appearance-none cursor-pointer [&>option]:bg-[#e0e5ec]">
                           <option value="">Select Gender</option>
                           <option value="M">Male</option>
                           <option value="F">Female</option>
                           <option value="O">Other</option>
                         </select>
-                        <div className="absolute right-3.5 pointer-events-none text-gray-400">
+                        <div className="absolute right-4 top-4 pointer-events-none text-gray-400">
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
-                      </InputWrapper>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Address */}
                   <div>
-                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Address</label>
+                    <label className={labelClasses}>Address</label>
                     <InputWrapper icon={MapPin}>
                       <input name="address" value={formData.address} onChange={handleChange}
-                        className="w-full bg-transparent pl-11 pr-4 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="123 Main St, City" />
+                        className={inputClasses} placeholder="123 Main St, City" />
                     </InputWrapper>
                   </div>
 
-                  {/* Next button */}
                   <div className="flex justify-end pt-3">
                     <button type="button" onClick={handleNext}
-                      className="flex items-center gap-2 px-7 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-sm hover:shadow-md hover:shadow-indigo-200">
-                      Continue <ChevronRight size={16} />
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-[#e0e5ec] text-indigo-600 font-semibold rounded-xl hover:text-indigo-500 transition-all shadow-[6px_6px_12px_#c3c8ce,-6px_-6px_12px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]">
+                      Continue <ChevronRight size={18} />
                     </button>
                   </div>
                 </motion.div>
               )}
 
-              {/* â•â•â•â•â•â•â•â•â•â•â• STEP 1: Security â•â•â•â•â•â•â•â•â•â•â• */}
+              {/* STEP 1: Security */}
               {step === 1 && (
                 <motion.div
                   key="security"
@@ -374,91 +354,89 @@ const FirstTimeSetup = () => {
                   transition={{ duration: 0.25 }}
                   className="space-y-5 sm:space-y-6"
                 >
-                  {/* Password */}
                   <div>
-                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">New Password <span className="text-red-400">*</span></label>
+                    <label className={labelClasses}>New Password <span className="text-red-400">*</span></label>
                     <InputWrapper icon={Key} error={errors.password}>
                       <input name="password" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={handleChange}
-                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="•••••••• (Min. 8 chars)" />
+                        className={`${inputClasses} ${errors.password ? 'border-red-400/50 focus:ring-red-400' : ''}`} placeholder="•••••••• (Min. 8 chars)" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 text-gray-400 hover:text-indigo-500 transition-colors p-1.5 rounded-lg hover:bg-indigo-50"
+                        className="absolute right-4 top-3.5 text-gray-400 hover:text-white transition-colors"
                         title={showPassword ? "Hide Password" : "Show Password"}>
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </InputWrapper>
                     <FieldError errors={errors} name="password" />
 
-                    {/* Strength meter */}
                     {formData.password && (
-                      <div className="mt-3 space-y-2">
-                        <div className="flex gap-1">
+                      <div className="mt-4 bg-[#e0e5ec] p-4 rounded-xl shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]">
+                        <div className="flex gap-1 mb-3">
                           {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="h-1 flex-1 rounded-full transition-all duration-300"
+                            <div key={i} className="h-1.5 flex-1 rounded-full transition-all duration-300"
                               style={{
                                 backgroundColor: i <= strength.score
                                   ? (strength.score <= 2 ? '#f87171' : strength.score <= 3 ? '#fbbf24' : '#34d399')
-                                  : '#e5e7eb'
+                                  : 'rgba(0,0,0,0.1)'
                               }} />
                           ))}
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="grid grid-cols-2 gap-2">
                           {strength.checks.map((c, i) => (
-                            <span key={i} className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${
-                              c.pass ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'
+                            <span key={i} className={`flex items-center gap-1.5 text-xs font-medium ${
+                              c.pass ? 'text-green-500' : 'text-gray-500'
                             }`}>
-                              {c.pass ? <Check size={10} /> : <X size={10} />} {c.label}
+                              {c.pass ? <Check size={12} /> : <X size={12} />} {c.label}
                             </span>
                           ))}
                         </div>
-                        <p className="text-xs font-medium" style={{ color: strength.score <= 2 ? '#ef4444' : strength.score <= 3 ? '#f59e0b' : '#10b981' }}>
-                          {strengthLabel}
+                        <p className="text-sm font-bold mt-3" style={{ color: strength.score <= 2 ? '#ef4444' : strength.score <= 3 ? '#f59e0b' : '#10b981' }}>
+                          Password is {strengthLabel}
                         </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Confirm Password */}
                   <div>
-                    <label className="block text-[13px] font-semibold text-gray-600 mb-2">Confirm Password <span className="text-red-400">*</span></label>
+                    <label className={labelClasses}>Confirm Password <span className="text-red-400">*</span></label>
                     <InputWrapper icon={Key} error={errors.confirmPassword}>
                       <input name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange}
-                        className="w-full bg-transparent pl-11 pr-12 py-3 text-sm sm:text-[15px] text-gray-800 placeholder-gray-400 outline-none rounded-xl" placeholder="•••••••• (Repeat password)" />
+                        className={`${inputClasses} ${errors.confirmPassword ? 'border-red-400/50 focus:ring-red-400' : ''}`} placeholder="•••••••• (Repeat password)" />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3.5 text-gray-400 hover:text-indigo-500 transition-colors p-1.5 rounded-lg hover:bg-indigo-50"
+                        className="absolute right-4 top-3.5 text-gray-400 hover:text-white transition-colors"
                         title={showConfirmPassword ? "Hide Password" : "Show Password"}>
                         {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </InputWrapper>
                     <FieldError errors={errors} name="confirmPassword" />
                     {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
-                      <p className="mt-1 text-xs text-emerald-500 flex items-center gap-1"><Check size={12} /> Passwords match</p>
+                      <p className="mt-2 text-xs text-green-400 flex items-center gap-1 font-medium"><Check size={12} /> Passwords match</p>
                     )}
                   </div>
 
-                  {/* Terms */}
-                  <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                    formData.agreeTerms ? 'border-indigo-300 bg-indigo-50/50' : errors.agreeTerms ? 'border-red-300 bg-red-50/30' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/40'
+                  <label className={`flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 ${
+                    formData.agreeTerms ? 'shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]' : errors.agreeTerms ? 'shadow-[inset_4px_4px_8px_#fca5a5,inset_-4px_-4px_8px_#ffffff]' : 'shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]'
                   }`}>
-                    <input type="checkbox" name="agreeTerms" checked={formData.agreeTerms} onChange={handleChange}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                    <span className="text-xs text-gray-600 leading-relaxed">
-                      I agree to the <Link to="/terms" className="text-indigo-600 hover:underline font-medium">Terms of Service</Link> and <Link to="/privacy" className="text-indigo-600 hover:underline font-medium">Privacy Policy</Link>
+                    <div className="relative flex items-center justify-center shrink-0 mt-0.5">
+                        <input type="checkbox" name="agreeTerms" checked={formData.agreeTerms} onChange={handleChange}
+                            className="peer h-5 w-5 appearance-none rounded shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff] focus:outline-none checked:bg-[#e0e5ec] transition-all cursor-pointer" />
+                        <Check className="absolute w-3 h-3 text-indigo-500 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" strokeWidth={3} />
+                    </div>
+                    <span className="text-sm text-gray-600 font-medium leading-relaxed">
+                      I agree to the <Link to="/terms" className="text-indigo-500 hover:underline font-bold">Terms of Service</Link> and <Link to="/privacy" className="text-indigo-500 hover:underline font-bold">Privacy Policy</Link>
                     </span>
                   </label>
-                  {errors.agreeTerms && <p className="text-xs text-red-500 flex items-center gap-1"><AlertCircle size={12} />{errors.agreeTerms}</p>}
+                  {errors.agreeTerms && <p className="text-xs text-red-300 flex items-center gap-1 font-medium"><AlertCircle size={12} />{errors.agreeTerms}</p>}
 
-                  {/* Action buttons */}
-                  <div className="flex items-center justify-between pt-3">
+                  <div className="flex flex-col-reverse sm:flex-row items-center justify-between pt-4 gap-4 sm:gap-0">
                     <button type="button" onClick={() => setStep(0)}
-                      className="px-5 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all">
-                      Back
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#e0e5ec] text-gray-600 font-semibold rounded-xl hover:text-gray-800 transition-all shadow-[6px_6px_12px_#c3c8ce,-6px_-6px_12px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]">
+                      <ArrowLeft size={16} /> Previous
                     </button>
                     <button type="submit" disabled={isLoading}
-                      className="flex items-center gap-2 px-7 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-sm hover:shadow-md hover:shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-[#e0e5ec] text-indigo-600 font-bold rounded-xl hover:text-indigo-500 transition-all shadow-[6px_6px_12px_#c3c8ce,-6px_-6px_12px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] disabled:opacity-50 disabled:cursor-not-allowed">
                       {isLoading ? (
-                        <><Loader2 size={16} className="animate-spin" /> Setting up...</>
+                        <><Loader2 size={18} className="animate-spin" /> Saving...</>
                       ) : (
-                        <><Check size={16} /> Complete Setup</>
+                        <><Check size={18} /> Complete Setup</>
                       )}
                     </button>
                   </div>
@@ -466,40 +444,37 @@ const FirstTimeSetup = () => {
               )}
             </AnimatePresence>
 
-            {/* â”€â”€ Error banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <AnimatePresence>
               {errors.non_field_errors && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2"
+                  className="mt-6 p-4 bg-[#e0e5ec] rounded-xl flex items-start gap-3 shadow-[inset_4px_4px_8px_#fca5a5,inset_-4px_-4px_8px_#ffffff]"
                 >
-                  <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-                  <div className="text-xs text-red-600">
+                  <AlertCircle size={18} className="text-red-400 mt-0.5 shrink-0" />
+                  <div className="text-sm text-red-500 font-medium">
                     {Array.isArray(errors.non_field_errors)
                       ? errors.non_field_errors.map((e, i) => <p key={i}>{e}</p>)
                       : <p>{errors.non_field_errors}</p>}
                   </div>
-                  <button type="button" onClick={() => setErrors(p => ({ ...p, non_field_errors: undefined }))} className="ml-auto text-red-400 hover:text-red-600">
-                    <X size={14} />
+                  <button type="button" onClick={() => setErrors(p => ({ ...p, non_field_errors: undefined }))} className="ml-auto text-red-400 hover:text-red-600 transition-colors">
+                    <X size={16} />
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
           </form>
 
-          {/* â”€â”€ Footer hint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-          <div className="px-8 sm:px-12 md:px-16 pb-8 sm:pb-10">
-            <div className="flex items-center gap-2.5 text-xs sm:text-[13px] text-gray-400 bg-gray-50 rounded-xl px-4 py-3.5">
-              <AlertCircle size={14} className="text-indigo-400 shrink-0" />
-              <span>You can update this information later in your profile settings.</span>
+          <div className="px-6 sm:px-12 pb-8 sm:pb-10">
+            <div className="flex items-center gap-3 text-[13px] text-gray-500 bg-[#e0e5ec] rounded-xl px-5 py-4 shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]">
+              <AlertCircle size={18} className="text-indigo-500 shrink-0" />
+              <span className="font-medium">You can update this information later in your profile settings.</span>
             </div>
           </div>
         </div>
 
-        {/* Branding */}
-        <p className="text-center text-xs text-gray-400 mt-5 mb-2">Fahari Academia &middot; Management Information System</p>
+        <p className="text-center text-xs text-gray-400 mt-6 font-medium tracking-wide">Fahari Academia &middot; Management Information System</p>
       </motion.div>
     </div>
   );

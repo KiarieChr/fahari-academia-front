@@ -106,15 +106,15 @@ const ReceiptDetailsModal = ({ show, receipt, onClose, onPrint, onReverse, onUpd
     return (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg modal-dialog-scrollable">
-                <div className="modal-content">
-                    <div className="modal-header">
+                <div className="modal-content neo-card border-none neo-bg">
+                    <div className="modal-header border-bottom-0">
                         <h5 className="modal-title">Receipt Details</h5>
                         <button type="button" className="btn-close" onClick={onClose}></button>
                     </div>
                     <div className="modal-body">
                         {/* Receipt Header */}
-                        <div className="card border-0 bg-light mb-4">
-                            <div className="card-body">
+                        <div className="neo-card border-none mb-4 p-4">
+                            <div>
                                 <div className="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h4 className="mb-1">{localReceipt.receiptNumber}</h4>
@@ -384,15 +384,15 @@ const ReceiptDetailsModal = ({ show, receipt, onClose, onPrint, onReverse, onUpd
                             </div>
                         )}
                     </div>
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
+                    <div className="modal-footer border-top-0 bg-transparent">
+                        <button type="button" className="neo-btn px-3 py-2" onClick={onClose}>
                             Close
                         </button>
                         {localReceipt.status !== 'Reversed' && (
                             <>
                                 <button
                                     type="button"
-                                    className="btn btn-outline-info"
+                                    className="neo-btn px-3 py-2"
                                     onClick={() => alert('Email functionality coming soon')}
                                 >
                                     <Mail size={16} className="me-1" />
@@ -400,7 +400,7 @@ const ReceiptDetailsModal = ({ show, receipt, onClose, onPrint, onReverse, onUpd
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn btn-success"
+                                    className="neo-btn neo-btn-accent py-2 px-3"
                                     onClick={() => onPrint(localReceipt)}
                                 >
                                     <Printer size={16} className="me-1" />
@@ -409,7 +409,7 @@ const ReceiptDetailsModal = ({ show, receipt, onClose, onPrint, onReverse, onUpd
                                 {canReverse && (
                                     <button
                                         type="button"
-                                        className="btn btn-danger"
+                                        className="neo-btn py-2 px-3"
                                         onClick={() => onReverse(localReceipt)}
                                     >
                                         <RotateCcw size={16} className="me-1" />

@@ -52,7 +52,7 @@ const NotificationsPanel = ({ todayPlanned = [] }) => {
     const alerts = useMemo(() => buildAlerts(todayPlanned), [todayPlanned]);
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm h-full">
+        <div className="neo-card overflow-hidden h-full">
             <div className="p-4 border-b border-gray-100 flex items-center gap-2">
                 <Bell size={18} className="text-indigo-600" />
                 <h3 className="text-lg font-bold text-gray-900">Alerts &amp; Notifications</h3>
@@ -70,7 +70,7 @@ const NotificationsPanel = ({ todayPlanned = [] }) => {
                     </div>
                 ) : (
                     alerts.map((alert) => (
-                        <div key={alert.id} className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div key={alert.id} className="flex gap-3 items-start p-3 neo-pressed rounded-lg border border-transparent">
                             <div className="mt-0.5 shrink-0">{getIcon(alert.type)}</div>
                             <div>
                                 <p className="text-sm text-gray-800 leading-snug">{alert.text}</p>

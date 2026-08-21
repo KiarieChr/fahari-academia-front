@@ -163,6 +163,16 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
     };
 
     const handleSave = async (status = 'Issued') => {
+        // Validation
+        if (!receiptData.payerName && !receiptData.studentId && receiptType !== 'General') {
+            setError('Please provide a payer name or select a student.');
+            return;
+        }
+        if (!receiptData.amount || receiptData.amount <= 0) {
+            setError('Please enter a valid amount greater than 0.');
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
         setSuccessMessage('');
@@ -309,8 +319,8 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
     return (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-lg modal-dialog-scrollable">
-                <div className="modal-content">
-                    <div className="modal-header">
+                <div className="modal-content neo-card border-none neo-bg">
+                    <div className="modal-header border-bottom-0">
                         <h5 className="modal-title">Create New Receipt</h5>
                         <button type="button" className="btn-close" onClick={handleClose}></button>
                     </div>
@@ -418,10 +428,10 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
                             />
                         )}
                     </div>
-                    <div className="modal-footer">
+                    <div className="modal-footer border-top-0 bg-transparent">
                         <button
                             type="button"
-                            className="btn btn-secondary"
+                            className="neo-btn"
                             onClick={handleClose}
                             disabled={isLoading}
                         >
@@ -433,7 +443,7 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
                             <>
                                 <button
                                     type="button"
-                                    className="btn btn-outline-primary"
+                                    className="neo-btn"
                                     onClick={() => handleSave('Draft')}
                                     disabled={isLoading}
                                 >
@@ -444,7 +454,7 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn btn-primary"
+                                    className="neo-btn neo-btn-accent"
                                     onClick={() => handleSave('Issued')}
                                     disabled={isLoading}
                                 >

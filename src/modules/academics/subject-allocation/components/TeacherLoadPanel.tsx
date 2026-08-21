@@ -3,45 +3,52 @@ import { User, AlertCircle, CheckCircle } from 'lucide-react';
 
 const TeacherLoadPanel = ({ teachers }) => {
     return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden h-fit sticky top-24 mr-3">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
-                <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <User size={18} className="text-blue-600" />
-                    Teacher Load Monitor
+        <div className="neo-card border-none overflow-hidden h-fit sticky top-24">
+            <div className="p-5 border-b border-slate-300/30 flex justify-between items-center bg-transparent">
+                <h3 className="font-black text-slate-800 flex items-center gap-2">
+                    <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                        <User size={18} />
+                    </div>
+                    Teacher Workload
                 </h3>
             </div>
-            <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
+            <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar">
                 {teachers.map(teacher => {
                     const loadPercent = Math.round((teacher.currentLoad / teacher.maxLoad) * 100);
                     const isOverloaded = teacher.currentLoad > teacher.maxLoad;
                     const isNearLimit = teacher.currentLoad >= teacher.maxLoad && !isOverloaded;
 
                     return (
-                        <div key={teacher.id} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-700 mr-4">
-                            <div className="flex justify-between items-start mb-2">
+                        <div key={teacher.id} className="p-4 neo-pressed border-none rounded-xl shadow-sm transition-all hover:-translate-y-0.5">
+                            <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h4 className="text-xs font-bold text-slate-800 dark:text-white">{teacher.name}</h4>
-                                    <p className="text-[10px] text-slate-500 truncate max-w-[150px]">{teacher.subjects.join(', ')}</p>
+                                    <h4 className="text-sm font-bold text-slate-800">{teacher.name}</h4>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate max-w-[150px] mt-0.5">{teacher.subjects.join(', ')}</p>
                                 </div>
                                 {isOverloaded ? (
-                                    <AlertCircle size={16} className="text-red-500" />
+                                    <div className="p-1.5 bg-red-100 rounded-lg text-red-500 shadow-sm border border-red-200/50">
+                                        <AlertCircle size={16} />
+                                    </div>
                                 ) : (
-                                    <CheckCircle size={16} className="text-green-500" />
+                                    <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-500 shadow-sm border border-emerald-200/50">
+                                        <CheckCircle size={16} />
+                                    </div>
                                 )}
                             </div>
 
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-[10px] font-medium text-slate-500">
-                                    <span>Load: {teacher.currentLoad} / {teacher.maxLoad} Lessons</span>
-                                    <span className={isOverloaded ? 'text-red-600' : 'text-slate-600'}>{loadPercent}%</span>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-xs font-bold text-slate-500">
+                                    <span>{teacher.currentLoad} <span className="text-[10px] uppercase text-slate-400">/ {teacher.maxLoad}</span></span>
+                                    <span className={isOverloaded ? 'text-red-500 font-black' : 'text-indigo-600 font-black'}>{loadPercent}%</span>
                                 </div>
-                                <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div className="h-2 neo-pressed rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full ${isOverloaded ? 'bg-red-500' :
-                                                isNearLimit ? 'bg-amber-500' :
-                                                    'bg-green-500'
-                                            }`}
-                                        style={{ width: `${Math.min(loadPercent, 100)}%` }}
+                                        className={`h-full rounded-full shadow-sm ${
+                                            isOverloaded ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                                            isNearLimit ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                                            'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                                        }`}
+                                        style={{ width: `${Math.min(loadPercent, 100)}%`, transition: 'width 1s ease-in-out' }}
                                     ></div>
                                 </div>
                             </div>
@@ -49,7 +56,7 @@ const TeacherLoadPanel = ({ teachers }) => {
                     );
                 })}
             </div>
-            <div className="p-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 text-[10px] text-slate-500 text-center">
+            <div className="p-4 border-t border-slate-300/30 text-[10px] font-bold tracking-widest uppercase text-slate-400 text-center bg-transparent">
                 Review availability before assignment
             </div>
         </div>

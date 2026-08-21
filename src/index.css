@@ -2323,3 +2323,104 @@ td {
 .form-group + .form-group {
     margin-top: 1.5rem;
 } */
+/* ========================================================================= */
+/* SOFT NEOMORPHIC UTILITY CLASSES                                           */
+/* ========================================================================= */
+
+:root {
+    --neo-bg-color: #e0e5ec;
+    --neo-shadow-light: #ffffff;
+    --neo-shadow-dark: #a3b1c6;
+    --neo-accent: #4f46e5;
+    --neo-accent-light: #818cf8;
+}
+
+.neo-bg {
+    background-color: var(--neo-bg-color);
+    color: #4a5568;
+}
+
+.neo-card {
+    background-color: var(--neo-bg-color);
+    border-radius: 1.25rem;
+    box-shadow: 
+        9px 9px 16px var(--neo-shadow-dark), 
+        -9px -9px 16px var(--neo-shadow-light);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.neo-pressed {
+    background-color: var(--neo-bg-color);
+    border-radius: 1.25rem;
+    box-shadow: 
+        inset 6px 6px 10px var(--neo-shadow-dark), 
+        inset -6px -6px 10px var(--neo-shadow-light);
+    border: none;
+}
+
+.neo-btn {
+    background-color: var(--neo-bg-color);
+    border-radius: 1rem;
+    box-shadow: 
+        6px 6px 10px var(--neo-shadow-dark), 
+        -6px -6px 10px var(--neo-shadow-light);
+    border: none;
+    color: #4a5568;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.neo-btn:hover {
+    box-shadow: 
+        4px 4px 8px var(--neo-shadow-dark), 
+        -4px -4px 8px var(--neo-shadow-light);
+    color: var(--neo-accent);
+}
+
+.neo-btn:active, .neo-btn.active {
+    box-shadow: 
+        inset 4px 4px 8px var(--neo-shadow-dark), 
+        inset -4px -4px 8px var(--neo-shadow-light);
+    color: var(--neo-accent);
+}
+
+.neo-input {
+    background-color: var(--neo-bg-color) !important;
+    border-radius: 0.75rem;
+    box-shadow: 
+        inset 4px 4px 8px var(--neo-shadow-dark), 
+        inset -4px -4px 8px var(--neo-shadow-light);
+    border: none;
+    padding: 0.75rem 1rem;
+    color: #2d3748;
+}
+
+.neo-input:focus {
+    outline: none;
+    box-shadow: 
+        inset 6px 6px 12px var(--neo-shadow-dark), 
+        inset -6px -6px 12px var(--neo-shadow-light);
+}
+
+.neo-text-accent {
+    color: var(--neo-accent);
+}
+
+.neo-btn-accent {
+    background-color: var(--neo-accent);
+    color: white;
+    border-radius: 1rem;
+    box-shadow: 
+        6px 6px 10px var(--neo-shadow-dark), 
+        -6px -6px 10px var(--neo-shadow-light);
+    transition: all 0.2s ease;
+}
+
+.neo-btn-accent:hover {
+    background-color: var(--neo-accent-light);
+}

@@ -36,7 +36,7 @@ const ReverseReceiptModal = ({ show, receipt, onClose, onConfirm }) => {
     return (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog">
-                <div className="modal-content">
+                <div className="modal-content neo-card border-none neo-bg">
                     <div className="modal-header bg-danger text-white">
                         <h5 className="modal-title">
                             <AlertTriangle size={20} className="me-2" />
@@ -51,7 +51,7 @@ const ReverseReceiptModal = ({ show, receipt, onClose, onConfirm }) => {
                         </div>
 
                         {/* Receipt Details */}
-                        <div className="card border-danger mb-3">
+                        <div className="neo-card border-none mb-3">
                             <div className="card-body">
                                 <h6 className="card-title">Receipt to be Reversed</h6>
                                 <table className="table table-sm mb-0">
@@ -83,7 +83,7 @@ const ReverseReceiptModal = ({ show, receipt, onClose, onConfirm }) => {
                                 Reversal Reason <span className="text-danger">*</span>
                             </label>
                             <select
-                                className="form-select"
+                                className="form-select neo-input border-none"
                                 value={reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 required
@@ -99,7 +99,7 @@ const ReverseReceiptModal = ({ show, receipt, onClose, onConfirm }) => {
                         <div className="mb-3">
                             <label className="form-label fw-bold">Additional Notes</label>
                             <textarea
-                                className="form-control"
+                                className="form-control neo-input border-none"
                                 rows="3"
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
@@ -121,13 +121,13 @@ const ReverseReceiptModal = ({ show, receipt, onClose, onConfirm }) => {
                             </label>
                         </div>
                     </div>
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
+                    <div className="modal-footer border-top-0 bg-transparent">
+                        <button type="button" className="neo-btn" onClick={onClose}>
                             Cancel
                         </button>
                         <button
                             type="button"
-                            className="btn btn-danger"
+                            className="neo-btn text-danger fw-bold"
                             onClick={handleSubmit}
                             disabled={!reason || !confirmed}
                         >

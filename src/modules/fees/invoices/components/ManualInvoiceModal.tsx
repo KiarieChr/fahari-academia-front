@@ -195,151 +195,153 @@ const ManualInvoiceModal = ({ show, onClose, onCreate }) => {
     if (!show) return null;
 
     return (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title">Create Manual Invoice</h5>
-                        <button type="button" className="btn-close" onClick={onClose}></button>
-                    </div>
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
-                            {/* Student & Invoice Details */}
-                            <div className="row g-3 mb-4">
-                                {/* Student Search */}
-                                <div className="col-md-6 position-relative">
-                                    <label className="form-label">Student *</label>
-                                    <div className="input-group">
-                                        <span className="input-group-text"><User size={18} /></span>
+        <div className="fixed inset-0 z-1000 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
+            <div className="neo-card w-full max-w-3xl my-3">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100">
+                    <h5 className="text-xl font-bold text-gray-700">Create Manual Invoice</h5>
+                    <button type="button" className="text-gray-400 hover:text-rose-500 transition-colors" onClick={onClose}>
+                        &times;
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit}>
+                    <div className="p-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        {/* Student & Invoice Details */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-2">
+                            {/* Student Search */}
+                            <div className="col-span-12 md:col-span-6 relative">
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Student *</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                                        <User size={18} className="text-gray-400" />
+                                    </span>
+                                    <input
+                                        type="text"
+                                        className="neo-input w-full pr-3 font-bold"
+                                        placeholder="Search by name or admission..."
+                                        style={{paddingLeft:'30px'}}
+                                        value={searchTerm}
+                                        
+                                        onChange={(e) => handleSearchInput(e.target.value)}
+                                        disabled={submitting}
+                                        required={!formData.studentId}
+                                    />
+                                    {formData.studentId && (
+                                        <button
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-500"
+                                            type="button"
+                                            onClick={() => {
+                                                setSearchTerm('');
+                                                setFormData(prev => ({ ...prev, studentId: '' }));
+                                                setItems([]);
+                                            }}
+                                        >
+                                            &times;
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Search Results Dropdown */}
+                                {showResults && searchResults.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 max-h-[200px] overflow-y-auto custom-scrollbar">
+                                        {searchResults.map(s => (
+                                            <button
+                                                key={s.id}
+                                                type="button"
+                                                className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors"
+                                                onClick={() => selectStudent(s)}
+                                            >
+                                                <span className="block font-bold text-gray-700">{s.name}</span>
+                                                <small className="block text-gray-400 font-bold">{s.admission_number}</small>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {contextLoading && <div className="text-xs font-bold text-indigo-500 mt-2">Fetching details...</div>}
+                            </div>
+                            <div className="col-span-12 md:col-span-3">
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Term</label>
+                                <input
+                                    type="text"
+                                    className="neo-input w-full font-bold bg-gray-100 text-gray-500 cursor-not-allowed opacity-70"
+                                    value={formData.term || ''}
+                                    readOnly
+                                    placeholder="Auto-filled"
+                                />
+                            </div>
+                            <div className="col-span-12 md:col-span-3">
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Year</label>
+                                <input
+                                    type="text"
+                                    className="neo-input w-full font-bold bg-gray-100 text-gray-500 cursor-not-allowed opacity-70"
+                                    value={formData.year || ''}
+                                    readOnly
+                                    placeholder="Auto-filled"
+                                />
+                            </div>
+                            <div className="col-span-12 md:col-span-6">
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Due Date *</label>
+                                <input
+                                    type="date"
+                                    className="neo-input w-full font-bold"
+                                    required
+                                    value={formData.dueDate}
+                                    onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+                                />
+                            </div>
+                            <div className="col-span-12 md:col-span-6">
+                                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Remarks</label>
+                                <input
+                                    type="text"
+                                    className="neo-input w-full font-bold"
+                                    placeholder="Reason for invoice..."
+                                    value={formData.remarks}
+                                    onChange={e => setFormData({ ...formData, remarks: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Line Items */}
+                        <h6 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">Invoice Items</h6>
+                        <div className="neo-pressed p-4 mb-6">
+                            {items.length === 0 && !contextLoading && (
+                                <p className="text-gray-400 font-bold text-center text-sm py-4">No fee structure found for this student's active session.</p>
+                            )}
+                            {items.map((item, index) => (
+                                <div key={item.id} className="grid grid-cols-12 gap-4 items-center mb-3 last:mb-0">
+                                    <div className="col-span-8">
                                         <input
                                             type="text"
-                                            className="form-control"
-                                            placeholder="Search by name or admission..."
-                                            value={searchTerm}
-                                            onChange={(e) => handleSearchInput(e.target.value)}
-                                            disabled={submitting}
-                                            required={!formData.studentId}
+                                            className="neo-input w-full font-bold bg-gray-50 text-gray-500 cursor-not-allowed opacity-70"
+                                            value={item.name}
+                                            readOnly
+                                            disabled
                                         />
-                                        {formData.studentId && (
-                                            <button
-                                                className="btn btn-outline-secondary"
-                                                type="button"
-                                                onClick={() => {
-                                                    setSearchTerm('');
-                                                    setFormData(prev => ({ ...prev, studentId: '' }));
-                                                    setItems([]);
-                                                }}
-                                            >
-                                                &times;
-                                            </button>
-                                        )}
                                     </div>
-
-                                    {/* Search Results Dropdown */}
-                                    {showResults && searchResults.length > 0 && (
-                                        <div className="list-group position-absolute w-100 shadow-lg" style={{ zIndex: 1050, maxHeight: '200px', overflowY: 'auto' }}>
-                                            {searchResults.map(s => (
-                                                <button
-                                                    key={s.id}
-                                                    type="button"
-                                                    className="list-group-item list-group-item-action"
-                                                    onClick={() => selectStudent(s)}
-                                                >
-                                                    <span className="fw-bold">{s.name}</span>
-                                                    <small className="d-block text-muted">{s.admission_number}</small>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {contextLoading && <div className="form-text text-primary">Fetching details...</div>}
-                                </div>
-                                <div className="col-md-3">
-                                    <label className="form-label">Term</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.term || ''}
-                                        readOnly
-                                        placeholder="Auto-filled"
-                                        style={{ backgroundColor: '#e9ecef' }}
-                                    />
-                                </div>
-                                <div className="col-md-3">
-                                    <label className="form-label">Year</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.year || ''}
-                                        readOnly
-                                        placeholder="Auto-filled"
-                                        style={{ backgroundColor: '#e9ecef' }}
-                                    />
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="form-label">Due Date *</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        required
-                                        value={formData.dueDate}
-                                        onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
-                                    />
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="form-label">Remarks</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Reason for invoice..."
-                                        value={formData.remarks}
-                                        onChange={e => setFormData({ ...formData, remarks: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Line Items */}
-                            <h6 className="fw-bold mb-3 border-bottom pb-2">Invoice Items</h6>
-                            <div className="bg-light p-3 rounded mb-3">
-                                {items.length === 0 && !contextLoading && (
-                                    <p className="text-muted text-center small mb-0">No fee structure found for this student's active session.</p>
-                                )}
-                                {items.map((item, index) => (
-                                    <div key={item.id} className="row g-2 align-items-center mb-2">
-                                        <div className="col-md-8">
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={item.name}
-                                                readOnly
-                                                disabled
-                                            />
-                                        </div>
-                                        <div className="col-md-4">
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm text-end"
-                                                value={item.amount}
-                                                readOnly // Strictly from structure
-                                                disabled
-                                            />
-                                        </div>
+                                    <div className="col-span-4">
+                                        <input
+                                            type="text"
+                                            className="neo-input w-full font-black text-right bg-gray-50 text-gray-500 cursor-not-allowed opacity-70"
+                                            value={item.amount}
+                                            readOnly
+                                            disabled
+                                        />
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ))}
+                        </div>
 
-                            <div className="d-flex justify-content-end align-items-center">
-                                <span className="me-3 fw-bold">Total Amount:</span>
-                                <h4 className="mb-0 text-primary">{formatKES(calculateTotal())}</h4>
-                            </div>
+                        <div className="flex justify-end items-center mb-4">
+                            <span className="mr-4 text-xs font-black text-gray-400 uppercase tracking-widest">Total Amount:</span>
+                            <h4 className="text-2xl font-black text-indigo-600">{formatKES(calculateTotal())}</h4>
                         </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>Cancel</button>
-                            <button type="submit" className="btn btn-primary" disabled={submitting || items.length === 0}>
-                                {submitting ? 'Generating...' : 'Create Invoice'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
+                        <button type="button" className="neo-btn px-4 py-2" onClick={onClose} disabled={submitting}>Cancel</button>
+                        <button type="submit" className="neo-btn neo-btn-accent px-4 py-2" disabled={submitting || items.length === 0}>
+                            {submitting ? 'Generating...' : 'Create Invoice'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

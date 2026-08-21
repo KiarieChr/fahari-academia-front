@@ -3,6 +3,10 @@ import { Save, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../services/studentSettingsService';
 
+const neoCardClass = 'bg-[#f8f9fa] rounded-3xl shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] border border-white p-6 space-y-6';
+const inputClass = 'w-full px-4 py-3 bg-gray-50/80 rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400';
+const labelClass = 'text-[13px] font-bold text-slate-600 block mb-2 tracking-wide ml-1';
+
 const AdmissionNumberSetup = () => {
     const [config, setConfig] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -63,35 +67,35 @@ const AdmissionNumberSetup = () => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="text-lg font-bold text-gray-800 mb-6">Admission Configuration</h3>
+                <div className={neoCardClass}>
+                    <h3 className="text-lg font-bold text-slate-800 drop-shadow-sm mb-6">Admission Configuration</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Admission Number Generation</label>
+                            <label className={labelClass}>Admission Number Generation</label>
                             <div className="flex gap-4">
-                                <label className="flex items-center gap-2 cursor-pointer border p-3 rounded-lg flex-1 hover:bg-gray-50">
+                                <label className={`flex items-center gap-3 cursor-pointer p-4 rounded-2xl flex-1 transition-all border border-white ${config.admission_format === 'auto' ? 'bg-[#f8f9fa] shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff]' : 'bg-gray-50/50 shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[2px_2px_5px_#e5e7eb,-2px_-2px_5px_#ffffff]'}`}>
                                     <input
                                         type="radio"
                                         checked={config.admission_format === 'auto'}
                                         onChange={() => setConfig({ ...config, admission_format: 'auto' })}
-                                        className="text-indigo-600 focus:ring-indigo-500"
+                                        className="w-5 h-5 accent-indigo-600"
                                     />
                                     <div>
-                                        <span className="block text-sm font-medium">Automatic</span>
-                                        <span className="block text-xs text-gray-500">System generates based on format</span>
+                                        <span className="block text-sm font-bold text-slate-700">Automatic</span>
+                                        <span className="block text-xs font-medium text-slate-500">System generates based on format</span>
                                     </div>
                                 </label>
-                                <label className="flex items-center gap-2 cursor-pointer border p-3 rounded-lg flex-1 hover:bg-gray-50">
+                                <label className={`flex items-center gap-3 cursor-pointer p-4 rounded-2xl flex-1 transition-all border border-white ${config.admission_format === 'manual' ? 'bg-[#f8f9fa] shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff]' : 'bg-gray-50/50 shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[2px_2px_5px_#e5e7eb,-2px_-2px_5px_#ffffff]'}`}>
                                     <input
                                         type="radio"
                                         checked={config.admission_format === 'manual'}
                                         onChange={() => setConfig({ ...config, admission_format: 'manual' })}
-                                        className="text-indigo-600 focus:ring-indigo-500"
+                                        className="w-5 h-5 accent-indigo-600"
                                     />
                                     <div>
-                                        <span className="block text-sm font-medium">Manual</span>
-                                        <span className="block text-xs text-gray-500">Admins input numbers manually</span>
+                                        <span className="block text-sm font-bold text-slate-700">Manual</span>
+                                        <span className="block text-xs font-medium text-slate-500">Admins input numbers manually</span>
                                     </div>
                                 </label>
                             </div>
@@ -100,10 +104,10 @@ const AdmissionNumberSetup = () => {
                         {config.admission_format === 'auto' && (
                             <>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Admission Prefix</label>
+                                    <label className={labelClass}>Admission Prefix</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none uppercase"
+                                        className={`${inputClass} uppercase`}
                                         value={config.prefix}
                                         onChange={e => setConfig({ ...config, prefix: e.target.value.toUpperCase() })}
                                         placeholder="e.g. SCH"
@@ -111,10 +115,10 @@ const AdmissionNumberSetup = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Separator</label>
+                                    <label className={labelClass}>Separator</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className={inputClass}
                                         value={config.separator || ''}
                                         onChange={e => setConfig({ ...config, separator: e.target.value })}
                                         placeholder="e.g. / or -"
@@ -122,10 +126,10 @@ const AdmissionNumberSetup = () => {
                                     />
                                 </div>
 
-                                <div className="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
-                                    <h4 className="text-sm font-semibold text-gray-800 mb-4">Structure Settings</h4>
+                                <div className="md:col-span-2 border-t border-slate-200/50 pt-6 mt-2">
+                                    <h4 className="text-sm font-extrabold text-slate-700 mb-5">Structure Settings</h4>
 
-                                    <div className="flex items-center gap-4 mb-4">
+                                    <div className="flex items-center gap-4 mb-6">
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
                                                 type="checkbox"
@@ -133,17 +137,17 @@ const AdmissionNumberSetup = () => {
                                                 checked={config.include_year}
                                                 onChange={e => setConfig({ ...config, include_year: e.target.checked })}
                                             />
-                                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                                            <span className="ml-3 text-sm font-medium text-gray-700">Include Year in Admission Number</span>
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-[inset_2px_2px_5px_rgba(0,0,0,0.1)]"></div>
+                                            <span className="ml-3 text-sm font-bold text-slate-600">Include Year in Admission Number</span>
                                         </label>
                                     </div>
 
                                     {config.include_year && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Year Format</label>
+                                                <label className={labelClass}>Year Format</label>
                                                 <select
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    className={inputClass + ' font-bold'}
                                                     value={config.year_format || 'YYYY'}
                                                     onChange={e => setConfig({ ...config, year_format: e.target.value })}
                                                 >
@@ -152,9 +156,9 @@ const AdmissionNumberSetup = () => {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Sequence Order</label>
+                                                <label className={labelClass}>Sequence Order</label>
                                                 <select
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    className={inputClass + ' font-bold'}
                                                     value={config.sequence_format || 'P-Y-S'}
                                                     onChange={e => setConfig({ ...config, sequence_format: e.target.value })}
                                                 >
@@ -169,18 +173,18 @@ const AdmissionNumberSetup = () => {
                             </>
                         )}
 
-                        <div className="md:col-span-2 border-t border-gray-100 pt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Initial Status for New Admissions</label>
+                        <div className="md:col-span-2 border-t border-slate-200/50 pt-6">
+                            <label className={labelClass}>Initial Status for New Admissions</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className={inputClass}
                                 value={config.default_status}
                                 onChange={e => setConfig({ ...config, default_status: e.target.value })}
                                 placeholder="Active"
                             />
                         </div>
 
-                        <div className="flex items-center gap-4 py-2">
+                        <div className="flex items-center gap-4 py-2 md:col-span-2">
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -188,18 +192,18 @@ const AdmissionNumberSetup = () => {
                                     checked={config.allow_mid_term}
                                     onChange={e => setConfig({ ...config, allow_mid_term: e.target.checked })}
                                 />
-                                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                                <span className="ml-3 text-sm font-medium text-gray-700">Allow Mid-term Admissions</span>
+                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-[inset_2px_2px_5px_rgba(0,0,0,0.1)]"></div>
+                                <span className="ml-3 text-sm font-bold text-slate-600">Allow Mid-term Admissions</span>
                             </label>
                         </div>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                    <div className="mt-8 pt-6 border-t border-slate-200/50 flex justify-end">
                         <button
                             onClick={handleSave}
-                            className="btn btn-primary px-5 py-2 fw-bold shadow-sm"
+                            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-indigo-700 bg-[#f8f9fa] rounded-xl shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-white"
                         >
-                            <Save size={18} /> Save Settings
+                            <Save size={18} className="text-indigo-600" /> Save Settings
                         </button>
                     </div>
                 </div>

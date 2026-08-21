@@ -93,8 +93,8 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     }
                 }
 
-                // Single update
-                onChange({ ...data, ...updates, receiptType: 'Student Fee' });
+                // Single update using functional pattern to prevent stale closure overriding user input
+                onChange(prev => ({ ...prev, ...updates, receiptType: 'Student Fee' }));
             } catch (err) {
                 console.error("Failed to load academic context", err);
             }
@@ -140,8 +140,8 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
             updates.payerName = '';
         }
 
-        // Single atomic update
-        onChange({ ...data, ...updates });
+        // Single atomic update using functional pattern
+        onChange(prev => ({ ...prev, ...updates }));
     };
 
     const checkBalance = async (studentId) => {
@@ -177,18 +177,18 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
         const amount = parseFloat(val) || 0;
         const allocations = calculateAllocations(amount, pendingInvoices);
 
-        onChange({
-            ...data,
+        onChange(prev => ({
+            ...prev,
             amount: amount,
             allocations: allocations,
             receiptType: 'Student Fee'
-        });
+        }));
     };
 
     const handleChange = (field, value) => {
         // If amount changes, we need to recalculate allocations, but handleAmountChange does that.
         // This is for generic fields.
-        onChange({ ...data, [field]: value, receiptType: 'Student Fee' });
+        onChange(prev => ({ ...prev, [field]: value, receiptType: 'Student Fee' }));
     };
 
     // Transform data for FilterDropdown
@@ -215,6 +215,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     options={studentOptions}
                     onChange={handleStudentChange}
                     searchable={true}
+                    variant="neo"
                     disabled={disabled || loadingStudents}
                     className="w-100"
                 />
@@ -225,7 +226,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Payer Name <span className="text-danger">*</span></label>
                 <input
                     type="text"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.payerName || ''}
                     onChange={(e) => handleChange('payerName', e.target.value)}
                     placeholder="Parent/Guardian name"
@@ -237,7 +238,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
             {/* Student Balance (Replaces Fee Category) */}
             <div className="col-md-6">
                 <label className="form-label">Current Balance</label>
-                <div className={`form-control d-flex justify-content-between align-items-center ${studentBalance > 0 ? 'border-danger text-danger bg-danger-subtle' : studentBalance < 0 ? 'border-success text-success bg-success-subtle' : 'bg-light'}`} style={{ height: '40px' }}>
+                <div className={`form-control neo-input border-none d-flex justify-content-between align-items-center ${studentBalance > 0 ? 'text-danger' : studentBalance < 0 ? 'text-success' : ''}`} style={{ height: '40px' }}>
                     <span>
                         {checkingBalance ? (
                             <span><span className="spinner-border spinner-border-sm me-2" />Checking...</span>
@@ -260,7 +261,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Term</label>
                 <input
                     type="text"
-                    className="form-control bg-light"
+                    className="form-control bg-light neo-input border-none"
                     value={data.term || currentTerm || ''}
                     readOnly
                     style={{ height: '40px' }}
@@ -272,7 +273,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Academic Year</label>
                 <input
                     type="text"
-                    className="form-control bg-light"
+                    className="form-control bg-light neo-input border-none"
                     value={data.year || currentYear || ''}
                     readOnly
                     style={{ height: '40px' }}
@@ -284,7 +285,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Amount Paid (KES) <span className="text-danger">*</span></label>
                 <input
                     type="number"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.amount || ''}
                     onChange={(e) => handleAmountChange(e.target.value)}
                     placeholder="0.00"
@@ -315,7 +316,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 </label>
                 <input
                     type="text"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.reference || ''}
                     onChange={(e) => handleChange('reference', e.target.value)}
                     placeholder={
@@ -331,7 +332,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
             <div className="col-md-12">
                 <label className="form-label">Notes</label>
                 <textarea
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     rows="2"
                     value={data.notes || ''}
                     onChange={(e) => handleChange('notes', e.target.value)}

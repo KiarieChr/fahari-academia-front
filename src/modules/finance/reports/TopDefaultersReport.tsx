@@ -109,7 +109,7 @@ const TopDefaultersReport = () => {
                     {chartData.length > 0 && (
                         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
                             <h3 className="font-bold text-slate-800 dark:text-white mb-4">Top Defaulters by Balance</h3>
-                            <div className="h-64">
+                            <div className="">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={chartData}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />

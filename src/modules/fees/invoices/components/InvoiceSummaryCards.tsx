@@ -19,9 +19,8 @@ const InvoiceSummaryCards = ({ summary }) => {
             value: formatKES(summary.totalInvoiced),
             subtitle: `${summary.invoiceCount} invoices generated`,
             icon: FileText,
-            color: 'primary',
-            bgClass: 'bg-primary-subtle',
-            iconClass: 'text-primary'
+            color: 'text-indigo-600',
+            bgClass: 'neo-pressed text-indigo-600',
         },
         {
             id: 'collected',
@@ -29,9 +28,8 @@ const InvoiceSummaryCards = ({ summary }) => {
             value: formatKES(summary.totalCollected),
             subtitle: `${summary.collectionRate.toFixed(1)}% collection rate`,
             icon: CheckCircle,
-            color: 'success',
-            bgClass: 'bg-success-subtle',
-            iconClass: 'text-success'
+            color: 'text-emerald-500',
+            bgClass: 'neo-pressed text-emerald-500',
         },
         {
             id: 'outstanding',
@@ -39,9 +37,8 @@ const InvoiceSummaryCards = ({ summary }) => {
             value: formatKES(summary.totalOutstanding),
             subtitle: 'Pending payments',
             icon: CreditCard,
-            color: 'warning',
-            bgClass: 'bg-warning-subtle',
-            iconClass: 'text-warning'
+            color: 'text-amber-500',
+            bgClass: 'neo-pressed text-amber-500',
         },
         {
             id: 'overdue',
@@ -49,45 +46,42 @@ const InvoiceSummaryCards = ({ summary }) => {
             value: formatKES(summary.classBreakdown ? 0 : 0), // Placeholder until calculated
             subtitle: 'Past due date',
             icon: Clock,
-            color: 'danger',
-            bgClass: 'bg-danger-subtle',
-            iconClass: 'text-danger'
+            color: 'text-rose-500',
+            bgClass: 'neo-pressed text-rose-500',
         }
     ];
 
     return (
-        <div className="row g-3 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-3">
             {cards.map((card) => (
-                <div key={card.id} className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100 invoice-summary-card">
-                        <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-start mb-3">
-                                <div className="flex-grow-1">
-                                    <p className="text-muted small mb-1">{card.title}</p>
-                                    <h3 className="mb-0 fw-bold">{card.value}</h3>
-                                    {card.subtitle && (
-                                        <small className={`text-${card.color}`}>{card.subtitle}</small>
-                                    )}
-                                </div>
-                                <div className={`p-3 rounded ${card.bgClass}`}>
-                                    <card.icon size={24} className={card.iconClass} />
-                                </div>
+                <div key={card.id} className="neo-card p-3 border-none flex flex-col justify-between">
+                    <div>
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="flex-grow">
+                                <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest mb-1">{card.title}</p>
+                                <h3 className="text-2xl font-black text-gray-700">{card.value}</h3>
+                                {card.subtitle && (
+                                    <small className={`font-bold ${card.color}`}>{card.subtitle}</small>
+                                )}
                             </div>
-
-                            {/* Mini Progress Bar for Collection */}
-                            {card.id === 'collected' && (
-                                <div className="progress" style={{ height: '4px' }}>
-                                    <div
-                                        className="progress-bar bg-success"
-                                        role="progressbar"
-                                        style={{ width: `${summary.collectionRate}%` }}
-                                        aria-valuenow={summary.collectionRate}
-                                        aria-valuemin="0"
-                                        aria-valuemax="100"
-                                    ></div>
-                                </div>
-                            )}
+                            <div className={`p-3 rounded-full ${card.bgClass} flex items-center justify-center`}>
+                                <card.icon size={24} />
+                            </div>
                         </div>
+
+                        {/* Mini Progress Bar for Collection */}
+                        {card.id === 'collected' && (
+                            <div className="h-2 neo-pressed rounded-full overflow-hidden mt-2">
+                                <div
+                                    className="h-full bg-emerald-500 shadow-sm transition-all duration-1000"
+                                    role="progressbar"
+                                    style={{ width: `${summary.collectionRate}%` }}
+                                    aria-valuenow={summary.collectionRate}
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                ></div>
+                            </div>
+                        )}
                     </div>
                 </div>
             ))}

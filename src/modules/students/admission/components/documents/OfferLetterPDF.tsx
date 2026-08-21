@@ -80,8 +80,9 @@ const OfferLetterPDF = ({ admission = {}, institution = {} }) => {
 
     const studentName = admission.student_name || admission.applicant_name || 'Student';
     const guardianName = admission.guardian_name || 'Parent/Guardian';
-    const admNo = admission.admission_number || '—';
+    const admNo = admission.admission_number || `APP-${admission.id}` || '—';
     const className = admission.class_name || admission.applying_for_grade_name || '—';
+    const intakeName = admission.intake_name || '—';
 
     const principalName = institution.principal_name || 'THE PRINCIPAL';
     const principalTitle = institution.principal_title || 'PRINCIPAL';
@@ -158,7 +159,7 @@ const OfferLetterPDF = ({ admission = {}, institution = {} }) => {
                     <Text style={styles.offerTitle}>✓ Offer of Admission</Text>
                     <Text style={styles.offerBody}>
                         We are pleased to offer <Text style={{ fontFamily: 'Helvetica-Bold' }}>{studentName}</Text> a place
-                        at {institution.name || 'this institution'} in <Text style={{ fontFamily: 'Helvetica-Bold' }}>{className}</Text>.
+                        at {institution.name || 'this institution'} in <Text style={{ fontFamily: 'Helvetica-Bold' }}>{className}</Text> for the <Text style={{ fontFamily: 'Helvetica-Bold' }}>{intakeName}</Text> intake.
                         This offer is conditional upon receipt of all required documents and the prescribed admission fee deposit by the deadline below.
                     </Text>
                 </View>

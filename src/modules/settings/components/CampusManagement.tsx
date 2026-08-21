@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import { institutionService } from '../../../services/institutionService';
 import Modal from '../../../components/common/Modal';
 
-const inputClass = 'w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all bg-gray-50/60 hover:bg-white focus:bg-white shadow-inner shadow-gray-100/50';
-const labelClass = 'text-[13px] font-semibold text-gray-600 block mb-2';
+const inputClass = 'w-full px-4 py-3 bg-gray-50/80 rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400';
+const labelClass = 'text-[13px] font-bold text-slate-600 block mb-2 tracking-wide ml-1';
 
 const emptyCampus = {
     code: '', name: '', location: '', address_line_1: '', address_line_2: '',
@@ -117,16 +117,16 @@ const CampusManagement = () => {
     }
 
     return (
-        <div className="space-y-7 animate-in fade-in duration-300">
+        <div className="space-y-7 animate-in fade-in duration-300 p-3">
             {/* Header */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center justify-between flex-wrap gap-3 pb-6 mb-2">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-900">Campus Management</h2>
-                    <p className="text-gray-400 text-sm mt-1">{campuses.length} campus{campuses.length !== 1 ? 'es' : ''} configured</p>
+                    <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-indigo-800 drop-shadow-sm">Campus Management</h2>
+                    <p className="text-slate-500 text-sm mt-2 font-medium">{campuses.length} campus{campuses.length !== 1 ? 'es' : ''} configured</p>
                 </div>
                 <button onClick={openAdd}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all">
-                    <Plus size={18} /> Add Campus
+                    className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-indigo-700 bg-[#f8f9fa] rounded-xl shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-white">
+                    <Plus size={18} className="text-indigo-600" /> Add Campus
                 </button>
             </div>
 
@@ -142,79 +142,79 @@ const CampusManagement = () => {
 
             {/* Campus Grid */}
             {filtered.length === 0 ? (
-                <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl">
-                    <div className="p-4 bg-gray-50 rounded-xl inline-block mb-3">
-                        <Building2 className="w-8 h-8 text-gray-300" />
+                <div className="text-center py-16 bg-[#f8f9fa] shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] border border-white rounded-3xl">
+                    <div className="p-4 bg-gray-50/50 shadow-[inset_3px_3px_6px_#e5e7eb,inset_-3px_-3px_6px_#ffffff] rounded-xl inline-block mb-3 border border-white">
+                        <Building2 className="w-8 h-8 text-indigo-300 drop-shadow-sm" />
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900">
+                    <h3 className="text-sm font-bold text-slate-700">
                         {campuses.length === 0 ? 'No campuses yet' : 'No matching campuses'}
                     </h3>
-                    <p className="text-sm text-gray-400 mt-1.5">
+                    <p className="text-sm text-slate-500 mt-1.5 font-medium">
                         {campuses.length === 0 ? 'Add your first campus to get started.' : 'Try a different search term.'}
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-2">
                     {filtered.map(campus => (
                         <div key={campus.id}
-                            className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-indigo-200 hover:shadow-md transition-all group relative">
+                            className="bg-[#f8f9fa] shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] hover:shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] border border-white rounded-3xl overflow-hidden transition-all group relative">
                             {/* Color bar */}
-                            <div className={`h-1.5 ${campus.is_active ? 'bg-indigo-500' : 'bg-gray-300'}`} />
+                            <div className={`h-1.5 shadow-sm ${campus.is_active ? 'bg-indigo-500' : 'bg-gray-300'}`} />
 
                             <div className="p-6">
                                 {/* Header row */}
-                                <div className="flex justify-between items-start mb-4">
+                                <div className="flex justify-between items-start mb-5">
                                     <div>
-                                        <h4 className="font-bold text-gray-900">{campus.name}</h4>
-                                        <p className="text-xs font-mono text-indigo-600 mt-0.5">{campus.code}</p>
+                                        <h4 className="font-extrabold text-slate-800 text-lg drop-shadow-sm">{campus.name}</h4>
+                                        <p className="text-xs font-mono font-bold text-indigo-500 mt-0.5 tracking-wide">{campus.code}</p>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => openEdit(campus)}
-                                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                                            className="p-2 text-indigo-400 hover:text-indigo-600 bg-gray-50/50 hover:bg-[#f8f9fa] shadow-[2px_2px_5px_#e5e7eb,-2px_-2px_5px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] rounded-lg transition-all border border-white">
                                             <Edit2 size={14} />
                                         </button>
                                         <button onClick={() => handleDelete(campus)}
-                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                            className="p-2 text-red-400 hover:text-red-600 bg-gray-50/50 hover:bg-[#f8f9fa] shadow-[2px_2px_5px_#e5e7eb,-2px_-2px_5px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] rounded-lg transition-all border border-white">
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Info rows */}
-                                <div className="space-y-2.5 text-xs">
+                                <div className="space-y-3 text-[13px] font-medium text-slate-600">
                                     {campus.location && (
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <MapPin size={13} className="text-gray-400 shrink-0" />
+                                        <div className="flex items-center gap-2.5">
+                                            <MapPin size={14} className="text-indigo-400 shrink-0" />
                                             <span className="truncate">{campus.location}</span>
                                         </div>
                                     )}
                                     {campus.principal_name && (
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <User size={13} className="text-gray-400 shrink-0" />
+                                        <div className="flex items-center gap-2.5">
+                                            <User size={14} className="text-indigo-400 shrink-0" />
                                             <span>Principal: {campus.principal_name}</span>
                                         </div>
                                     )}
                                     {campus.phone && (
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <Phone size={13} className="text-gray-400 shrink-0" />
+                                        <div className="flex items-center gap-2.5">
+                                            <Phone size={14} className="text-indigo-400 shrink-0" />
                                             <span>{campus.phone}</span>
                                         </div>
                                     )}
                                     {campus.email && (
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <Mail size={13} className="text-gray-400 shrink-0" />
+                                        <div className="flex items-center gap-2.5">
+                                            <Mail size={14} className="text-indigo-400 shrink-0" />
                                             <span>{campus.email}</span>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Status badge */}
-                                <div className="mt-4 pt-3 border-t border-gray-50">
-                                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full ${campus.is_active
-                                            ? 'bg-emerald-50 text-emerald-700'
-                                            : 'bg-gray-100 text-gray-500'
+                                <div className="mt-5 pt-4 border-t border-slate-100">
+                                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-[inset_2px_2px_5px_rgba(0,0,0,0.05)] border border-white/50 ${campus.is_active
+                                            ? 'bg-emerald-50/50 text-emerald-700'
+                                            : 'bg-gray-50/50 text-gray-500'
                                         }`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${campus.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                                        <span className={`w-2 h-2 rounded-full shadow-sm ${campus.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
                                         {campus.is_active ? 'Active' : 'Inactive'}
                                     </span>
                                 </div>

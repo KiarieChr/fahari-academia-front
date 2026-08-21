@@ -43,59 +43,44 @@ const CurriculumDashboard = () => {
 
     return (
         <DashboardLayout title="Curriculum Management">
-            <div className="curriculum-dashboard h-full" style={{ background: 'var(--bg-light, #f8fafc)' }}>
+            <div className="curriculum-dashboard h-full neo-bg">
                 {showSettings ? (
                     <CurriculumSettings onBack={() => setShowSettings(false)} />
                 ) : (
-                    <div className="pb-20 max-w-[1400px] mx-auto" style = {{padding:'15px'}}>
+                    <div className="pb-20 max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
 
-                        {/* ─── Hero Header ─── */}
-                        <div
-                            className="relative overflow-hidden mb-2"
-                            style={{
-                                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%)', borderRadius:'15px', padding:'30px',
-                            }}
-                        >
-                            {/* decorative blobs */}
-                            <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #818cf8 0%, transparent 70%)' }} />
-                            <div className="absolute bottom-0 left-1/3 w-48 h-48 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #a5b4fc 0%, transparent 70%)' }} />
-
+                        {/* ─── Hero Header (Neomorphic) ─── */}
+                        <div className="relative mb-6 neo-card p-6 md:p-8">
+                            
                             {/* Breadcrumb */}
-                            <div className="flex items-center gap-2 text-indigo-300 text-xs font-semibold uppercase tracking-widest mb-5 relative z-10">
+                            <div className="flex items-center gap-2 text-gray-400 text-xs font-bold uppercase tracking-widest mb-6 relative z-10">
                                 <span>Academics</span>
                                 <ChevronRight size={14} />
-                                <span className="text-white">Curriculum</span>
+                                <span className="neo-text-accent">Curriculum</span>
                             </div>
 
                             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative z-10">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-2xl"
-                                        style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center neo-bg neo-pressed text-indigo-500">
                                         <GraduationCap size={30} />
                                     </div>
                                     <div>
-                                        <h1 className="text-3xl font-black text-white tracking-tight leading-tight">Curriculum Management</h1>
-                                        <p className="text-indigo-300 font-medium mt-1 text-sm">Academic structure, subjects & learning framework orchestration</p>
+                                        <h1 className="text-3xl font-black text-gray-700 tracking-tight leading-tight">Curriculum Management</h1>
+                                        <p className="text-gray-500 font-medium mt-1 text-sm">Academic structure, subjects & learning framework orchestration</p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex items-center gap-4 shrink-0">
                                     <button
                                         onClick={() => setShowSettings(true)}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
-                                        style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+                                        className="neo-btn px-5 py-2.5 gap-2"
                                     >
                                         <Settings size={16} />
                                         Settings
                                     </button>
                                     <button
                                         onClick={() => setIsAddItemOpen(true)}
-                                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg"
-                                        style={{ background: 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)', color: 'white' }}
-                                        onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-                                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                        className="neo-btn neo-btn-accent px-6 py-2.5 gap-2 font-bold"
                                     >
                                         <Plus size={17} strokeWidth={2.5} />
                                         Add Item
@@ -104,24 +89,14 @@ const CurriculumDashboard = () => {
                             </div>
 
                             {/* ─── Tab Strip inside header ─── */}
-                            <div className="flex items-center gap-1 mt-8 relative z-10 overflow-x-auto hide-scrollbar">
+                            <div className="flex items-center gap-3 mt-10 relative z-10 overflow-x-auto hide-scrollbar pb-2">
                                 {tabs.map((tab) => {
                                     const isActive = activeTab === tab.id;
                                     return (
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
-                                            className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 relative"
-                                            style={isActive ? {
-                                                background: 'rgba(255,255,255,0.95)',
-                                                color: '#4338ca',
-                                                boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-                                            } : {
-                                                color: 'rgba(199,210,254,0.85)',
-                                                background: 'transparent',
-                                            }}
-                                            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
-                                            onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                                            className={`flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 ${isActive ? 'neo-pressed neo-text-accent' : 'neo-btn'}`}
                                         >
                                             <tab.icon size={15} />
                                             {tab.label}

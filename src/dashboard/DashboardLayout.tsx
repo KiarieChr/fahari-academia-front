@@ -21,12 +21,16 @@ import {
     CalendarDays,
     Compass,
     BookMarked,
+    Sparkles,
+    MessageSquare,
+    SettingsIcon,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { toast } from 'react-toastify';
 import { usePermissions } from '../auth/PermissionProvider';
 import SystemTour from '../components/common/SystemTour';
 import TopBar from './components/TopBar';
+import OffcanvasChat from '../components/intelligence/OffcanvasChat';
 import './dashboard.css';
 
 const DashboardLayout = ({ children, title }) => {
@@ -49,7 +53,13 @@ const DashboardLayout = ({ children, title }) => {
     const [sidebarSearch, setSidebarSearch] = useState('');
     const [compactPopover, setCompactPopover] = useState(null); // { item, top }
     const [compactTooltip, setCompactTooltip] = useState(null); // { label, top }
+    const [isAiChatOpen, setIsAiChatOpen] = useState(false);
 
+    useEffect(() => {
+        const handleOpenChat = () => setIsAiChatOpen(true);
+        window.addEventListener('open-ai-chat', handleOpenChat);
+        return () => window.removeEventListener('open-ai-chat', handleOpenChat);
+    }, []);
 
     const TOUR_VERSION = 'v1';
 
@@ -89,6 +99,7 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Nominal Roll',           path: '/dashboard/students/admission/nominal-roll' },
                 { label: 'Student Reporting',      path: '/dashboard/students/admission/reporting' },
                 { label: 'Repeaters & Transfers',  path: '/dashboard/students/admission/repeaters' },
+                { label: 'Reports & Analytics',    path: '/dashboard/students/reports', badge: 'NEW' },
                 { label: 'Terms & Academic Sessions', path: '/dashboard/students/academic-sessions' },
                 { label: 'Curriculums',            path: '/dashboard/students/curriculums' },
                 { label: 'Settings / Setup',       path: '/dashboard/students/settings' }
@@ -181,6 +192,21 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Expenses', path: '/dashboard/fleet?tab=expenses' },
             ]
         },
+        { sectionLabel: 'CRM & ENGAGEMENT' },
+        {
+            icon: MessageSquare,
+            label: 'CRM & Comms',
+            path: '/dashboard/crm',
+            module: 'crm',
+            subItems: [
+                { label: 'CRM Dashboard', path: '/dashboard/crm' },
+                { label: 'Parent Directory', path: '/dashboard/crm/parents' },
+                { label: 'Unified Inbox', path: '/dashboard/crm/inbox' },
+                { label: 'Campaign Builder', path: '/dashboard/crm/campaigns/new' },
+                { label: 'Message Templates', path: '/dashboard/crm/templates' },
+                { label: 'API Settings', path: '/dashboard/crm/settings' },
+            ]
+        },
         { sectionLabel: 'PEOPLE' },
         {
             icon: Briefcase,
@@ -224,10 +250,28 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Users', path: '/dashboard/users/list' }
             ]
         },
-        { icon: Settings, label: 'Settings', path: '/dashboard/settings', module: 'settings', subItems: [
-                { label: 'Institution Profile', path: '/dashboard/settings' },
-                { label: 'Campuses', path: '/dashboard/settings?tab=campuses' }
+        { sectionLabel: 'SETUP & SETTINGS' },
+        {
+            path: '/dashboard/general-settings',
+            module: 'settings',
+            label: 'System Settings',
+            icon: SettingsIcon,
+            subItems: [
+                { label: 'School Setup', path: '/dashboard/school-setup' },
+                { label: 'General Settings', path: '/dashboard/general-settings' },
+                { label: 'Users & Access', path: '/dashboard/users-roles' },
+                { label: 'API Configurations', path: '/dashboard/api-config' },
+                { label: 'Student Setup', path: '/dashboard/student-settings' },
+                { label: 'System Logs', path: '/dashboard/system-logs' },
+                { label: 'System Modules', path: '/dashboard/system-modules' },
             ]
+        },
+        { sectionLabel: 'INTELLIGENCE' },
+        {
+            icon: Sparkles,
+            label: 'Intelligence',
+            path: '/dashboard/intelligence',
+            badge: '3'
         },
     ];
 
@@ -703,8 +747,8 @@ const DashboardLayout = ({ children, title }) => {
                 aria-label="Open appearance settings"
                 style={{
                     position: 'fixed',
-                    bottom: '40px',
-                    right: '28px',
+                    bottom: '96px',
+                    right: '34px',
                     zIndex: 1200,
                     width: '48px',
                     height: '48px',
@@ -957,7 +1001,7 @@ const DashboardLayout = ({ children, title }) => {
             )}
 
             {/* ── Compact Sidebar Submenu Popover ───────────────────────────── */}
-            {isCompactMode && compactPopover && (
+        {isCompactMode && compactPopover && (
                 <div
                     className="compact-popover"
                     style={{
@@ -988,6 +1032,10 @@ const DashboardLayout = ({ children, title }) => {
                     ))}
                 </div>
             )}
+
+
+            {/* Global AI Chat Drawer */}
+            <OffcanvasChat isOpen={isAiChatOpen} onClose={() => setIsAiChatOpen(false)} />
 
         </div>
     );

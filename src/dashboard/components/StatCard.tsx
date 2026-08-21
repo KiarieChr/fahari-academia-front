@@ -18,19 +18,7 @@ const StatCard = ({ title, count, icon, color, iconColor, trend, trendLabel }) =
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            style={{
-                background: 'white',
-                padding: '2rem', // Increased padding for spaciousness
-                borderRadius: 'var(--border-radius)',
-                boxShadow: 'var(--shadow-sm)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                height: 'auto', // Allow aspect ratio to control height
-                aspectRatio: '1 / 1', // Force perfect square
-                position: 'relative',
-                border: '1px solid var(--border-color-light)',
-            }}
+            className="neo-card p-8 border-none flex flex-col justify-between aspect-square relative"
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

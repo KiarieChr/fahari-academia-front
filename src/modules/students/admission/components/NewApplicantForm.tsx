@@ -30,6 +30,7 @@ const NewApplicantForm = ({ onClose }) => {
     const [options, setOptions] = useState({
         intakes: [],
         curriculums: [],
+        curriculumLevels: [],
         classes: [],
         campuses: []
     });
@@ -37,7 +38,7 @@ const NewApplicantForm = ({ onClose }) => {
     const [formData, setFormData] = useState({
         selectedEnquiryId: '',
         firstName: '', lastName: '', gender: 'Male', dob: '',
-        class: '', curriculum: '', intake: '', campus: '',
+        class: '', curriculum: '', curriculum_level: '', intake: '', campus: '',
         prevSchool: '', score: '', isTransfer: false,
         passportPhoto: null,
         guardianName: '', phone: '', email: '',
@@ -49,16 +50,18 @@ const NewApplicantForm = ({ onClose }) => {
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const [intakes, curriculums, classes, campusesRes, enquiriesRes] = await Promise.all([
+                const [intakes, curriculums, classes, campusesRes, enquiriesRes, levelsRes] = await Promise.all([
                     studentManagementService.getIntakes(),
                     studentManagementService.getCurriculums(),
                     studentManagementService.getGrades(),
                     institutionService.getCampuses(),
-                    studentManagementService.getEnquiries()
+                    studentManagementService.getEnquiries(),
+                    api.get('/api/academics/curriculum-levels/')
                 ]);
                 setOptions({
                     intakes: intakes.results || intakes,
                     curriculums: curriculums.results || curriculums,
+                    curriculumLevels: levelsRes.results || levelsRes || [],
                     classes: classes.results || classes,
                     campuses: campusesRes.results || campusesRes || []
                 });
@@ -140,7 +143,8 @@ const NewApplicantForm = ({ onClose }) => {
         setFormData(prev => ({
             ...prev,
             class: String(entryGrade.id),
-            curriculum: entryGrade.curriculum ? String(entryGrade.curriculum) : ''
+            curriculum: entryGrade.curriculum ? String(entryGrade.curriculum) : '',
+            curriculum_level: entryGrade.curriculum_level ? String(entryGrade.curriculum_level) : ''
         }));
         
         setErrors(prev => ({ ...prev, class: null, curriculum: null }));
@@ -300,19 +304,19 @@ const NewApplicantForm = ({ onClose }) => {
         }
     };
 
-    const inputClasses = "w-full px-4 py-2.5 border rounded-xl outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 font-medium shadow-sm text-sm";
+    const inputClasses = "w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 hover:border-slate-300 dark:hover:border-slate-600 font-medium shadow-sm text-sm text-slate-800 dark:text-slate-100";
 
     return (
         <AnimatePresence onExitComplete={onClose}>
             {isOpen && (
-                <div className="fixed inset-0 z-[8000] flex justify-end overflow-hidden">
+                <div className="fixed inset-0 z-[9999] flex justify-end overflow-hidden">
                     {/* Backdrop Overlay */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={handleClose}
-                        className="fixed inset-0 z-[7999] bg-slate-950/40 backdrop-blur-[2px] cursor-pointer"
+                        className="fixed inset-0 z-[9998] bg-slate-900/40 backdrop-blur-sm dark:bg-black/60 cursor-pointer"
                     />
 
                     {/* Drawer Side Panel */}
@@ -321,54 +325,34 @@ const NewApplicantForm = ({ onClose }) => {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                        style={{ 
-                            background: 'var(--card-bg)', 
-                            borderColor: 'var(--border-color-light)' 
-                        }}
-                        className="relative z-[8000] h-full w-full max-w-[500px] md:max-w-[580px] border-l shadow-[0_0_60px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden text-left"
+                        className="relative z-[9999] h-full w-full max-w-[500px] md:max-w-[580px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.15)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden text-left"
                     >
                         {/* 1. Header (Sticky) */}
-                        <div 
-                            style={{ borderColor: 'var(--border-color-light)' }} 
-                            className="p-5 border-b flex flex-col gap-4 sticky top-0 z-25 bg-[inherit]"
-                        >
+                        <div className="p-2 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-3 sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
                             <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
+                                <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <span 
-                                            className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-600"
-                                            style={{
-                                                background: 'var(--primary-light)',
-                                                color: 'var(--primary-color)'
-                                            }}
-                                        >
+                                        <span className="px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400">
                                             Registration
                                         </span>
-                                        <span 
-                                            className="text-[9px] font-bold uppercase tracking-widest"
-                                            style={{ color: 'var(--text-muted)' }}
-                                        >
+                                        <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400">
                                             Admissions portal
                                         </span>
                                     </div>
-                                    <h3 
-                                        style={{ color: 'var(--text-main)' }} 
-                                        className="text-lg font-black tracking-tight"
-                                    >
+                                    <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white mt-1">
                                         Register New Applicant
                                     </h3>
                                 </div>
                                 <button 
                                     onClick={handleClose}
-                                    style={{ color: 'var(--text-muted)' }}
-                                    className="p-2 rounded-xl hover:bg-[var(--bg-light)] hover:text-[var(--text-main)] transition-all cursor-pointer animate-in fade-in"
+                                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all cursor-pointer"
                                 >
-                                    <X size={16} />
+                                    <X size={20} />
                                 </button>
                             </div>
 
                             {/* Steps indicators Ribbon */}
-                            <div className="flex justify-between items-center relative px-2.5 mt-2">
+                            <div className="flex justify-between items-center relative px-1 mt-1">
                                 {CREATE_STEPS.map((s) => {
                                     const Icon = s.icon;
                                     const isCompleted = step > s.id;
@@ -383,22 +367,20 @@ const NewApplicantForm = ({ onClose }) => {
                                             className={`flex flex-col items-center flex-1 z-10 focus:outline-none transition-transform active:scale-95 ${s.id < step ? 'cursor-pointer' : 'cursor-default'}`}
                                         >
                                             <div
-                                                style={{
-                                                    background: isActive ? 'var(--primary-color)' : isCompleted ? 'var(--primary-light)' : 'var(--card-bg)',
-                                                    borderColor: isActive ? 'var(--primary-color)' : isCompleted ? 'var(--primary-color)' : 'var(--border-color-light)',
-                                                    color: isActive ? '#fff' : isCompleted ? 'var(--primary-color)' : 'var(--text-muted)',
-                                                    boxShadow: isActive ? '0 0 0 3px var(--primary-light, rgba(79, 70, 229, 0.15))' : 'none'
-                                                }}
-                                                className="w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 mb-1"
+                                                className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 mb-2 shadow-sm border ${
+                                                    isActive 
+                                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-indigo-500/30 ring-4 ring-indigo-50 dark:ring-indigo-900/30 scale-110' 
+                                                    : isCompleted 
+                                                    ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20' 
+                                                    : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
+                                                }`}
                                             >
-                                                {isCompleted ? <Check size={14} className="stroke-[3]" /> : <Icon size={13} />}
+                                                {isCompleted ? <Check size={18} className="stroke-[3]" /> : <Icon size={16} />}
                                             </div>
                                             <span 
-                                                style={{ 
-                                                    color: isActive ? 'var(--primary-color)' : 'var(--text-secondary)',
-                                                    fontWeight: isActive ? '900' : '500'
-                                                }}
-                                                className="text-[9px] uppercase tracking-wider"
+                                                className={`text-[9px] uppercase tracking-wider transition-colors mt-1 ${
+                                                    isActive ? 'text-indigo-600 dark:text-indigo-400 font-black' : 'text-slate-400 font-bold'
+                                                }`}
                                             >
                                                 {s.title}
                                             </span>
@@ -407,16 +389,10 @@ const NewApplicantForm = ({ onClose }) => {
                                 })}
 
                                 {/* Connection Lines */}
-                                <div 
-                                    style={{ background: 'var(--border-color-light)' }}
-                                    className="absolute top-4 left-7 right-7 h-0.5 -z-10"
-                                />
+                                <div className="absolute top-5 left-10 right-10 h-1 bg-slate-100 dark:bg-slate-800 rounded-full -z-10" />
                                 <div
-                                    style={{ 
-                                        width: `${((step - 1) / (CREATE_STEPS.length - 1)) * (100 - 15)}%`,
-                                        background: 'var(--primary-color)'
-                                    }}
-                                    className="absolute top-4 left-7 h-0.5 -z-10 transition-all duration-300"
+                                    style={{ width: `${((step - 1) / (CREATE_STEPS.length - 1)) * (100 - 15)}%` }}
+                                    className="absolute top-5 left-10 h-1 bg-indigo-500 rounded-full -z-10 transition-all duration-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"
                                 />
                             </div>
                         </div>
@@ -431,11 +407,11 @@ const NewApplicantForm = ({ onClose }) => {
                                     animate={{ opacity: 1, x: 0 }}
                                     className="space-y-4"
                                 >
-                                    <div className="p-4 rounded-2xl border" style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)' }}>
-                                        <h4 className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
-                                            <User size={15} style={{ color: 'var(--primary-color)' }} /> Student Information
+                                    <div className="p-4 rounded-2xl border bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-800/30">
+                                        <h4 className="text-sm font-bold flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                                            <User size={16} /> Student Information
                                         </h4>
-                                        <p className="text-xs mt-0.5 mb-0" style={{ color: 'var(--text-secondary)' }}>
+                                        <p className="text-xs mt-1 mb-0 text-indigo-900/60 dark:text-indigo-200/60">
                                             Enter the student's legal name, gender identity, and date of birth.
                                         </p>
                                     </div>
@@ -590,11 +566,11 @@ const NewApplicantForm = ({ onClose }) => {
                                     animate={{ opacity: 1, x: 0 }}
                                     className="space-y-4"
                                 >
-                                    <div className="p-4 rounded-2xl border" style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)' }}>
-                                        <h4 className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--text-main)' }}>
-                                            <BookOpen size={15} style={{ color: 'var(--primary-color)' }} /> Academic Intent
+                                    <div className="p-4 rounded-2xl border bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-800/30">
+                                        <h4 className="text-sm font-bold flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                                            <BookOpen size={16} /> Academic Intent
                                         </h4>
-                                        <p className="text-xs mt-0.5 mb-0" style={{ color: 'var(--text-secondary)' }}>
+                                        <p className="text-xs mt-1 mb-0 text-indigo-900/60 dark:text-indigo-200/60">
                                             Configure target intakes, curricular placement, and previous school history.
                                         </p>
                                     </div>
@@ -689,6 +665,29 @@ const NewApplicantForm = ({ onClose }) => {
                                             )}
                                         </div>
 
+                                        <div className="col-span-2 sm:col-span-1">
+                                            <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-main)' }}>Curriculum Level</label>
+                                            <select
+                                                name="curriculum_level"
+                                                value={formData.curriculum_level}
+                                                onChange={handleChange}
+                                                disabled={!formData.isTransfer}
+                                                style={{ 
+                                                    background: !formData.isTransfer ? 'var(--bg-light)' : 'var(--card-bg)', 
+                                                    borderColor: 'var(--border-color-light)', 
+                                                    color: 'var(--text-main)' 
+                                                }}
+                                                className={`${inputClasses} ${!formData.isTransfer ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}
+                                            >
+                                                <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Level...</option>
+                                                {options.curriculumLevels
+                                                    .filter(level => !formData.curriculum || level.curriculum == formData.curriculum)
+                                                    .map(level => (
+                                                        <option key={level.id} value={level.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>{level.name}</option>
+                                                    ))}
+                                            </select>
+                                        </div>
+
                                         <div className="col-span-2">
                                             <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-main)' }}>Applying For Class <span className="text-red-500">*</span></label>
                                             <select
@@ -706,6 +705,7 @@ const NewApplicantForm = ({ onClose }) => {
                                                 <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Class...</option>
                                                 {options.classes
                                                     .filter(c => !formData.curriculum || c.curriculum == formData.curriculum)
+                                                    .filter(c => !formData.curriculum_level || c.curriculum_level == formData.curriculum_level)
                                                     .map(cls => (
                                                         <option key={cls.id} value={cls.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>{cls.name}</option>
                                                     ))}
@@ -906,20 +906,21 @@ const NewApplicantForm = ({ onClose }) => {
                                 >
                                     {/* Sleek Premium Glassmorphic Alert Banner */}
                                     <div 
-                                        className="p-4 rounded-2xl border flex items-start gap-3 shadow-[0_2px_12px_rgba(99,102,241,0.04)] animate-in fade-in"
+                                        className="p-4 rounded-[20px] border flex items-start gap-4 shadow-sm relative overflow-hidden group"
                                         style={{ 
-                                            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.03) 100%)', 
-                                            borderColor: 'rgba(99, 102, 241, 0.15)' 
+                                            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.15) 100%)', 
+                                            borderColor: 'rgba(99, 102, 241, 0.2)' 
                                         }}
                                     >
-                                        <div className="p-2 rounded-xl shrink-0" style={{ background: 'var(--primary-light)', color: 'var(--primary-color)' }}>
-                                            <Sparkles size={16} className="animate-pulse" />
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-2xl rounded-full -mr-10 -mt-10" />
+                                        <div className="p-2.5 rounded-[14px] shrink-0 shadow-sm relative z-10 bg-white dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/30">
+                                            <Sparkles size={18} className="animate-pulse" />
                                         </div>
-                                        <div className="space-y-0.5">
-                                             <h4 className="text-[10px] font-black uppercase tracking-wider text-left m-0" style={{ color: 'var(--primary-color)' }}>
+                                        <div className="space-y-1 relative z-10 pt-0.5">
+                                             <h4 className="text-[11px] font-black uppercase tracking-[0.15em] text-left m-0 text-indigo-700 dark:text-indigo-300">
                                                  Final Review
                                              </h4>
-                                             <p className="text-[11px] leading-relaxed m-0 text-left" style={{ color: 'var(--text-secondary)' }}>
+                                             <p className="text-xs leading-relaxed m-0 text-left text-indigo-900/70 dark:text-indigo-200/70 font-medium">
                                                  Please verify the student placement profile and contact details before submitting this formal application.
                                              </p>
                                         </div>
@@ -927,55 +928,48 @@ const NewApplicantForm = ({ onClose }) => {
 
                                     {/* 1. Student Profile Card */}
                                     <div 
-                                        style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)' }} 
-                                        className="border rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow text-left"
+                                        className="border rounded-[24px] p-5 space-y-4 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-all duration-300 text-left bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group"
                                     >
-                                        <div className="flex items-center gap-4">
+                                        <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-50 dark:bg-indigo-500/5 blur-2xl rounded-full pointer-events-none group-hover:scale-150 transition-transform duration-700" />
+                                        <div className="flex items-center gap-5 relative z-10">
                                             {/* Passport Photo Preview or Initials Avatar */}
                                             {passportPhotoPreview ? (
-                                                <div className="relative group shrink-0">
+                                                <div className="relative group/img shrink-0">
+                                                    <div className="absolute inset-0 bg-indigo-500 blur-md opacity-20 rounded-[20px] group-hover/img:opacity-40 transition-opacity" />
                                                     <img 
                                                         src={passportPhotoPreview} 
                                                         alt="Preview" 
-                                                        className="w-16 h-16 rounded-2xl object-cover border-2 shadow-inner"
+                                                        className="w-16 h-16 rounded-[20px] object-cover border-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] relative z-10"
                                                         style={{ borderColor: 'var(--primary-color)' }}
                                                     />
-                                                    <div className="absolute inset-0 bg-black/10 rounded-2xl" />
                                                 </div>
                                             ) : (
                                                 <div 
-                                                    style={{ 
-                                                        background: 'linear-gradient(135deg, var(--primary-light) 0%, rgba(99, 102, 241, 0.05) 100%)',
-                                                        borderColor: 'var(--border-color-light)',
-                                                        color: 'var(--primary-color)'
-                                                    }}
-                                                    className="w-16 h-16 rounded-2xl border flex items-center justify-center font-black text-lg tracking-wider shrink-0 shadow-sm animate-in fade-in"
+                                                    className="w-16 h-16 rounded-[20px] border flex items-center justify-center font-black text-xl tracking-wider shrink-0 shadow-sm relative z-10 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20"
                                                 >
                                                     {((formData.firstName?.[0] || '') + (formData.lastName?.[0] || '')).toUpperCase() || 'NA'}
                                                 </div>
                                             )}
 
-                                            <div className="space-y-1">
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block text-left">Student Profile</span>
-                                                <h4 className="text-base font-black tracking-tight text-left" style={{ color: 'var(--text-main)' }}>
+                                            <div className="space-y-1.5">
+                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 block text-left">Student Profile</span>
+                                                <h4 className="text-xl font-black tracking-tight text-left text-slate-800 dark:text-slate-100">
                                                     {formData.firstName} {formData.lastName}
                                                 </h4>
                                                 
                                                 {/* Custom Gender and DOB Badges */}
-                                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                <div className="flex flex-wrap items-center gap-2 mt-2">
                                                     <span 
-                                                        style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold border rounded-lg shadow-sm"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold border rounded-[10px] shadow-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                                                     >
-                                                        <User size={11} className="text-indigo-500" />
+                                                        <User size={12} className="text-indigo-500" />
                                                         {formData.gender}
                                                     </span>
                                                     {formData.dob && (
                                                          <span 
-                                                             style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                                             className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold border rounded-lg shadow-sm"
+                                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold border rounded-[10px] shadow-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                                                          >
-                                                             <Calendar size={11} className="text-emerald-500" />
+                                                             <Calendar size={12} className="text-emerald-500" />
                                                              {formData.dob}
                                                          </span>
                                                      )}
@@ -986,55 +980,49 @@ const NewApplicantForm = ({ onClose }) => {
 
                                     {/* 2. Target Placement Card */}
                                     <div 
-                                        style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)' }} 
-                                        className="border rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow text-left"
+                                        className="border rounded-[24px] p-5 space-y-5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-all duration-300 text-left bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm"
                                     >
-                                         <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-color-light)' }}>
-                                             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Placement Details</span>
-                                             <BookOpen size={14} className="text-indigo-500" />
+                                         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Placement Details</span>
+                                             <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                                                <BookOpen size={14} className="text-indigo-500" />
+                                             </div>
                                          </div>
                                          
-                                         <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
-                                             <div>
-                                                 <span className="text-[10px] text-slate-400 block mb-1 text-left">Applying Grade</span>
-                                                 <div className="flex items-center gap-2">
-                                                     <span 
-                                                         className="font-bold px-2.5 py-1 rounded-lg border text-[10px] shadow-sm" 
-                                                         style={{ 
-                                                             color: 'var(--primary-color)', 
-                                                             background: 'var(--card-bg)', 
-                                                             borderColor: 'var(--border-color-light)' 
-                                                         }}
-                                                     >
+                                         <div className="grid grid-cols-2 gap-5 text-xs">
+                                             <div className="p-3 rounded-[16px] bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50">
+                                                 <span className="text-[10px] font-bold text-slate-400 block mb-1 text-left uppercase tracking-widest">Applying Grade</span>
+                                                 <div className="flex items-center gap-2 mt-1.5">
+                                                     <span className="font-black text-sm text-indigo-600 dark:text-indigo-400">
                                                          {options.classes.find(c => c.id == formData.class)?.name || 'Class: ' + formData.class}
                                                      </span>
                                                      {formData.isTransfer && (
-                                                         <span className="text-[9px] bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-lg font-black uppercase tracking-wide">
+                                                         <span className="text-[9px] bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-[6px] font-black uppercase tracking-wide">
                                                              Transfer
                                                          </span>
                                                      )}
                                                  </div>
                                              </div>
 
-                                             <div>
-                                                 <span className="text-[10px] text-slate-400 block mb-1 text-left">Curriculum</span>
-                                                 <span className="text-xs font-bold text-left block" style={{ color: 'var(--text-main)' }}>
+                                             <div className="p-3 rounded-[16px] bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50">
+                                                 <span className="text-[10px] font-bold text-slate-400 block mb-1 text-left uppercase tracking-widest">Curriculum</span>
+                                                 <span className="font-black text-sm text-slate-800 dark:text-slate-100 block mt-1.5">
                                                      {options.curriculums.find(c => c.id == formData.curriculum)?.name || 'N/A'}
                                                  </span>
                                              </div>
 
-                                             <div>
-                                                 <span className="text-[10px] text-slate-400 block mb-1 text-left">Target Intake</span>
-                                                 <span className="text-xs font-bold text-left block" style={{ color: 'var(--text-main)' }}>
+                                             <div className="p-3 rounded-[16px] bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50">
+                                                 <span className="text-[10px] font-bold text-slate-400 block mb-1 text-left uppercase tracking-widest">Target Intake</span>
+                                                 <span className="font-black text-sm text-slate-800 dark:text-slate-100 block mt-1.5">
                                                      {options.intakes.find(i => i.id == formData.intake)?.name || 'N/A'}
                                                  </span>
                                              </div>
 
                                              {formData.campus && (
-                                                 <div>
-                                                     <span className="text-[10px] text-slate-400 block mb-1 text-left">Campus Placement</span>
-                                                     <span className="text-xs font-bold flex items-center gap-1 text-left" style={{ color: 'var(--text-main)' }}>
-                                                         <Building size={11} className="text-indigo-400" />
+                                                 <div className="p-3 rounded-[16px] bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700/50">
+                                                     <span className="text-[10px] font-bold text-slate-400 block mb-1 text-left uppercase tracking-widest">Campus Placement</span>
+                                                     <span className="font-black text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5 mt-1.5">
+                                                         <Building size={14} className="text-indigo-500" />
                                                          {options.campuses.find(c => c.id == formData.campus)?.name || 'N/A'}
                                                      </span>
                                                  </div>
@@ -1044,38 +1032,40 @@ const NewApplicantForm = ({ onClose }) => {
 
                                     {/* 3. Primary Contact & Guardian Card */}
                                     <div 
-                                        style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)' }} 
-                                        className="border rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow text-left"
+                                        className="border rounded-[24px] p-5 space-y-5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-all duration-300 text-left bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm"
                                     >
-                                         <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--border-color-light)' }}>
-                                             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Parent / Guardian Contacts</span>
-                                             <Users size={14} className="text-indigo-500" />
+                                         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Parent / Guardian Contacts</span>
+                                             <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                                                <Users size={14} className="text-emerald-500" />
+                                             </div>
                                          </div>
 
                                          <div className="space-y-4">
                                              {/* Primary Guardian */}
-                                             <div className="space-y-1.5">
-                                                 <span className="text-[10px] text-slate-400 block text-left">Primary Parent / Guardian</span>
-                                                 <p className="font-extrabold text-xs m-0 text-left" style={{ color: 'var(--text-main)' }}>
-                                                     {formData.guardianName}
-                                                 </p>
+                                             <div className="space-y-2 relative">
+                                                 <div className="absolute -left-2 top-1 bottom-1 w-1 bg-emerald-500 rounded-full" />
+                                                 <div className="pl-3">
+                                                     <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block text-left">Primary Guardian</span>
+                                                     <p className="font-black text-base m-0 text-left text-slate-800 dark:text-slate-100 mt-0.5">
+                                                         {formData.guardianName}
+                                                     </p>
+                                                 </div>
                                                  
-                                                 <div className="flex flex-wrap gap-2 mt-1">
+                                                 <div className="flex flex-wrap gap-2 mt-2 pl-3">
                                                      <a 
                                                          href={`tel:${formData.phone}`}
-                                                         style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold border rounded-lg shadow-sm hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+                                                         className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold border rounded-[12px] shadow-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
                                                      >
-                                                         <Phone size={10} className="text-indigo-500" />
+                                                         <Phone size={12} className="text-emerald-500" />
                                                          {formData.phone}
                                                      </a>
                                                      {formData.email && (
                                                          <a 
                                                              href={`mailto:${formData.email}`}
-                                                             style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold border rounded-lg shadow-sm hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+                                                             className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold border rounded-[12px] shadow-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
                                                          >
-                                                             <Mail size={10} className="text-indigo-500" />
+                                                             <Mail size={12} className="text-emerald-500" />
                                                              {formData.email}
                                                          </a>
                                                      )}
@@ -1084,30 +1074,31 @@ const NewApplicantForm = ({ onClose }) => {
 
                                              {/* Second Guardian (only if filled) */}
                                              {showGuardian2 && formData.guardian2Name && (
-                                                 <div className="border-t pt-3 mt-3 space-y-1.5" style={{ borderColor: 'var(--border-color-light)' }}>
-                                                     <span className="text-[10px] text-slate-400 block text-left">Secondary Parent / Guardian</span>
-                                                     <p className="font-extrabold text-xs m-0 text-left" style={{ color: 'var(--text-main)' }}>
-                                                         {formData.guardian2Name}
-                                                     </p>
+                                                 <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4 space-y-2 relative">
+                                                     <div className="absolute -left-2 top-5 bottom-1 w-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
+                                                     <div className="pl-3">
+                                                         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block text-left">Secondary Guardian</span>
+                                                         <p className="font-black text-sm m-0 text-left text-slate-700 dark:text-slate-300 mt-0.5">
+                                                             {formData.guardian2Name}
+                                                         </p>
+                                                     </div>
                                                      
-                                                     <div className="flex flex-wrap gap-2 mt-1">
+                                                     <div className="flex flex-wrap gap-2 mt-2 pl-3">
                                                          {formData.guardian2Phone && (
                                                              <a 
                                                                  href={`tel:${formData.guardian2Phone}`}
-                                                                 style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold border rounded-lg shadow-sm hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+                                                                 className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold border rounded-[12px] shadow-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-400 transition-colors"
                                                              >
-                                                                 <Phone size={10} className="text-indigo-500" />
+                                                                 <Phone size={12} className="text-slate-500" />
                                                                  {formData.guardian2Phone}
                                                              </a>
                                                          )}
                                                          {formData.guardian2Email && (
                                                              <a 
                                                                  href={`mailto:${formData.guardian2Email}`}
-                                                                 style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold border rounded-lg shadow-sm hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+                                                                 className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold border rounded-[12px] shadow-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200/60 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-400 transition-colors"
                                                              >
-                                                                 <Mail size={10} className="text-indigo-500" />
+                                                                 <Mail size={12} className="text-slate-500" />
                                                                  {formData.guardian2Email}
                                                              </a>
                                                          )}
@@ -1135,31 +1126,23 @@ const NewApplicantForm = ({ onClose }) => {
                         </div>
 
                         {/* 3. Sticky Drawer Footer */}
-                        <div 
-                            style={{ 
-                                borderColor: 'var(--border-color-light)',
-                                background: 'var(--bg-light)'
-                            }} 
-                            className="p-5 border-t flex items-center justify-between gap-4 sticky bottom-0 z-25 bg-[inherit]"
-                        >
+                        <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 sticky bottom-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
                             {/* Steps navigation arrows */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={handleBack}
                                     disabled={step === 1}
-                                    style={{ borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                    className="p-2.5 border rounded-xl hover:bg-[var(--card-bg)] disabled:opacity-40 transition-all cursor-pointer bg-[var(--card-bg)]"
+                                    className="p-3.5 border border-slate-200 dark:border-slate-700 rounded-[14px] hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-md disabled:opacity-30 transition-all cursor-pointer text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 shadow-sm hover:-translate-y-0.5"
                                 >
-                                    <ChevronLeft size={16} />
+                                    <ChevronLeft size={20} strokeWidth={2.5} />
                                 </button>
                                 
                                 <button
                                     onClick={handleNext}
                                     disabled={step === 4}
-                                    style={{ borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                                    className="p-2.5 border rounded-xl hover:bg-[var(--card-bg)] disabled:opacity-40 transition-all cursor-pointer bg-[var(--card-bg)]"
+                                    className="p-3.5 border border-slate-200 dark:border-slate-700 rounded-[14px] hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-md disabled:opacity-30 transition-all cursor-pointer text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 shadow-sm hover:-translate-y-0.5"
                                 >
-                                    <ChevronRight size={16} />
+                                    <ChevronRight size={20} strokeWidth={2.5} />
                                 </button>
                             </div>
 
@@ -1168,22 +1151,22 @@ const NewApplicantForm = ({ onClose }) => {
                                 {step < 4 ? (
                                     <button
                                         onClick={handleNext}
-                                        style={{ background: 'var(--primary-color)' }}
-                                        className="px-5 py-2.5 text-white font-bold rounded-xl text-xs shadow-md transition-all cursor-pointer hover:opacity-90 active:scale-95"
+                                        className="px-6 py-3.5 bg-indigo-600 text-white font-bold rounded-[14px] text-sm shadow-[0_4px_20px_rgba(79,70,229,0.4)] hover:bg-indigo-700 hover:shadow-[0_6px_25px_rgba(79,70,229,0.5)] hover:-translate-y-1 transition-all cursor-pointer flex items-center gap-2"
                                     >
-                                        Next Step
+                                        Next Step <ChevronRight size={16} strokeWidth={3} />
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleSubmit}
                                         disabled={loading}
-                                        style={{ background: 'var(--primary-color)' }}
-                                        className="px-5 py-2.5 text-white font-bold rounded-xl text-xs shadow-md transition-all cursor-pointer hover:opacity-90 active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                                        className="px-6 py-3.5 text-white font-bold rounded-[14px] text-sm shadow-[0_4px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_6px_25px_rgba(16,185,129,0.5)] hover:-translate-y-1 transition-all cursor-pointer disabled:opacity-50 disabled:hover:translate-y-0 flex items-center gap-2 relative overflow-hidden group"
+                                        style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
                                     >
+                                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         {loading ? (
-                                            <>Registering...</>
+                                            <><Sparkles size={18} className="animate-pulse" /> Processing...</>
                                         ) : (
-                                            <><Save size={14} /> Submit Application</>
+                                            <><CheckCircle2 size={18} strokeWidth={2.5} className="relative z-10" /> <span className="relative z-10">Submit Application</span></>
                                         )}
                                     </button>
                                 )}

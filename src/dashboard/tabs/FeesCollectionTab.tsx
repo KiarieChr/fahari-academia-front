@@ -129,14 +129,14 @@ const FeesCollectionTab = () => {
             {/* Details Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', padding: '0 1rem' }}>
                 {/* Arrears by Class */}
-                <motion.div variants={cardVariants} className="widget-compact">
-                    <div className="widget-header-compact">
-                        <h3>Arrears by Class</h3>
-                        <button className="view-all-btn" onClick={() => navigate('/dashboard/fees/arrears')}>
+                <motion.div variants={cardVariants} className="neo-card p-4 border-none flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-sm font-bold text-slate-800">Arrears by Class</h3>
+                        <button className="neo-btn px-3 py-1 text-xs flex items-center gap-1" onClick={() => navigate('/dashboard/fees/arrears')}>
                             View All <ChevronRight size={14} />
                         </button>
                     </div>
-                    <div className="widget-content-compact" style={{ padding: '0.5rem 1rem' }}>
+                    <div className="flex-1" style={{ padding: '0 0.5rem' }}>
                         {(arrears?.by_class || []).length === 0 && <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1.5rem 0' }}>No arrears data</p>}
                         {(arrears?.by_class || []).slice(0, 8).map((item, i) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
@@ -148,14 +148,14 @@ const FeesCollectionTab = () => {
                 </motion.div>
 
                 {/* Payment Method Breakdown */}
-                <motion.div variants={cardVariants} className="widget-compact">
-                    <div className="widget-header-compact">
-                        <h3>Collection by Payment Method</h3>
-                        <button className="view-all-btn" onClick={() => navigate('/dashboard/fees/receipts')}>
+                <motion.div variants={cardVariants} className="neo-card p-4 border-none flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-sm font-bold text-slate-800">Collection by Payment Method</h3>
+                        <button className="neo-btn px-3 py-1 text-xs flex items-center gap-1" onClick={() => navigate('/dashboard/fees/receipts')}>
                             View All <ChevronRight size={14} />
                         </button>
                     </div>
-                    <div className="widget-content-compact" style={{ padding: '0.5rem 1rem' }}>
+                    <div className="flex-1" style={{ padding: '0 0.5rem' }}>
                         {rcpt.payment_method_breakdown ? (
                             Object.entries(rcpt.payment_method_breakdown).map(([method, data], i) => (
                                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
@@ -178,12 +178,12 @@ const FeesCollectionTab = () => {
 
             {/* Alerts */}
             {insights?.alerts && insights.alerts.length > 0 && (
-                <motion.div variants={cardVariants} style={{ padding: '0 1rem' }}>
-                    <div className="widget-compact" style={{ borderLeft: '4px solid #f59e0b' }}>
-                        <div className="widget-header-compact">
-                            <h3>Alerts</h3>
+                <motion.div variants={cardVariants} style={{ padding: '0 1rem', marginTop: '1rem' }}>
+                    <div className="neo-card p-4 border-none" style={{ borderLeft: '4px solid #f59e0b' }}>
+                        <div className="mb-2">
+                            <h3 className="text-sm font-bold text-slate-800">Alerts</h3>
                         </div>
-                        <div className="widget-content-compact" style={{ padding: '0.5rem 1rem' }}>
+                        <div className="space-y-2">
                             {insights.alerts.slice(0, 5).map((alert, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.4rem 0', fontSize: '0.85rem', color: '#92400e' }}>
                                     <AlertTriangle size={14} style={{ marginTop: 2, flexShrink: 0 }} />
@@ -196,26 +196,15 @@ const FeesCollectionTab = () => {
             )}
 
             <style>{`
-                .view-all-btn {
-                    display: flex; align-items: center; gap: 2px;
-                    background: none; border: none; color: #2563eb;
-                    font-size: 0.8rem; font-weight: 600; cursor: pointer;
-                }
-                .view-all-btn:hover { text-decoration: underline; }
             `}</style>
         </motion.div>
     );
 };
 
 const KpiCard = ({ icon, color, label, value, sub, subColor }) => (
-    <div style={{
-        background: 'var(--card-bg, #fff)',
-        border: '1px solid var(--border-color, #e2e8f0)',
-        borderRadius: 12, padding: '1rem 1.1rem',
-        display: 'flex', flexDirection: 'column', gap: '0.3rem',
-    }}>
+    <div className="neo-card flex flex-col gap-1 p-4 border-none">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ color, opacity: 0.85 }}>{React.cloneElement(icon, { size: 18 })}</div>
+            <div className="neo-pressed rounded-lg p-2 flex items-center justify-center" style={{ color }}>{React.cloneElement(icon, { size: 18 })}</div>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary, #64748b)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{label}</span>
         </div>
         <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>{value}</div>

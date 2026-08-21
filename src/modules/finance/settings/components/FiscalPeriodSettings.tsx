@@ -28,7 +28,7 @@ const FiscalPeriodSettings = ({ periods: initialPeriods }) => {
         setLoading(true);
         try {
             const res = await financeService.createFiscalPeriod(newPeriod);
-            setPeriods([res.data, ...periods]);
+            setPeriods([res, ...periods]);
             setShowAddModal(false);
             setNewPeriod({ name: '', start_date: '', end_date: '' });
             toast.success('Fiscal period created');
@@ -43,8 +43,8 @@ const FiscalPeriodSettings = ({ periods: initialPeriods }) => {
     const toggleStatus = async (period) => {
         try {
             const res = await financeService.updateFiscalPeriod(period.id, { is_closed: !period.is_closed });
-            setPeriods(periods.map(p => p.id === period.id ? res.data : p));
-            toast.success(`Period ${res.data.is_closed ? 'Closed' : 'Reopened'}`);
+            setPeriods(periods.map(p => p?.id === period.id ? res : p));
+            toast.success(`Period ${res.is_closed ? 'Closed' : 'Reopened'}`);
         } catch (err) {
             toast.error('Failed to update status');
         }
@@ -53,6 +53,7 @@ const FiscalPeriodSettings = ({ periods: initialPeriods }) => {
     // Determine current period
     const today = new Date();
     const currentPeriod = periods.find(p => {
+        if (!p || !p.start_date || !p.end_date) return false;
         const start = new Date(p.start_date);
         const end = new Date(p.end_date);
         return today >= start && today <= end;

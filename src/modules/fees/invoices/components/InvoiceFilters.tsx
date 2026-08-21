@@ -49,98 +49,97 @@ const InvoiceFilters = ({
     const isFiltered = filters.classId || filters.term || filters.year || filters.status || filters.search;
 
     return (
-        <div className="card border-0 shadow-sm mb-4">
-            <div className="card-body p-3">
-                <div className="row g-3">
-                    {/* Search */}
-                    <div className="col-md-3">
-                        <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                                <Search size={18} className="text-muted" />
-                            </span>
-                            <input
-                                type="text"
-                                className="form-control border-start-0 ps-0"
-                                placeholder="Search student or invoice #"
-                                value={filters.search}
-                                onChange={(e) => onSearch(e.target.value)}
-                            />
-                        </div>
+        <div className="neo-card p-4 border-none mb-3">
+            <div className="grid sm:grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                {/* Search */}
+                <div className=" col-span-4 md:col-span-6 lg:col-span-4">
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                            <Search size={18} className="text-gray-400" />
+                        </span>
+                        <input
+                            type="text"
+                            className="neo-input w-full py-2 text-sm font-bold"
+                            placeholder="Search student or invoice #"
+                            style={{paddingLeft:'2.1rem'}}
+                            value={filters.search}
+                            onChange={(e) => onSearch(e.target.value)}
+                        />
                     </div>
+                </div>
 
-                    {/* Class Filter */}
-                    <div className="col-md-2" style={{ display: 'none' }}>
-                        {/* Hiding Class Filter for now as we don't have dynamic classes passed yet */}
-                        <select
-                            className="form-select"
-                            value={filters.classId}
-                            onChange={(e) => onFilterChange('classId', e.target.value)}
+                {/* Class Filter */}
+                <div className="col-span-3 md:col-span-2 hidden">
+                    {/* Hiding Class Filter for now as we don't have dynamic classes passed yet */}
+                    <select
+                        className="neo-input w-full text-sm font-bold"
+                        value={filters.classId}
+                        onChange={(e) => onFilterChange('classId', e.target.value)}
+                    >
+                        <option value="">All Classes</option>
+                        {classes.map(cls => (
+                            <option key={cls.id} value={cls.id}>{cls.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Year Filter - moved before Term */}
+                <div className="col-span-2 md:col-span-3 lg:col-span-2">
+                    <select
+                        className="neo-input w-full text-sm font-bold"
+                        value={filters.year}
+                        onChange={(e) => {
+                            onFilterChange('year', e.target.value);
+                            onFilterChange('term', ''); // Reset term when year changes
+                        }}
+                    >
+                        <option value="">All Years</option>
+                        {years.map(year => (
+                            <option key={year.id} value={year.name}>{year.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Term Filter */}
+                <div className="col-span-3 md:col-span-3 lg:col-span-2">
+                    <select
+                        className="neo-input w-full text-sm font-bold"
+                        value={filters.term}
+                        onChange={(e) => onFilterChange('term', e.target.value)}
+                        disabled={!filters.year} // Optional: modify UX to require year first?
+                    >
+                        <option value="">{filters.year ? "All Terms" : "Select Year First"}</option>
+                        {availableTerms.map(term => (
+                            <option key={term.id} value={term.name}>{term.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="col-span-12 md:col-span-6 lg:col-span-3">
+                    <select
+                        className="neo-input w-full text-sm font-bold"
+                        value={filters.status}
+                        onChange={(e) => onFilterChange('status', e.target.value)}
+                    >
+                        <option value="">All Statuses</option>
+                        {invoiceStatuses.map(status => (
+                            <option key={status} value={status}>{status}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Reset Button */}
+                <div className="col-span-12 lg:col-span-1 flex justify-end">
+                    {isFiltered && (
+                        <button
+                            className="neo-btn p-2 text-gray-500 hover:text-indigo-600 transition-colors w-full lg:w-auto flex justify-center"
+                            onClick={onReset}
+                            title="Reset Filters"
                         >
-                            <option value="">All Classes</option>
-                            {classes.map(cls => (
-                                <option key={cls.id} value={cls.id}>{cls.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Year Filter - moved before Term */}
-                    <div className="col-md-3">
-                        <select
-                            className="form-select"
-                            value={filters.year}
-                            onChange={(e) => {
-                                onFilterChange('year', e.target.value);
-                                onFilterChange('term', ''); // Reset term when year changes
-                            }}
-                        >
-                            <option value="">All Years</option>
-                            {years.map(year => (
-                                <option key={year.id} value={year.name}>{year.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Term Filter */}
-                    <div className="col-md-3">
-                        <select
-                            className="form-select"
-                            value={filters.term}
-                            onChange={(e) => onFilterChange('term', e.target.value)}
-                            disabled={!filters.year} // Optional: modify UX to require year first?
-                        >
-                            <option value="">{filters.year ? "All Terms" : "Select Year First"}</option>
-                            {availableTerms.map(term => (
-                                <option key={term.id} value={term.name}>{term.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Status Filter */}
-                    <div className="col-md-2">
-                        <select
-                            className="form-select"
-                            value={filters.status}
-                            onChange={(e) => onFilterChange('status', e.target.value)}
-                        >
-                            <option value="">All Statuses</option>
-                            {invoiceStatuses.map(status => (
-                                <option key={status} value={status}>{status}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Reset Button */}
-                    <div className="col-md-1">
-                        {isFiltered && (
-                            <button
-                                className="btn btn-outline-secondary w-100"
-                                onClick={onReset}
-                                title="Reset Filters"
-                            >
-                                <RefreshCw size={18} />
-                            </button>
-                        )}
-                    </div>
+                            <RefreshCw size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

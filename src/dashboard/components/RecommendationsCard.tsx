@@ -25,8 +25,8 @@ const RecommendationItem = ({ icon: Icon, title, description, actionText, type =
     const color = colors[type];
 
     return (
-        <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer border border-transparent hover:border-slate-100">
-            <div className={`p-2 rounded-lg bg-${color}-50 text-${color}-600 mt-1`}>
+        <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50/50 transition-colors group cursor-pointer">
+            <div className={`p-2 rounded-lg neo-pressed text-${color}-500 mt-1`}>
                 <Icon size={20} />
             </div>
             <div className="flex-1">
@@ -136,11 +136,11 @@ const RecommendationsCard = () => {
         <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full flex flex-col"
+            className="neo-card h-full flex flex-col border-none"
         >
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                    <div className="p-2 neo-pressed text-rose-600 rounded-lg">
                         <Bell size={20} />
                     </div>
                     <div>
@@ -168,8 +168,8 @@ const RecommendationsCard = () => {
                 )}
             </div>
             
-            <div className="p-4 bg-slate-50 border-t border-slate-100">
-                <button className="w-full py-2.5 px-4 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+            <div className="p-4 border-t border-slate-100 rounded-b-2xl">
+                <button className="neo-btn w-full py-2.5 px-4 text-slate-600 text-sm font-bold flex items-center justify-center gap-2">
                     View All Notifications <ChevronRight size={16} />
                 </button>
             </div>

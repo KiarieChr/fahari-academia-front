@@ -37,7 +37,7 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
     }, []);
 
     const handleChange = (field, value) => {
-        onChange({ ...data, [field]: value, receiptType: 'General' });
+        onChange(prev => ({ ...prev, [field]: value, receiptType: 'General' }));
     };
 
     const accountOptions = incomeAccounts.map(acc => ({
@@ -59,7 +59,7 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Payer Name <span className="text-danger">*</span></label>
                 <input
                     type="text"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.payerName || ''}
                     onChange={(e) => handleChange('payerName', e.target.value)}
                     placeholder="Individual or organization name"
@@ -78,14 +78,15 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
                     options={accountOptions}
                     onChange={(val) => {
                         const account = incomeAccounts.find(acc => String(acc.id) === String(val));
-                        onChange({
-                            ...data,
+                        onChange(prev => ({
+                            ...prev,
                             incomeAccountId: val,
                             incomeAccount: account ? account.name : '',
                             receiptType: 'General'
-                        });
+                        }));
                     }}
                     searchable={true}
+                    variant="neo"
                     disabled={disabled || isLoadingData}
                     className="w-100"
                 />
@@ -96,7 +97,7 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Amount (KES) <span className="text-danger">*</span></label>
                 <input
                     type="number"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.amount || ''}
                     onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
                     placeholder="0.00"
@@ -113,7 +114,7 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Description <span className="text-danger">*</span></label>
                 <input
                     type="text"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.description || ''}
                     onChange={(e) => handleChange('description', e.target.value)}
                     placeholder="What is this payment for?"
@@ -132,12 +133,12 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
                     options={paymentMethodOptions}
                     onChange={(val) => {
                         const method = paymentMethods.find(m => String(m.id) === String(val));
-                        onChange({
-                            ...data,
+                        onChange(prev => ({
+                            ...prev,
                             paymentMethodId: val,
                             paymentMethod: method ? method.name : '',
                             receiptType: 'General'
-                        });
+                        }));
                     }}
                     disabled={disabled || isLoadingData}
                     className="w-100"
@@ -151,7 +152,7 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
                 </label>
                 <input
                     type="text"
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     value={data.reference || ''}
                     onChange={(e) => handleChange('reference', e.target.value)}
                     placeholder="Reference number"
@@ -164,7 +165,7 @@ const GeneralReceiptForm = ({ data, onChange, disabled }) => {
             <div className="col-md-12">
                 <label className="form-label">Notes</label>
                 <textarea
-                    className="form-control"
+                    className="form-control neo-input border-none"
                     rows="2"
                     value={data.notes || ''}
                     onChange={(e) => handleChange('notes', e.target.value)}

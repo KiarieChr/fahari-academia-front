@@ -5,6 +5,9 @@ import studentSettingsService from '../../../../../services/studentSettingsServi
 import SystemConfig from '../../../../settings/components/SystemConfig';
 import { toast } from 'react-toastify';
 
+const neoCardClass = 'bg-[#f8f9fa] rounded-3xl shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] border border-white p-6 space-y-6';
+const inputClass = 'w-full px-4 py-3 bg-gray-50/80 rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400';
+
 const StudentRulesTab = () => {
     const [activeSection, setActiveSection] = useState('admission');
 
@@ -17,20 +20,20 @@ const StudentRulesTab = () => {
     ];
 
     return (
-        <div className="flex flex-col lg:flex-row gap-8">
-            {/* Local Sidebar */}
-            <div className="w-full lg:w-64 flex-shrink-0">
-                <div className="bg-gray-50 rounded-2xl p-2 space-y-1 border border-gray-200">
+        <div className="space-y-8">
+            {/* Horizontal Tabs */}
+            <div className="w-full overflow-x-auto pb-4">
+                <div className="flex items-center gap-3 bg-[#f8f9fa] rounded-[2rem] shadow-[inset_4px_4px_10px_#e5e7eb,inset_-4px_-4px_10px_#ffffff] border border-white/50 p-2 min-w-max">
                     {sections.map(section => (
                         <button
                             key={section.id}
                             onClick={() => setActiveSection(section.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeSection === section.id
-                                ? 'bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100'
-                                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                            className={`flex items-center gap-2.5 px-6 py-3.5 rounded-3xl text-sm font-bold transition-all whitespace-nowrap ${activeSection === section.id
+                                ? 'bg-white shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] text-indigo-700 border border-white/80'
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-gray-50/40 border border-transparent'
                                 }`}
                         >
-                            <section.icon size={18} />
+                            <section.icon size={18} className={activeSection === section.id ? 'text-indigo-500' : 'text-slate-400'} />
                             {section.label}
                         </button>
                     ))}
@@ -38,12 +41,14 @@ const StudentRulesTab = () => {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 min-w-0">
-                {activeSection === 'admission' && <AdmissionNumberSetup />}
-                {activeSection === 'status' && <StatusSetup />}
-                {activeSection === 'promotion' && <PromotionSetup />}
-                {activeSection === 'demographics' && <DemographicsSetup />}
-                {activeSection === 'grading-admissions' && <SystemConfig filterGroups={['grading', 'admissions']} />}
+            <div className="w-full">
+                <div className="animate-in fade-in duration-300">
+                    {activeSection === 'admission' && <AdmissionNumberSetup />}
+                    {activeSection === 'status' && <StatusSetup />}
+                    {activeSection === 'promotion' && <PromotionSetup />}
+                    {activeSection === 'demographics' && <DemographicsSetup />}
+                    {activeSection === 'grading-admissions' && <SystemConfig filterGroups={['grading', 'admissions']} />}
+                </div>
             </div>
         </div>
     );
@@ -72,18 +77,18 @@ const StatusSetup = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-semibold">Student Lifecycle Statuses</h3>
+        <div className={neoCardClass}>
+            <h3 className="text-lg font-bold text-slate-800 drop-shadow-sm">Student Lifecycle Statuses</h3>
             <div className="grid gap-4">
                 {statuses.map(s => (
-                    <div key={s.id} className="p-4 bg-white border rounded-xl flex items-center justify-between">
+                    <div key={s.id} className="p-5 bg-gray-50/50 rounded-2xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white flex items-center justify-between transition-all">
                         <div>
-                            <p className="font-bold">{s.name}</p>
-                            <p className="text-xs text-gray-500">{s.is_active_state ? 'Allows class assignment' : 'Restricts assignment'}</p>
+                            <p className="font-extrabold text-slate-700">{s.name}</p>
+                            <p className="text-xs text-slate-500 mt-0.5 font-medium">{s.is_active_state ? 'Allows class assignment' : 'Restricts assignment'}</p>
                         </div>
                         <button
                             onClick={() => toggleStatus(s)}
-                            className={`btn btn-sm fw-bold rounded-pill ${s.is_enabled ? 'btn-success text-white' : 'btn-danger text-white'}`}>
+                            className={`px-4 py-2 text-xs font-bold rounded-xl shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] active:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] transition-all border border-white/50 ${s.is_enabled ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}>
                             {s.is_enabled ? 'Enabled' : 'Disabled'}
                         </button>
                     </div>
@@ -111,31 +116,34 @@ const PromotionSetup = () => {
     if (!config) return null;
 
     return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-semibold">Promotion & Progression Rules</h3>
-            <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-xl border flex items-center justify-between">
+        <div className={neoCardClass}>
+            <h3 className="text-lg font-bold text-slate-800 drop-shadow-sm">Promotion & Progression Rules</h3>
+            <div className="space-y-5">
+                <div className="p-5 bg-gray-50/50 rounded-2xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white flex items-center justify-between">
                     <div>
-                        <p className="font-medium">Promotion Method</p>
-                        <p className="text-sm text-gray-500">How students move to the next grade</p>
+                        <p className="font-extrabold text-slate-700">Promotion Method</p>
+                        <p className="text-xs text-slate-500 mt-0.5 font-medium">How students move to the next grade</p>
                     </div>
                     <select
                         value={config.promotion_method}
                         onChange={(e) => handleUpdate({ promotion_method: e.target.value })}
-                        className="bg-white border rounded-lg px-3 py-1.5 text-sm"
+                        className="bg-[#f8f9fa] shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] border border-white rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none"
                     >
                         <option value="manual">Manual Approval</option>
                         <option value="automatic">Automatic Progression</option>
                     </select>
                 </div>
-                <div className="p-4 border rounded-xl flex items-center justify-between">
-                    <p className="font-medium">Allow Mid-year Promotion</p>
-                    <input
-                        type="checkbox"
-                        checked={config.allow_mid_year}
-                        onChange={(e) => handleUpdate({ allow_mid_year: e.target.checked })}
-                        className="w-5 h-5 accent-indigo-600"
-                    />
+                <div className="p-5 bg-gray-50/50 rounded-2xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white flex items-center justify-between">
+                    <p className="font-extrabold text-slate-700">Allow Mid-year Promotion</p>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={config.allow_mid_year}
+                            onChange={(e) => handleUpdate({ allow_mid_year: e.target.checked })}
+                            className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-[inset_2px_2px_5px_rgba(0,0,0,0.1)]"></div>
+                    </label>
                 </div>
             </div>
         </div>
@@ -158,23 +166,33 @@ const DemographicsSetup = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-semibold">Mandatory Registration Fields</h3>
-            <div className="overflow-hidden border rounded-xl">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 border-b">
+        <div className={neoCardClass}>
+            <h3 className="text-lg font-bold text-slate-800 drop-shadow-sm">Mandatory Registration Fields</h3>
+            <div className="overflow-hidden border border-white shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] rounded-2xl bg-gray-50/50">
+                <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-[#f8f9fa] shadow-[2px_2px_5px_#e5e7eb,-2px_-2px_5px_#ffffff]">
                         <tr>
-                            <th className="p-4">Field Name</th>
-                            <th className="p-4">Enabled</th>
-                            <th className="p-4">Required</th>
+                            <th className="p-4 font-extrabold text-slate-700">Field Name</th>
+                            <th className="p-4 font-extrabold text-slate-700">Enabled</th>
+                            <th className="p-4 font-extrabold text-slate-700">Required</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-white/50">
                         {fields.map(f => (
-                            <tr key={f.id}>
-                                <td className="p-4 font-medium">{f.field_name}</td>
-                                <td className="p-4"><input type="checkbox" checked={f.is_enabled} onChange={() => toggleField(f, 'is_enabled')} /></td>
-                                <td className="p-4"><input type="checkbox" checked={f.is_required} onChange={() => toggleField(f, 'is_required')} /></td>
+                            <tr key={f.id} className="hover:bg-white/40 transition-colors">
+                                <td className="p-4 font-bold text-slate-700">{f.field_name}</td>
+                                <td className="p-4">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked={f.is_enabled} onChange={() => toggleField(f, 'is_enabled')} className="sr-only peer" />
+                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all shadow-[inset_2px_2px_5px_rgba(0,0,0,0.1)]"></div>
+                                    </label>
+                                </td>
+                                <td className="p-4">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked={f.is_required} onChange={() => toggleField(f, 'is_required')} className="sr-only peer" />
+                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all shadow-[inset_2px_2px_5px_rgba(0,0,0,0.1)]"></div>
+                                    </label>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

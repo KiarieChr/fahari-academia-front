@@ -63,6 +63,8 @@ const AcademicSessionsDashboard = () => {
     const [showEnrollModal, setShowEnrollModal] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [transferEnrollment, setTransferEnrollment] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editEnrollment, setEditEnrollment] = useState(null);
 
     // Collapsible grades list
     const [expandedGrades, setExpandedGrades] = useState({});
@@ -243,6 +245,19 @@ const AcademicSessionsDashboard = () => {
             fetchSessions();
         } catch (e) {
             toast.error(e?.data?.error || 'Transfer failed');
+        }
+    };
+
+    const handleEditEnrollmentSubmit = async (enrollmentId, data) => {
+        try {
+            await studentSettingsService.updateSessionEnrollment(enrollmentId, data);
+            toast.success('Enrollment updated successfully');
+            setShowEditModal(false);
+            setEditEnrollment(null);
+            if (selectedSession) fetchEnrollments(selectedSession.id);
+            fetchSessions();
+        } catch (e) {
+            toast.error(e?.data?.error || 'Failed to update enrollment');
         }
     };
 
@@ -920,7 +935,8 @@ const AcademicSessionsDashboard = () => {
                                                                         key={enrollment.id}
                                                                         enrollment={enrollment}
                                                                         streams={bulkOptions.streams}
-                                                                        onTransfer={handleTransfer}
+                                                                        onTransfer={(enr) => { setTransferEnrollment(enr); setShowTransferModal(true); }}
+                                                                        onEdit={(enr) => { setEditEnrollment(enr); setShowEditModal(true); }}
                                                                         onRemove={handleRemoveEnrollment}
                                                                         onChangeStream={handleChangeStream}
                                                                         selected={selectedEnrollmentIds.includes(enrollment.id)}
@@ -1301,6 +1317,14 @@ const AcademicSessionsDashboard = () => {
                         onClose={() => { setShowTransferModal(false); setTransferEnrollment(null); }}
                     />
                 )}
+                {showEditModal && editEnrollment && (
+                    <EditEnrollmentModal
+                        enrollment={editEnrollment}
+                        sessions={sessions}
+                        onSave={handleEditEnrollmentSubmit}
+                        onClose={() => { setShowEditModal(false); setEditEnrollment(null); }}
+                    />
+                )}
             </div>
         </DashboardLayout>
     );
@@ -1428,7 +1452,7 @@ const SessionCard = ({ session, isSelected, onClick, onStatusChange }) => {
 /* ================================================================
    ENROLLMENT ROW
    ================================================================ */
-const EnrollmentRow = ({ enrollment, streams, onTransfer, onRemove, onChangeStream, inactive, selected, onSelect }) => {
+const EnrollmentRow = ({ enrollment, streams, onTransfer, onEdit, onRemove, onChangeStream, inactive, selected, onSelect }) => {
     const [showStreamSelect, setShowStreamSelect] = useState(false);
 
     return (
@@ -1494,6 +1518,14 @@ const EnrollmentRow = ({ enrollment, streams, onTransfer, onRemove, onChangeStre
                             <BarChart3 size={12} />
                         </button>
                     )}
+                    {/* Edit */}
+                    <button
+                        onClick={() => onEdit(enrollment)}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit enrollment settings"
+                    >
+                        <Settings size={12} />
+                    </button>
                     {/* Transfer */}
                     <button
                         onClick={() => onTransfer(enrollment)}
@@ -2064,3 +2096,116 @@ const TransferModal = ({ enrollment, sessions, currentSessionId, onTransfer, onC
 };
 
 export default AcademicSessionsDashboard;
+
+/* ================================================================
+   EDIT ENROLLMENT MODAL (SUPER ADMIN OVERRIDE)
+   ================================================================ */
+const EditEnrollmentModal = ({ enrollment, sessions, onSave, onClose }) => {
+    const [formData, setFormData] = useState({
+        session: enrollment.session,
+        status: enrollment.status || 'active',
+        progression_status: enrollment.progression_status || 'pending',
+        is_active: enrollment.is_active !== undefined ? enrollment.is_active : true,
+    });
+    const [saving, setSaving] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        await onSave(enrollment.id, formData);
+        setSaving(false);
+    };
+
+    return (
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Edit Class Session Enrollment (Admin Override)"
+            maxWidth="md"
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-xs mb-4">
+                    <strong>Warning:</strong> Editing these fields directly can bypass standard workflows (like transfers or graduation). This should primarily be used to correct system mismatches affecting billing or attendance.
+                </div>
+
+                <div>
+                    <label className={labelClass}>Class Session</label>
+                    <select
+                        className={inputClass}
+                        value={formData.session}
+                        onChange={e => setFormData({ ...formData, session: e.target.value })}
+                        required
+                    >
+                        {sessions.map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className={labelClass}>Status</label>
+                    <select
+                        className={inputClass}
+                        value={formData.status}
+                        onChange={e => setFormData({ ...formData, status: e.target.value })}
+                        required
+                    >
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="transferred_out">Transferred Out</option>
+                        <option value="dropped">Dropped</option>
+                        <option value="expelled">Expelled</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label className={labelClass}>Progression Status</label>
+                    <select
+                        className={inputClass}
+                        value={formData.progression_status}
+                        onChange={e => setFormData({ ...formData, progression_status: e.target.value })}
+                        required
+                    >
+                        <option value="pending">Pending Decision</option>
+                        <option value="promoted">Promoted</option>
+                        <option value="retained">Retained/Repeated</option>
+                        <option value="graduated">Graduated</option>
+                        <option value="discontinued">Discontinued</option>
+                    </select>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                    <input
+                        type="checkbox"
+                        id="is_active_flag"
+                        checked={formData.is_active}
+                        onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                        className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="is_active_flag" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                        Is Current Active Session
+                    </label>
+                </div>
+                <p className="text-[10px] text-slate-400 pl-7">Checking this will automatically mark all other class sessions for this student as inactive.</p>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-md transition-all disabled:opacity-50"
+                    >
+                        {saving && <Loader2 size={16} className="animate-spin" />}
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
+};

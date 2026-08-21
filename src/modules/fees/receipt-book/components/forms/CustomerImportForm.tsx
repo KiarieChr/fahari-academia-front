@@ -46,7 +46,7 @@ const CustomerImportForm = ({ onImport, disabled }) => {
                         <div className="input-group">
                             <input
                                 type="file"
-                                className="form-control"
+                                className="form-control neo-input border-none"
                                 id="receiptFile"
                                 accept=".csv,.xlsx,.xls"
                                 onChange={handleFileChange}

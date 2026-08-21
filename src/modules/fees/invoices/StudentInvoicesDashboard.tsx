@@ -171,26 +171,26 @@ const StudentInvoicesDashboard = () => {
 
     return (
         <DashboardLayout title="Student Invoices">
-            <div className="invoice-dashboard p-3">
+            <div className="min-h-screen neo-bg p-3 relative">
                 {/* Header */}
-                <div className="d-flex justify-content-between align-items-center mb-4">
+                <div className="neo-card flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 p-3">
                     <div>
-                        <h4 className="mb-0 fw-bold">Student Invoices</h4>
-                        <p className="text-muted mb-0">Manage term billings and outstanding balances</p>
+                        <h4 className="text-xl font-bold text-gray-700">Student Invoices</h4>
+                        <p className="text-sm text-gray-500 font-bold mt-1">Manage term billings and outstanding balances</p>
                     </div>
-                    <div className="d-flex gap-2">
+                    <div className="flex gap-3">
                         <button
-                            className="btn btn-primary"
+                            className="neo-btn neo-btn-accent px-4 py-2 flex items-center gap-2"
                             onClick={() => setShowManualModal(true)}
                         >
-                            <Plus size={18} className="me-2" />
+                            <Plus size={18} />
                             New Invoice
                         </button>
                         <button
-                            className="btn btn-outline-primary"
+                            className="neo-btn px-4 py-2 flex items-center gap-2"
                             onClick={() => setShowGenerateModal(true)}
                         >
-                            <Sliders size={18} className="me-2" />
+                            <Sliders size={18} />
                             Bulk Generate
                         </button>
                     </div>
@@ -211,7 +211,7 @@ const StudentInvoicesDashboard = () => {
 
                 {/* Table */}
                 {loading ? (
-                    <div className="text-center py-5">Loading Invoices...</div>
+                    <div className="flex justify-center py-12 text-gray-500 font-bold tracking-widest uppercase text-sm">Loading Invoices...</div>
                 ) : (
                     <InvoiceTable
                         invoices={invoices}

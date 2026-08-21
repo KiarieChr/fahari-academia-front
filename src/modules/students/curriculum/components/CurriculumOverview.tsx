@@ -11,51 +11,48 @@ const getIconGradient = (color) => {
     return 'linear-gradient(135deg, #dc2626 0%, #f43f5e 100%)';
 };
 
-const MetricCard = ({ title, count, icon: Icon, color, status, loading }) => (
-    <div 
-        className="group p-6 rounded-[28px] border transition-all duration-500 relative overflow-hidden transform hover:-translate-y-1.5 hover:shadow-xl"
-        style={{ 
-            background: 'linear-gradient(135deg, var(--card-bg) 0%, rgba(99, 102, 241, 0.02) 100%)', 
-            borderColor: 'var(--border-color-light)', 
-            boxShadow: 'var(--shadow-card)' 
-        }}
-    >
-        {/* Glow decoration inside the card */}
-        <div 
-            className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-all duration-700 pointer-events-none" 
-            style={{ 
-                background: color.includes('indigo') ? 'var(--primary-color)' 
-                          : color.includes('emerald') ? '#10b981' 
-                          : color.includes('violet') ? '#8b5cf6' 
-                          : color.includes('amber') ? '#f59e0b' 
-                          : '#f43f5e' 
-            }}
-        />
-        
-        <div className="relative flex justify-between items-start z-10">
+const MetricCard = ({ title, count, icon: Icon, color, status, loading }) => {
+    const iconColor = color.replace('bg-', 'text-');
+    
+    // We can extract the actual color code for glows
+    let hexColor = '#4f46e5';
+    if(color.includes('emerald')) hexColor = '#10b981';
+    if(color.includes('violet')) hexColor = '#8b5cf6';
+    if(color.includes('amber')) hexColor = '#f59e0b';
+    if(color.includes('rose')) hexColor = '#f43f5e';
+
+    return (
+        <div className="group p-6 neo-card relative overflow-hidden transition-all duration-500">
+            {/* Ambient Glow */}
             <div 
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md transition-all duration-500 group-hover:scale-110" 
-                style={{ background: getIconGradient(color) }}
-            >
-                <Icon size={26} />
+                className="absolute -right-10 -bottom-10 w-40 h-40 rounded-full blur-3xl opacity-20 dark:opacity-10 transition-all duration-700 pointer-events-none group-hover:scale-150 group-hover:opacity-40" 
+                style={{ background: hexColor }}
+            />
+            
+            <div className="relative flex justify-between items-start z-10 mb-8">
+                <div 
+                    className={`w-14 h-14 rounded-[20px] flex items-center justify-center ${iconColor} neo-pressed transition-all duration-500 group-hover:scale-110 group-hover:rotate-3`} 
+                >
+                    <Icon size={26} strokeWidth={2.5} />
+                </div>
+                {status && (
+                    <span className="text-[9px] font-black px-3 py-1 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/20 uppercase tracking-widest animate-pulse shadow-sm">
+                        {status}
+                    </span>
+                )}
             </div>
-            {status && (
-                <span className="text-[9px] font-black px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/60 uppercase tracking-widest animate-pulse">
-                    {status}
-                </span>
-            )}
+            
+            <div className="relative space-y-1 z-10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">{title}</p>
+                {loading ? (
+                    <div className="h-10 w-24 bg-gray-200 animate-pulse rounded-xl mt-1"></div>
+                ) : (
+                    <h3 className="text-4xl font-black tracking-tighter text-gray-700">{count}</h3>
+                )}
+            </div>
         </div>
-        
-        <div className="relative mt-6 space-y-1 z-10">
-            {loading ? (
-                <div className="h-9 w-20 bg-gray-100 animate-pulse rounded-xl"></div>
-            ) : (
-                <h3 className="text-3.5xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>{count}</h3>
-            )}
-            <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{title}</p>
-        </div>
-    </div>
-);
+    );
+};
 
 const CurriculumOverview = ({ refreshKey = 0 }) => {
     const [loading, setLoading] = useState(true);
@@ -130,34 +127,33 @@ const CurriculumOverview = ({ refreshKey = 0 }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-3">
                 {/* Subject Distribution */}
                 <div 
-                    className="p-3 rounded-[32px] border relative overflow-hidden group hover:shadow-lg transition-all duration-300"
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
+                    className="p-6 neo-card relative overflow-hidden group transition-all duration-300"
                 >
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <BarChart3 size={120} />
+                    <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-10 transition-opacity pointer-events-none">
+                        <BarChart3 size={160} />
                     </div>
-                    <div className="relative mb-8 flex items-center justify-between">
+                    <div className="relative mb-8 flex items-center justify-between z-10">
                         <div className="space-y-1">
-                            <h4 className="text-xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>Subjects Distribution</h4>
-                            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Inventory by Framework</p>
+                            <h4 className="text-xl font-black tracking-tight text-gray-700">Subjects Distribution</h4>
+                            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Inventory by Framework</p>
                         </div>
                     </div>
                     
                     {loading ? (
-                        <div className="flex flex-col gap-6">
-                            {[1, 2, 3].map(i => <div key={i} className="h-4 bg-gray-50 animate-pulse rounded-full w-full" />)}
+                        <div className="flex flex-col gap-6 relative z-10">
+                            {[1, 2, 3].map(i => <div key={i} className="h-4 bg-gray-200 animate-pulse rounded-full w-full" />)}
                         </div>
                     ) : stats?.subject_distribution?.length > 0 ? (
-                        <div className="space-y-7">
+                        <div className="space-y-7 relative z-10">
                             {stats.subject_distribution.map((item, idx) => (
                                 <div key={idx} className="group/item">
                                     <div className="flex justify-between items-end mb-2.5">
-                                        <span className="text-sm font-black" style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
-                                        <span className="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{item.count} UNIT{(item.count !== 1) ? 'S' : ''}</span>
+                                        <span className="text-sm font-black text-gray-600">{item.name}</span>
+                                        <span className="text-[11px] font-black neo-text-accent px-2.5 py-0.5 rounded-lg border border-indigo-100">{item.count} UNIT{(item.count !== 1) ? 'S' : ''}</span>
                                     </div>
-                                    <div className="h-3.5 w-full bg-slate-50 dark:bg-slate-800/20 rounded-full overflow-hidden border" style={{ borderColor: 'var(--border-color-light)' }}>
+                                    <div className="h-3.5 w-full neo-pressed rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full ${barColors[idx % barColors.length]} rounded-full transition-all duration-1000 ease-out shadow-sm group-hover/item:brightness-110`}
+                                            className={`h-full ${barColors[idx % barColors.length]} rounded-full transition-all duration-1000 ease-out shadow-sm`}
                                             style={{ width: `${(item.count / maxSubjectCount) * 100}%` }}
                                         />
                                     </div>
@@ -166,8 +162,8 @@ const CurriculumOverview = ({ refreshKey = 0 }) => {
                         </div>
                     ) : (
                         <div className="text-center py-12">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Library className="text-gray-300" size={24} />
+                            <div className="w-16 h-16 neo-pressed rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Library className="text-gray-400" size={24} />
                             </div>
                             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">No Subjects Cataloged</p>
                         </div>
@@ -176,55 +172,58 @@ const CurriculumOverview = ({ refreshKey = 0 }) => {
 
                 {/* Class Coverage */}
                 <div 
-                    className="p-3 rounded-[32px] border hover:shadow-lg transition-all duration-300"
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
+                    className="p-6 neo-card transition-all duration-300 lg:col-span-2"
                 >
                     <div className="mb-8 space-y-1">
-                        <h4 className="text-xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>Class Coverage</h4>
-                        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Structural Implementation</p>
+                        <h4 className="text-xl font-black tracking-tight text-gray-700">Class Coverage</h4>
+                        <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Structural Implementation</p>
                     </div>
                     
                     {loading ? (
                         <div className="space-y-4">
-                            {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-50 animate-pulse rounded-2xl w-full" />)}
+                            {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-200 animate-pulse rounded-2xl w-full" />)}
                         </div>
                     ) : stats?.class_coverage?.length > 0 ? (
-                        <div className="space-y-4 max-h-[420px] pr-2 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-3 max-h-[420px] pr-2 overflow-y-auto custom-scrollbar">
                             {stats.class_coverage.map((item, idx) => (
                                 <div 
                                     key={idx} 
-                                    className="flex items-center justify-between p-3 rounded-[22px] border transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md cursor-pointer mb-3"
-                                    style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)' }}
+                                    className="flex items-center justify-between p-4 rounded-[22px] neo-btn transition-all duration-300 transform w-full text-left"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm border border-gray-100 dark:border-slate-700">
-                                            <Users size={18} />
+                                        <div className="w-12 h-12 neo-pressed rounded-[18px] flex items-center justify-center neo-text-accent">
+                                            <Users size={20} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-[15px] font-black text-left" style={{ color: 'var(--text-main)' }}>{item.level}</p>
-                                            <p className="text-[11px] font-black uppercase tracking-widest mt-0.5 text-left" style={{ color: 'var(--primary-color)' }}>{item.curriculum}</p>
+                                            <p className="text-[15px] font-black text-left text-gray-700">{item.level}</p>
+                                            <p className="text-[11px] font-black uppercase tracking-widest mt-1 text-left neo-text-accent bg-indigo-50 inline-block px-2 py-0.5 rounded-md">{item.curriculum}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-lg font-black leading-none" style={{ color: 'var(--text-main)' }}>{item.classes}</p>
-                                        <p className="text-[10px] font-bold uppercase mt-1" style={{ color: 'var(--text-muted)' }}>Sections</p>
+                                    
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Enrolled</span>
+                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
+                                            <span className="text-sm font-black">{item.students}</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-12 text-gray-400 font-bold uppercase text-xs tracking-widest">Registry Empty</div>
+                        <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+                            <GraduationCap size={48} className="mb-4 opacity-50" />
+                            <span className="text-sm font-bold uppercase tracking-widest">No Class Data</span>
+                        </div>
                     )}
                 </div>
 
                 {/* Subject Types */}
                 <div 
-                    className="p-3 rounded-[32px] border flex flex-col hover:shadow-lg transition-all duration-300"
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
+                    className="p-6 neo-card flex flex-col transition-all duration-300"
                 >
                     <div className="mb-8 space-y-1">
-                        <h4 className="text-xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>Subject Classification</h4>
-                        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Functional Distribution</p>
+                        <h4 className="text-xl font-black tracking-tight text-gray-700">Subject Classification</h4>
+                        <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Functional Distribution</p>
                     </div>
                     
                     {loading ? (
@@ -234,12 +233,12 @@ const CurriculumOverview = ({ refreshKey = 0 }) => {
                     ) : stats?.type_distribution?.length > 0 ? (
                         <div className="flex-1 flex flex-col justify-center gap-8">
                             <div className="relative flex items-center justify-center h-48">
-                                <div className="absolute inset-0 border-[16px] rounded-full" style={{ borderColor: 'var(--bg-light)' }} />
+                                <div className="absolute inset-0 border-[16px] rounded-full border-gray-100 shadow-[inset_0_4px_20px_rgba(0,0,0,0.03)]" />
                                 <div className="text-center z-10">
-                                    <span className="text-5xl font-black tracking-tighter" style={{ color: 'var(--text-main)' }}>
+                                    <span className="text-5xl font-black tracking-tighter text-gray-700">
                                         {stats.type_distribution.reduce((acc, t) => acc + t.value, 0)}
                                     </span>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>Total Units</p>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] mt-1 text-gray-400">Total Units</p>
                                 </div>
                             </div>
                             
@@ -247,17 +246,16 @@ const CurriculumOverview = ({ refreshKey = 0 }) => {
                                 {stats.type_distribution.map((item, idx) => (
                                     <div 
                                         key={idx} 
-                                        className="flex items-center justify-between p-4 rounded-2xl border hover:shadow-sm transition-all"
-                                        style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)' }}
+                                        className="flex items-center justify-between p-4 rounded-2xl neo-btn w-full transition-all"
                                     >
                                         <div className="flex items-center gap-3">
                                             <div
-                                                className="w-4 h-4 rounded-full shadow-inner shadow-black/10"
+                                                className="w-4 h-4 rounded-full shadow-inner shadow-black/20"
                                                 style={{ backgroundColor: item.color }}
                                             />
-                                            <span className="text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
+                                            <span className="text-sm font-bold text-gray-600">{item.name}</span>
                                         </div>
-                                        <span className="text-base font-black" style={{ color: 'var(--text-main)' }}>{item.value}</span>
+                                        <span className="text-base font-black text-gray-700">{item.value}</span>
                                     </div>
                                 ))}
                             </div>
@@ -271,27 +269,25 @@ const CurriculumOverview = ({ refreshKey = 0 }) => {
             {/* ─── Knowledge Domains ─── */}
             {stats?.area_distribution?.length > 0 && (
                 <div 
-                    className="p-4 rounded-[32px] border relative overflow-hidden"
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
+                    className="p-8 neo-card relative overflow-hidden"
                 >
                     <div className="relative mb-10 space-y-1">
-                        <h4 className="text-xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>Learning Area Distribution</h4>
-                        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Cognitive Domains and Expertise</p>
+                        <h4 className="text-xl font-black tracking-tight text-gray-700">Learning Area Distribution</h4>
+                        <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Cognitive Domains and Expertise</p>
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                         {stats.area_distribution.map((area, idx) => (
                             <div
                                 key={idx}
-                                className="group p-6 rounded-[24px] border bg-white dark:bg-slate-800 hover:bg-gradient-to-br hover:from-indigo-600 hover:to-indigo-700 transition-all duration-500 text-center shadow-sm hover:shadow-xl cursor-pointer transform hover:-translate-y-1.5 hover:text-white"
-                                style={{ borderColor: 'var(--border-color-light)' }}
+                                className="group p-6 rounded-[24px] neo-btn text-center cursor-pointer transform hover:-translate-y-1.5 transition-all duration-300"
                             >
                                 <div 
-                                    className="w-12 h-1 bg-indigo-500 mx-auto mb-6 rounded-full group-hover:w-full transition-all duration-500"
+                                    className="w-12 h-1.5 mx-auto mb-6 rounded-full group-hover:w-16 transition-all duration-500"
                                     style={{ backgroundColor: area.color }}
                                 />
-                                <p className="text-4xl font-black text-slate-800 group-hover:text-white transition-colors duration-500" style={{ color: 'inherit' }}>{area.count}</p>
-                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-3 leading-tight group-hover:text-indigo-200 transition-colors duration-500" style={{ color: 'inherit' }}>{area.name}</p>
+                                <p className="text-4xl font-black text-gray-700 relative z-10">{area.count}</p>
+                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-3 leading-tight relative z-10 group-hover:text-gray-700 transition-colors duration-300">{area.name}</p>
                             </div>
                         ))}
                     </div>

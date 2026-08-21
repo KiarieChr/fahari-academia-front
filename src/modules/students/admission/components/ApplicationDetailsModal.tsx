@@ -115,16 +115,14 @@ const ApplicationDetailsModal = ({ app, onClose, onAdmit, onStatusChange }) => {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-                        style={{ 
-                            background: 'var(--card-bg)', 
-                            borderColor: 'var(--border-color-light)'
-                        }}
-                        className="relative z-[8000] h-full w-full max-w-[500px] border-l shadow-[0_0_60px_rgba(0,0,0,0.18)] flex flex-col overflow-hidden"
+                        className="relative z-[8000] h-full w-full max-w-[500px] shadow-[-20px_0_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden bg-white dark:bg-slate-900 border-l border-slate-200/60 dark:border-slate-800/60"
                     >
+                        {/* Decorative background blurs */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-50/50 dark:bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
+                        
                         {/* 1. Header (Sticky) */}
                         <div 
-                            style={{ borderColor: 'var(--border-color-light)' }} 
-                            className="p-5 border-b flex flex-col gap-4 sticky top-0 z-25 bg-[inherit]"
+                            className="p-5 border-b border-slate-200/60 dark:border-slate-800/60 flex flex-col gap-4 sticky top-0 z-25 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl"
                         >
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
@@ -594,7 +592,6 @@ const ApplicationDetailsModal = ({ app, onClose, onAdmit, onStatusChange }) => {
                                         </p>
                                     </div>
 
-                                    {/* Action items & document downloads */}
                                     <div className="flex items-center gap-2 px-1">
                                         <FileText size={13} style={{ color: 'var(--primary-color)' }} />
                                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
@@ -603,37 +600,36 @@ const ApplicationDetailsModal = ({ app, onClose, onAdmit, onStatusChange }) => {
                                     </div>
 
                                     <div 
-                                        style={{ borderColor: 'var(--border-color-light)', background: 'var(--bg-light)' }} 
-                                        className="border rounded-2xl p-4 space-y-4"
+                                        className="border border-slate-200/60 dark:border-slate-800/60 rounded-[24px] p-5 space-y-4 bg-white/50 dark:bg-slate-900/50 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1)] relative overflow-hidden"
                                     >
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 dark:bg-indigo-500/10 blur-2xl rounded-full -mr-10 -mt-10" />
+                                        
                                         {activeApp.application_status === 'accepted' ? (
-                                            <div className="flex flex-col gap-2">
-                                                <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Available Documents</p>
+                                            <div className="flex flex-col gap-3 relative z-10">
+                                                <p className="text-[9px] font-black uppercase tracking-widest mb-1 text-slate-500 dark:text-slate-400">Available Documents</p>
                                                 
                                                 <button 
                                                     onClick={() => handleDownload('offer_letter')}
                                                     disabled={isGenerating}
-                                                    style={{ background: 'var(--primary-light)', color: 'var(--primary-color)' }}
-                                                    className="w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer shadow-sm border border-indigo-100/10"
+                                                    className="w-full py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm border bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/30 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 disabled:opacity-50"
                                                 >
-                                                    <Download size={14} /> 
+                                                    <Download size={15} /> 
                                                     {isGenerating ? 'Generating Offer...' : 'Download Official Offer Letter'}
                                                 </button>
 
                                                 <button 
                                                     onClick={() => handleDownload('admission_letter')}
                                                     disabled={isGenerating}
-                                                    style={{ background: 'var(--primary-light)', color: 'var(--primary-color)' }}
-                                                    className="w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer shadow-sm border border-indigo-100/10"
+                                                    className="w-full py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm border bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/30 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 disabled:opacity-50"
                                                 >
-                                                    <Download size={14} /> 
+                                                    <Download size={15} /> 
                                                     {isGenerating ? 'Generating Letter...' : 'Download Admission Letter'}
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100/50 border border-slate-200/50 text-[10px]" style={{ borderColor: 'var(--border-color-light)', background: 'var(--card-bg)' }}>
+                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-[10px] relative z-10">
                                                 <AlertCircle size={16} className="text-slate-400 shrink-0" />
-                                                <p className="font-bold mb-0" style={{ color: 'var(--text-muted)' }}>
+                                                <p className="font-bold mb-0 text-slate-500 dark:text-slate-400">
                                                     Documents such as the Offer Letter and Admission Letter will automatically generate once this application is moved to the "Accepted" status.
                                                 </p>
                                             </div>
@@ -649,17 +645,16 @@ const ApplicationDetailsModal = ({ app, onClose, onAdmit, onStatusChange }) => {
                                     </div>
 
                                     <div 
-                                        style={{ borderColor: 'var(--border-color-light)', background: 'var(--bg-light)' }} 
-                                        className="border rounded-2xl p-4 flex flex-col gap-2.5"
+                                        className="border border-slate-200/60 dark:border-slate-800/60 rounded-[24px] p-5 flex flex-col gap-3 bg-white/50 dark:bg-slate-900/50 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1)] relative overflow-hidden"
                                     >
-                                        <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Move Applicant File To:</p>
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 dark:bg-indigo-500/10 blur-2xl rounded-full -mr-10 -mt-10 pointer-events-none" />
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 relative z-10 mb-1">Move Applicant File To:</p>
                                         
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-2 gap-3 relative z-10">
                                             {activeApp.application_status !== 'pending' && (
                                                 <button
                                                     onClick={() => triggerStatusChange('pending')}
-                                                    style={{ color: 'var(--text-main)', borderColor: 'var(--border-color-light)' }}
-                                                    className="py-2 px-3 border rounded-xl text-[10px] font-black uppercase tracking-wider bg-[var(--card-bg)] hover:bg-[var(--bg-light)] transition-all cursor-pointer text-center"
+                                                    className="py-2.5 px-3 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-wider bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all shadow-sm text-slate-700 dark:text-slate-300"
                                                 >
                                                     Move to Pending
                                                 </button>
@@ -668,8 +663,7 @@ const ApplicationDetailsModal = ({ app, onClose, onAdmit, onStatusChange }) => {
                                             {activeApp.application_status !== 'interview' && (
                                                 <button
                                                     onClick={() => triggerStatusChange('interview')}
-                                                    className="py-2 px-3 border rounded-xl text-[10px] font-black uppercase tracking-wider bg-[var(--card-bg)] hover:bg-amber-500/10 hover:border-amber-500/30 text-amber-600 transition-all cursor-pointer text-center"
-                                                    style={{ borderColor: 'var(--border-color-light)' }}
+                                                    className="py-2.5 px-3 border border-amber-200 dark:border-amber-900/50 rounded-xl text-[10px] font-black uppercase tracking-wider bg-amber-50 dark:bg-amber-500/10 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-all shadow-sm"
                                                 >
                                                     Schedule Interview
                                                 </button>
@@ -678,8 +672,7 @@ const ApplicationDetailsModal = ({ app, onClose, onAdmit, onStatusChange }) => {
                                             {activeApp.application_status !== 'waitlist' && (
                                                 <button
                                                     onClick={() => triggerStatusChange('waitlist')}
-                                                    className="py-2 px-3 border rounded-xl text-[10px] font-black uppercase tracking-wider bg-[var(--card-bg)] hover:bg-purple-500/10 hover:border-purple-500/30 text-purple-600 transition-all cursor-pointer text-center"
-                                                    style={{ borderColor: 'var(--border-color-light)' }}
+                                                    className="py-2.5 px-3 border border-purple-200 dark:border-purple-900/50 rounded-xl text-[10px] font-black uppercase tracking-wider bg-purple-50 dark:bg-purple-500/10 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-all shadow-sm"
                                                 >
                                                     Place on Waitlist
                                                 </button>

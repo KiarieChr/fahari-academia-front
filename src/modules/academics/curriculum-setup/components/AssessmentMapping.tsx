@@ -1,7 +1,9 @@
-import React from 'react';
-import { PenTool, Target, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PenTool, Target, Plus, Trash2, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { examService } from '../../../../services/examService';
 
-const AssessmentMapping = ({ isReadOnly }) => {
+const AssessmentMapping = ({ isReadOnly, curriculum }) => {
     // Mock static for now as this can get complex
     const terms = [
         { id: 1, name: 'Term 1', weight: 33 },
@@ -9,61 +11,90 @@ const AssessmentMapping = ({ isReadOnly }) => {
         { id: 3, name: 'Term 3', weight: 34 },
     ];
 
-    const assessments = [
-        { id: 1, name: 'Opener Exam', maxMarks: 30, weight: 15 },
-        { id: 2, name: 'Mid-Term Exam', maxMarks: 40, weight: 25 },
-        { id: 3, name: 'End-Term Exam', maxMarks: 60, weight: 60 },
-    ];
+    const [showAddType, setShowAddType] = useState(false);
+    const [newType, setNewType] = useState({ name: '', max_mark: 100, weight: 0 });
+    const [assessmentsState, setAssessmentsState] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    const [showAddType, setShowAddType] = React.useState(false);
-    const [newType, setNewType] = React.useState({ name: '', maxMarks: 100, weight: 0 });
-    const [assessmentsState, setAssessmentsState] = React.useState(assessments);
-
-    const handleAddType = () => {
-        if (!newType.name) return;
-        setAssessmentsState([...assessmentsState, {
-            id: `assess-${Date.now()}`,
-            name: newType.name,
-            maxMarks: Number(newType.maxMarks),
-            weight: Number(newType.weight)
-        }]);
-        setShowAddType(false);
-        setNewType({ name: '', maxMarks: 100, weight: 0 });
+    const fetchAssessments = async () => {
+        if (!curriculum?.id) return;
+        setLoading(true);
+        try {
+            const data = await examService.getAssessmentTypes({ curriculum: curriculum.id });
+            setAssessmentsState(data.results || data);
+        } catch (err) {
+            toast.error('Failed to load assessment types');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleDeleteType = (id) => {
-        setAssessmentsState(assessmentsState.filter(a => a.id !== id));
+    useEffect(() => {
+        fetchAssessments();
+    }, [curriculum]);
+
+    const handleAddType = async () => {
+        if (!newType.name || !curriculum?.id) return;
+        setSaving(true);
+        try {
+            await examService.createAssessmentType({
+                name: newType.name,
+                code: newType.name.toLowerCase().replace(/\s+/g, '_').substring(0, 30),
+                max_mark: Number(newType.max_mark),
+                weight: Number(newType.weight),
+                curriculum: curriculum.id
+            });
+            toast.success('Assessment type added');
+            setShowAddType(false);
+            setNewType({ name: '', max_mark: 100, weight: 0 });
+            fetchAssessments();
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to add assessment type');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDeleteType = async (id) => {
+        try {
+            await examService.deleteAssessmentType(id);
+            toast.success('Assessment type deleted');
+            fetchAssessments();
+        } catch (err) {
+            toast.error('Failed to delete assessment type');
+        }
     };
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Target size={20} className="text-pink-600" />
+                <h3 className="text-lg font-bold text-gray-700 flex items-center gap-2">
+                    <Target size={20} className="text-indigo-500" />
                     Assessment Configuration
                 </h3>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Terms Config */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <h4 className="font-bold text-slate-800 dark:text-white mb-4 flex justify-between">
+                <div className="neo-card p-6 border-none">
+                    <h4 className="font-bold text-gray-700 mb-6 flex justify-between">
                         Term Weights
-                        <span className="text-xs font-normal text-slate-500 bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded">Total: 100%</span>
+                        <span className="text-xs font-bold text-gray-500 neo-pressed px-3 py-1 uppercase tracking-widest">Total: 100%</span>
                     </h4>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {terms.map(term => (
                             <div key={term.id} className="flex items-center gap-4">
-                                <div className="w-32 font-medium text-slate-700 dark:text-slate-300">{term.name}</div>
+                                <div className="w-24 font-bold text-gray-600">{term.name}</div>
                                 <div className="flex-1">
-                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-blue-500" style={{ width: `${term.weight}%` }}></div>
+                                    <div className="h-3 neo-pressed rounded-full overflow-hidden">
+                                        <div className="h-full bg-indigo-500 shadow-sm" style={{ width: `${term.weight}%` }}></div>
                                     </div>
                                 </div>
-                                <div className="w-16">
+                                <div className="w-20">
                                     <input
                                         type="number"
-                                        className="w-full px-2 py-1 border border-slate-200 rounded text-center text-sm font-bold"
+                                        className="w-full neo-input text-center text-sm font-black text-gray-700"
                                         value={term.weight}
                                         disabled={isReadOnly}
                                         readOnly
@@ -75,13 +106,13 @@ const AssessmentMapping = ({ isReadOnly }) => {
                 </div>
 
                 {/* Assessment Types */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <h4 className="font-bold text-slate-800 dark:text-white mb-4 flex justify-between">
+                <div className="neo-card p-6 border-none">
+                    <h4 className="font-bold text-gray-700 mb-6 flex justify-between items-center">
                         Standard Assessments
                         {!isReadOnly && !showAddType && (
                             <button
                                 onClick={() => setShowAddType(true)}
-                                className="text-xs text-blue-600 font-medium hover:underline flex items-center gap-1"
+                                className="neo-btn text-xs text-indigo-600 font-bold px-3 py-1 flex items-center gap-1 uppercase tracking-widest"
                             >
                                 <Plus size={12} /> Add Type
                             </button>
@@ -89,14 +120,14 @@ const AssessmentMapping = ({ isReadOnly }) => {
                     </h4>
 
                     {showAddType && (
-                        <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-700">
-                            <h5 className="text-xs font-bold text-slate-500 mb-2">New Assessment Type</h5>
-                            <div className="space-y-2">
-                                <div className="grid grid-cols-12 gap-2">
+                        <div className="mb-6 p-4 neo-pressed border-none">
+                            <h5 className="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-3">New Assessment Type</h5>
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-12 gap-3">
                                     <div className="col-span-12">
                                         <input
                                             type="text"
-                                            className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full neo-input text-sm font-bold"
                                             placeholder="Assessment Name (e.g. CAT 1)"
                                             value={newType.name}
                                             onChange={(e) => setNewType({ ...newType, name: e.target.value })}
@@ -104,55 +135,55 @@ const AssessmentMapping = ({ isReadOnly }) => {
                                         />
                                     </div>
                                     <div className="col-span-6">
-                                        <label className="text-[10px] uppercase font-bold text-slate-400">Max Marks</label>
+                                        <label className="text-[10px] uppercase font-black text-gray-400 tracking-widest ml-1">Max Marks</label>
                                         <input
                                             type="number"
-                                            className="w-full px-2 py-1 text-sm border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                                            value={newType.maxMarks}
-                                            onChange={(e) => setNewType({ ...newType, maxMarks: e.target.value })}
+                                            className="w-full neo-input text-sm font-bold text-center mt-1"
+                                            value={newType.max_mark}
+                                            onChange={(e) => setNewType({ ...newType, max_mark: e.target.value })}
                                         />
                                     </div>
                                     <div className="col-span-6">
-                                        <label className="text-[10px] uppercase font-bold text-slate-400">Weight %</label>
+                                        <label className="text-[10px] uppercase font-black text-gray-400 tracking-widest ml-1">Weight %</label>
                                         <input
                                             type="number"
-                                            className="w-full px-2 py-1 text-sm border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full neo-input text-sm font-bold text-center mt-1"
                                             value={newType.weight}
                                             onChange={(e) => setNewType({ ...newType, weight: e.target.value })}
                                         />
                                     </div>
                                 </div>
-                                <div className="flex justify-end gap-2 mt-2">
+                                <div className="flex justify-end gap-2 pt-2">
                                     <button
                                         onClick={() => setShowAddType(false)}
-                                        className="text-xs px-2 py-1 text-slate-500 hover:bg-slate-200 rounded"
+                                        className="neo-btn text-xs px-4 py-2 font-bold text-gray-500 uppercase tracking-widest"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={handleAddType}
-                                        disabled={!newType.name}
-                                        className="text-xs px-3 py-1 bg-blue-600 text-black rounded font-medium hover:bg-blue-700 disabled:opacity-50"
+                                        disabled={!newType.name || saving}
+                                        className="neo-btn neo-btn-accent text-xs px-4 py-2 font-bold uppercase tracking-widest disabled:opacity-50 flex items-center gap-2"
                                     >
-                                        Save
+                                        {saving ? <Loader2 size={14} className="animate-spin" /> : 'Save'}
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-slate-500 uppercase mb-2">
+                    <div className="space-y-4 mt-2">
+                        <div className="grid grid-cols-12 gap-3 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 px-1">
                             <div className="col-span-5">Name</div>
                             <div className="col-span-3 text-center">Max Marks</div>
                             <div className="col-span-3 text-center">Weight %</div>
                             <div className="col-span-1"></div>
                         </div>
                         {assessmentsState.map(assess => (
-                            <div key={assess.id} className="grid grid-cols-12 gap-2 items-center">
+                            <div key={assess.id} className="grid grid-cols-12 gap-3 items-center">
                                 <div className="col-span-5">
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-sm font-medium"
+                                        className="w-full neo-input text-sm font-bold"
                                         value={assess.name}
                                         disabled={isReadOnly}
                                         readOnly
@@ -161,8 +192,8 @@ const AssessmentMapping = ({ isReadOnly }) => {
                                 <div className="col-span-3">
                                     <input
                                         type="number"
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-sm text-center"
-                                        value={assess.maxMarks}
+                                        className="w-full neo-input text-sm text-center font-bold"
+                                        value={assess.max_mark}
                                         disabled={isReadOnly}
                                         readOnly
                                     />
@@ -170,14 +201,14 @@ const AssessmentMapping = ({ isReadOnly }) => {
                                 <div className="col-span-3">
                                     <input
                                         type="number"
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-sm text-center font-bold text-blue-600"
+                                        className="w-full neo-input text-sm text-center font-black text-indigo-600"
                                         value={assess.weight}
                                         disabled={isReadOnly}
                                         readOnly
                                     />
                                 </div>
                                 <div className="col-span-1 text-center">
-                                    {!isReadOnly && <button onClick={() => handleDeleteType(assess.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>}
+                                    {!isReadOnly && <button onClick={() => handleDeleteType(assess.id)} className="neo-btn p-2 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>}
                                 </div>
                             </div>
                         ))}

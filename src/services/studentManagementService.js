@@ -97,6 +97,30 @@ export const studentManagementService = {
         return response;
     },
 
+    // === Bulk Import ===
+    downloadImportTemplate: async () => {
+        const response = await api.get('/api/student-management/import/template/', { responseType: 'blob' });
+        return response;
+    },
+    importStudents: async (file, dryRun = false) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post(`/api/student-management/import/upload/?dry_run=${dryRun}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response;
+    },
+    processImportChunk: async (importId, offset, chunkSize) => {
+        const response = await api.post('/api/student-management/import/process-chunk/', {
+            import_id: importId,
+            offset: offset,
+            chunk_size: chunkSize,
+        });
+        return response;
+    },
+
     // === Settings & Dropdowns (from student_settings) ===
     getIntakes: async () => {
         const response = await api.get('/api/settings/intakes/');

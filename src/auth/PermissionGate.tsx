@@ -14,6 +14,15 @@ import { usePermissions } from './PermissionProvider';
  *   fallback     – custom element to show instead of redirect when denied
  *   children     – content to render if authorized
  */
+interface PermissionGateProps {
+    module?: string;
+    permission?: string;
+    permissions?: string[];
+    requireAll?: boolean;
+    fallback?: React.ReactNode;
+    children: React.ReactNode;
+}
+
 const PermissionGate = ({
     module,
     permission,
@@ -21,7 +30,7 @@ const PermissionGate = ({
     requireAll = false,
     fallback,
     children,
-}) => {
+}: PermissionGateProps) => {
     const { loading, hasPermission, hasAnyPermission, hasAllPermissions, hasModuleAccess, isSuperuser } = usePermissions();
 
     if (loading) {

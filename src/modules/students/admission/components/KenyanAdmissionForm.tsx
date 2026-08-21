@@ -69,8 +69,10 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
     const [options, setOptions] = useState({
         intakes: [],
         curriculums: [],
+        curriculumLevels: [],
         classes: [],
-        campuses: []
+        campuses: [],
+        fees: []
     });
 
     const [formData, setFormData] = useState({
@@ -90,6 +92,7 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
         // Academic Info
         intake: '',
         curriculum: '',
+        curriculumLevel: '',
         applyingForGrade: '',
         campus: '',
         isTransfer: false,
@@ -147,21 +150,26 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const [intakes, curriculums, classes, campusesRes, yearsRes] = await Promise.all([
+                const [intakesRes, curriculumsRes, classesRes, campusesRes, feesRes, levelsRes] = await Promise.all([
                     studentManagementService.getIntakes(),
                     studentManagementService.getCurriculums(),
-                    studentManagementService.getClasses(),
+                    studentManagementService.getGrades(),
                     institutionService.getCampuses(),
-                    studentSettingsService.getAcademicYears(),
+                    studentManagementService.getFees(),
+                    api.get('/api/academics/curriculum-levels/')
                 ]);
+
                 setOptions({
-                    intakes: intakes.results || intakes,
-                    curriculums: curriculums.results || curriculums,
-                    classes: classes.results || classes,
-                    campuses: campusesRes.results || campusesRes || []
+                    intakes: intakesRes.results || intakesRes || [],
+                    curriculums: curriculumsRes.results || curriculumsRes || [],
+                    curriculumLevels: levelsRes.results || levelsRes || [],
+                    classes: classesRes.results || classesRes || [],
+                    campuses: campusesRes.results || campusesRes || [],
+                    fees: feesRes.results || feesRes || []
                 });
-                // Default intake to one from the current academic year
-                const allIntakes = intakes.results || intakes || [];
+                
+                const allIntakes = intakesRes.results || intakesRes || [];
+                const yearsRes = await studentSettingsService.getAcademicYears();
                 const allYears = yearsRes?.results || yearsRes || [];
                 const currentYear = allYears.find(y => y.is_current);
                 if (currentYear) {
@@ -576,6 +584,22 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
                             ))}
                         </select>
                     </InputField>
+                    <InputField label="Curriculum Level">
+                        <select
+                            name="curriculum_level"
+                            value={formData.curriculum_level}
+                            onChange={handleChange}
+                            style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
+                            className={`${inputClasses} cursor-pointer`}
+                        >
+                            <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Level...</option>
+                            {options.curriculumLevels
+                                .filter(level => !formData.curriculum || level.curriculum == formData.curriculum)
+                                .map(level => (
+                                    <option key={level.id} value={level.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>{level.name}</option>
+                                ))}
+                        </select>
+                    </InputField>
                     <InputField label="Applying For Class" required error={errors.applyingForGrade}>
                         <select
                             name="applyingForGrade"
@@ -587,6 +611,7 @@ const KenyanAdmissionForm = ({ onClose, onSuccess }) => {
                             <option value="" style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>Select Class...</option>
                             {options.classes
                                 .filter(c => !formData.curriculum || c.curriculum == formData.curriculum)
+                                .filter(c => !formData.curriculum_level || c.curriculum_level == formData.curriculum_level)
                                 .map(cls => (
                                     <option key={cls.id} value={cls.id} style={{ background: 'var(--card-bg)', color: 'var(--text-main)' }}>{cls.name}</option>
                                 ))}

@@ -14,6 +14,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
     const [subjects, setSubjects] = useState([]);
     const [assessmentTypes, setAssessmentTypes] = useState([]);
     const [classSessions, setClassSessions] = useState([]);
+    const [gradeSubjects, setGradeSubjects] = useState([]);
     const [examinations, setExaminations] = useState([]);
     const [gradingScales, setGradingScales] = useState([]);
     const [institutionProfile, setInstitutionProfile] = useState(null);
@@ -81,6 +82,12 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                 } else {
                     setContext(prev => ({ ...prev, classSession: '', examination: '' }));
                 }
+
+                // Fetch subject mappings for the selected grade
+                const mappingsRes = await api.timetable.getGradeSubjects({ grade: context.grade });
+                const mappings = mappingsRes.results || mappingsRes || [];
+                setGradeSubjects(mappings.map(m => m.subject));
+
             } catch {
                 setContext(prev => ({ ...prev, classSession: '', examination: '' }));
             }
@@ -163,8 +170,8 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
     });
 
     const filteredSubjects = subjects.filter(s => {
-        if (!activeCurriculum) return true;
-        return s.curriculum == activeCurriculum;
+        if (!context.grade) return true; // Show all if no grade selected
+        return gradeSubjects.includes(s.id);
     });
 
     const filteredAssessments = assessmentTypes.filter(a => {

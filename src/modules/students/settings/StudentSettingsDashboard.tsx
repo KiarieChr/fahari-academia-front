@@ -20,6 +20,7 @@ import CalendarTab from './components/tabs/CalendarTab';
 import IntakeTab from './components/tabs/IntakeTab';
 import SystemCommandsTab from './components/tabs/SystemCommandsTab';
 import AdmissionWorkflowTab from './components/tabs/AdmissionWorkflowTab';
+import GradingAssessmentSetup from './components/GradingAssessmentSetup';
 
 const StudentSettingsDashboard = () => {
   const [activeTab, setActiveTab] = useState('intakes');
@@ -29,6 +30,9 @@ const StudentSettingsDashboard = () => {
     { id: 'workflow',  label: 'Admission Workflow',   icon: GitBranch,  component: <AdmissionWorkflowTab /> },
     { id: 'rules',     label: 'Student Rules',        icon: Settings,   component: <StudentRulesTab /> },
     { id: 'calendar',  label: 'School Calendar',      icon: Calendar,   component: <CalendarTab /> },
+    { id: 'academic',  label: 'Academic Years',       icon: CalendarDays, component: <AcademicSetupTab /> },
+    { id: 'curriculum',label: 'Curriculum Setup',     icon: BookOpen,   component: <CurriculumSetupTab /> },
+    { id: 'grading',   label: 'Grading Scales',       icon: BookOpen,   component: <GradingAssessmentSetup /> },
     { id: 'system',    label: 'System Commands',      icon: Terminal,   component: <SystemCommandsTab /> },
   ];
 

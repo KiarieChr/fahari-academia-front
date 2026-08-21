@@ -81,15 +81,14 @@ const SessionStats = ({ analytics = null }) => {
     return (
         <div className="space-y-4">
             {/* Operational progress bar */}
-            <div className="bg-white border border-gray-100 rounded-2xl px-6 py-4
-                            shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+            <div className="neo-card px-6 py-4">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-gray-700">Today's Session Progress</span>
                     <span className="text-sm font-bold text-indigo-600 tabular-nums">
                         {fmt(completed)} <span className="font-normal text-gray-400">/ {fmt(total)} sessions</span>
                     </span>
                 </div>
-                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2.5 neo-pressed rounded-full overflow-hidden">
                     <div
                         className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-400
                                    transition-all duration-700"
@@ -110,16 +109,13 @@ const SessionStats = ({ analytics = null }) => {
                         return (
                             <div
                                 key={index}
-                                className="relative bg-white p-4 rounded-2xl border border-gray-100
-                                           shadow-[0_1px_3px_rgba(0,0,0,0.05)]
-                                           hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]
-                                           transition-all duration-200 group"
+                                className="relative neo-card p-4 transition-all duration-200 group hover:-translate-y-0.5"
                             >
                                 {/* top accent strip */}
                                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r
                                                 from-indigo-400 via-indigo-500 to-indigo-400 rounded-t-2xl" />
                                 <div className="flex justify-between items-start mb-3">
-                                    <div className={`p-2 rounded-lg ${c.bg} ${c.text} transition-transform
+                                    <div className={`p-2 rounded-lg neo-pressed ${c.text} transition-transform
                                                     duration-200 group-hover:scale-110`}>
                                         <kpi.icon size={18} />
                                     </div>
@@ -154,17 +150,16 @@ const SessionStats = ({ analytics = null }) => {
                 </div>
 
                 {/* Chart with period filter */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100
-                                shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                <div className="neo-card p-5">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-bold text-gray-900">Sessions by Grade</h3>
-                        <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+                        <div className="inline-flex neo-pressed rounded-lg p-0.5">
                             {['today', 'week', 'month'].map(p => (
                                 <button
                                     key={p}
                                     onClick={() => setChartPeriod(p)}
                                     className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${chartPeriod === p
-                                            ? 'bg-white text-indigo-700 shadow-sm border border-gray-100'
+                                            ? 'neo-btn neo-text-accent'
                                             : 'text-gray-500 hover:text-gray-700'
                                         }`}
                                 >

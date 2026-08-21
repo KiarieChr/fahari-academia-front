@@ -393,6 +393,15 @@ const LoginForm = () => {
           {isLoading ? <Loader2 className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> : (activeTab === 'login' ? 'Sign In' : 'Create Account')}
         </motion.button>
 
+        <motion.div variants={itemVariants} style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <p style={{ fontSize: '0.9rem', color: '#5c6bc0', margin: 0 }}>
+            New to Fahari?{' '}
+            <Link to="/create-institution" style={{ color: '#3f51b5', fontWeight: 700, textDecoration: 'none' }}>
+              Onboard your business to Fahari
+            </Link>
+          </p>
+        </motion.div>
+
         <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: '#9fa8da' }}>
           Powered by <a href="https://royalsoftwares.co.ke" target="_blank" rel="noopener noreferrer" style={{ color: '#3f51b5', textDecoration: 'none', fontWeight: 600 }}>Royal Software Solutions</a>
         </div>

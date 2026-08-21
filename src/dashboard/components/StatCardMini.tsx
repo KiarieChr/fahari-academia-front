@@ -170,12 +170,7 @@ const StatCardMini = ({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      style={{
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border-color-light)',
-        boxShadow: 'var(--shadow-card)',
-      }}
-      className="group relative flex flex-col justify-between p-4 pl-5 sm:p-5 sm:pl-6 rounded-[16px] sm:rounded-[20px] transition-all duration-300 h-full min-h-[95px] sm:min-h-[105px] overflow-hidden"
+      className="neo-card border-none group relative flex flex-col justify-between p-4 pl-5 sm:p-5 sm:pl-6 transition-all duration-300 h-full min-h-[95px] sm:min-h-[105px] overflow-hidden"
     >
       {/* Left accent border bar */}
       <div

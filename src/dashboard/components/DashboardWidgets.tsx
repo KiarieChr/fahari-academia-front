@@ -48,7 +48,7 @@ export const QuickActions = () => {
         { label: 'Record Payment', icon: CreditCard, color: '#fff3e0', textColor: '#f57c00', path: '/dashboard/fees/receipts' },
         { label: 'Take Attendance', icon: UserCheck, color: '#ffebee', textColor: '#d32f2f', path: '/dashboard/hr/staff-attendance' },
         { label: 'Schedule Exam', icon: Calendar, color: '#f3e5f5', textColor: '#7b1fa2', path: '/dashboard/academics' },
-        { label: 'Export Data', icon: Download, color: '#efebe9', textColor: '#5d4037', path: '/dashboard/settings' },
+        { label: 'Export Data', icon: Download, color: '#efebe9', textColor: '#5d4037', path: '/dashboard/general-settings' },
     ];
 
     return (

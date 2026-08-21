@@ -6,8 +6,10 @@ import {
 import { toast } from 'react-toastify';
 import { institutionService } from '../../../services/institutionService';
 
-const inputClass = 'w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none text-sm transition-all bg-gray-50/60 hover:bg-white focus:bg-white shadow-inner shadow-gray-100/50';
-const labelClass = 'text-[13px] font-semibold text-gray-600 block mb-2';
+const inputClass = 'w-full px-4 py-3 bg-gray-50/80 rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400';
+const labelClass = 'text-[13px] font-bold text-slate-600 block mb-2 tracking-wide ml-1';
+
+const neoCardClass = 'bg-[#f8f9fa] rounded-3xl shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] border border-white p-6 space-y-6';
 
 const INSTITUTION_TYPES = [
     { value: 'lower_primary', label: 'Lower Primary' },
@@ -218,10 +220,11 @@ const InstitutionProfile = () => {
             await institutionService.updateProfile(data);
             toast.success('Institution profile saved');
         } catch (error) {
-            console.error('Save failed:', error);
-            const msg = error.response?.data
-                ? Object.entries(error.response.data).map(([k, v]) => `${k}: ${v}`).join(', ')
-                : 'Failed to save profile';
+            console.error('Save failed:', error, error.data);
+            const errData = error.data || error.response?.data;
+            const msg = errData
+                ? Object.entries(errData).map(([k, v]) => `${k}: ${v}`).join(', ')
+                : error.message || 'Failed to save profile';
             toast.error(msg);
         } finally {
             setSaving(false);
@@ -243,52 +246,52 @@ const InstitutionProfile = () => {
     );
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-300">
+        <div className="space-y-8 animate-in fade-in duration-300 p-3">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-6 mb-2">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-900">Institution Profile</h2>
-                    <p className="text-gray-400 text-sm mt-1">Manage your school's identity, contacts, branding and document signing.</p>
+                    <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-indigo-800 drop-shadow-sm">Institution Profile</h2>
+                    <p className="text-slate-500 text-sm mt-2 font-medium">Manage your school's identity, contacts, branding and document signing.</p>
                 </div>
                 <button onClick={handleSave} disabled={saving}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200/50 transition-all disabled:opacity-50">
-                    {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                    className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-indigo-700 bg-[#f8f9fa] rounded-xl shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all disabled:opacity-50 border border-white">
+                    {saving ? <Loader2 size={18} className="animate-spin text-indigo-500" /> : <Save size={18} className="text-indigo-600" />}
                     {saving ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-2 pb-8">
                 {/* ── Left Column ── */}
-                <div className="space-y-6">
+                <div className="space-y-8">
 
                     {/* Logo & Branding */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-7 space-y-6">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <div className={neoCardClass}>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                             <Palette size={14} className="text-indigo-500" /> Branding
                         </h3>
                         <div className="text-center py-2">
-                            <div className="w-32 h-32 mx-auto rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50/80 hover:border-indigo-300 transition-colors">
+                            <div className="w-36 h-36 mx-auto rounded-3xl border border-white shadow-[inset_4px_4px_10px_#e5e7eb,inset_-4px_-4px_10px_#ffffff] flex items-center justify-center overflow-hidden bg-gray-50/50 transition-all duration-300 group">
                                 {logoPreview
-                                    ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-3" />
-                                    : <Building2 className="text-gray-300" size={44} />
+                                    ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                                    : <Building2 className="text-indigo-200 group-hover:text-indigo-400 transition-colors" size={48} />
                                 }
                             </div>
-                            <label className="mt-4 inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 cursor-pointer font-medium">
-                                <Upload size={14} /> Upload Logo
+                            <label className="mt-6 inline-flex items-center gap-2 text-sm text-indigo-600 cursor-pointer font-bold bg-[#f8f9fa] shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] active:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] px-5 py-2.5 rounded-xl transition-all border border-white">
+                                <Upload size={16} /> Upload Logo
                                 <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
                             </label>
-                            <p className="text-[11px] text-gray-400 mt-1.5">PNG or JPG, max 2MB</p>
+                            <p className="text-[11px] text-slate-400 mt-2 font-medium">PNG or JPG, max 2MB</p>
                         </div>
-                        <div className="space-y-4 pt-2 border-t border-gray-100">
+                        <div className="space-y-5 pt-4 border-t border-slate-100/50">
                             <div>
                                 <label className={labelClass}>Primary Color</label>
                                 <div className="flex items-center gap-3">
                                     <input type="color" value={profile.primary_color || '#4f46e5'}
                                         onChange={e => handleChange('primary_color', e.target.value)}
-                                        className="w-11 h-11 rounded-xl border border-gray-200 cursor-pointer p-0.5" />
+                                        className="w-12 h-12 rounded-xl border border-white shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] cursor-pointer p-1 bg-[#f8f9fa]" />
                                     <input type="text" value={profile.primary_color || '#4f46e5'}
                                         onChange={e => handleChange('primary_color', e.target.value)}
-                                        className={inputClass + ' flex-1'} />
+                                        className={inputClass + ' flex-1 font-mono uppercase text-slate-600'} />
                                 </div>
                             </div>
                             <div>
@@ -296,7 +299,7 @@ const InstitutionProfile = () => {
                                 <div className="flex items-center gap-3">
                                     <input type="color" value={profile.secondary_color || '#f59e0b'}
                                         onChange={e => handleChange('secondary_color', e.target.value)}
-                                        className="w-11 h-11 rounded-xl border border-gray-200 cursor-pointer p-0.5" />
+                                        className="w-12 h-12 rounded-xl border border-white shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] cursor-pointer p-1 bg-[#f8f9fa]" />
                                     <input type="text" value={profile.secondary_color || '#f59e0b'}
                                         onChange={e => handleChange('secondary_color', e.target.value)}
                                         className={inputClass + ' flex-1'} />
@@ -306,8 +309,8 @@ const InstitutionProfile = () => {
                     </div>
 
                     {/* ── Document Signing Card ── */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-7 space-y-6">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <div className={neoCardClass}>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
                             <PenTool size={14} className="text-indigo-500" /> Document Signing
                         </h3>
 
@@ -341,17 +344,17 @@ const InstitutionProfile = () => {
                             </div>
 
                             {signaturePreview ? (
-                                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 flex items-center justify-center">
-                                    <img src={signaturePreview} alt="Signature" className="max-h-20 object-contain" />
+                                <div className="rounded-2xl border border-white shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] bg-[#f8f9fa] p-4 flex items-center justify-center">
+                                    <img src={signaturePreview} alt="Signature" className="max-h-20 object-contain drop-shadow-sm opacity-80" />
                                 </div>
                             ) : (
                                 <>
                                     {/* Tabs */}
-                                    <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-semibold">
+                                    <div className="flex rounded-xl p-1 bg-[#f8f9fa] shadow-[inset_3px_3px_6px_#e5e7eb,inset_-3px_-3px_6px_#ffffff] overflow-hidden text-xs font-bold border border-white/50">
                                         {['draw', 'upload'].map(tab => (
                                             <button key={tab} type="button"
                                                 onClick={() => setSigTab(tab)}
-                                                className={`flex-1 py-2 capitalize transition-colors ${sigTab === tab ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+                                                className={`flex-1 py-2.5 rounded-lg capitalize transition-all ${sigTab === tab ? 'bg-white text-indigo-700 shadow-[2px_2px_5px_#e5e7eb,-2px_-2px_5px_#ffffff]' : 'text-slate-500 hover:text-slate-700'}`}>
                                                 {tab === 'draw' ? '✍️ Draw' : '⬆️ Upload'}
                                             </button>
                                         ))}
@@ -362,11 +365,11 @@ const InstitutionProfile = () => {
                                     )}
 
                                     {sigTab === 'upload' && (
-                                        <div>
-                                            <label className="flex flex-col items-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-6 cursor-pointer hover:border-indigo-300 transition-colors">
-                                                <Upload size={20} className="text-gray-400" />
-                                                <span className="text-sm text-gray-500">Click to upload signature image</span>
-                                                <span className="text-xs text-gray-400">PNG with transparent background recommended</span>
+                                        <div className="pt-2">
+                                            <label className="flex flex-col items-center gap-3 border border-white bg-[#f8f9fa] shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] rounded-2xl py-8 cursor-pointer hover:shadow-[inset_4px_4px_10px_#d1d5db,inset_-4px_-4px_10px_#ffffff] transition-all duration-300">
+                                                <Upload size={24} className="text-indigo-400 drop-shadow-sm" />
+                                                <span className="text-sm font-bold text-slate-500">Upload signature</span>
+                                                <span className="text-xs text-slate-400 font-medium">PNG with transparent background recommended</span>
                                                 <input type="file" accept="image/*" className="hidden" onChange={handleSignatureUpload} />
                                             </label>
                                         </div>
@@ -391,35 +394,38 @@ const InstitutionProfile = () => {
 
                             {stampPreview ? (
                                 <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-gray-50">
-                                        <img src={stampPreview} alt="Stamp" className="w-full h-full object-contain" />
+                                    <div className="w-20 h-20 rounded-full border border-white shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] overflow-hidden flex items-center justify-center bg-[#f8f9fa]">
+                                        <img src={stampPreview} alt="Stamp" className="w-full h-full object-contain p-2 opacity-80" />
                                     </div>
-                                    <div className="text-xs text-gray-400">
+                                    <div className="text-xs text-slate-400 font-medium">
                                         <p>Stamp preview</p>
                                         <p className="mt-1">PNG with transparent{'\n'}background works best</p>
                                     </div>
                                 </div>
                             ) : (
-                                <label className="flex flex-col items-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-5 cursor-pointer hover:border-indigo-300 transition-colors">
-                                    <Stamp size={20} className="text-gray-400" />
-                                    <span className="text-sm text-gray-500">Click to upload stamp image</span>
-                                    <span className="text-xs text-gray-400">PNG with transparent background recommended</span>
+                                <label className="flex flex-col items-center gap-3 border border-white bg-[#f8f9fa] shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] rounded-2xl py-8 cursor-pointer hover:shadow-[inset_4px_4px_10px_#d1d5db,inset_-4px_-4px_10px_#ffffff] transition-all duration-300">
+                                    <Stamp size={24} className="text-indigo-400 drop-shadow-sm" />
+                                    <span className="text-sm font-bold text-slate-500">Upload stamp image</span>
+                                    <span className="text-xs text-slate-400 font-medium">PNG with transparent background</span>
                                     <input type="file" accept="image/*" className="hidden" onChange={handleStampUpload} />
                                 </label>
                             )}
                         </div>
 
-                        <p className="text-[10px] text-gray-400 bg-gray-50 rounded-lg p-2 leading-relaxed">
-                            The signature and stamp will appear on all generated school letters (Admission Letter, Offer Letter, Registration Confirmation).
-                        </p>
+                        <div className="bg-transparent rounded-xl p-2 flex items-start gap-3">
+                            <PenTool size={16} className="text-indigo-400/70 mt-0.5" />
+                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                                The signature and stamp will appear on all generated school letters (Admission Letter, Offer Letter, Registration Confirmation).
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 {/* ── Right Column ── */}
-                <div className="lg:col-span-2 space-y-7">
+                <div className="lg:col-span-2 space-y-8 p-3">
                     {/* Basic Information */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-7">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-6">
+                    <div className={neoCardClass}>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-3">
                             <Building2 size={14} className="text-indigo-500" /> Basic Information
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -468,8 +474,8 @@ const InstitutionProfile = () => {
                     </div>
 
                     {/* Contact & Digital */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-7">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-6">
+                    <div className={neoCardClass}>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-8">
                             <Mail size={14} className="text-indigo-500" /> Contact & Digital
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -501,8 +507,8 @@ const InstitutionProfile = () => {
                     </div>
 
                     {/* Address */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-7">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-6">
+                    <div className={neoCardClass}>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-8">
                             <MapPin size={14} className="text-indigo-500" /> Address
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

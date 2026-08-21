@@ -468,7 +468,7 @@ export const api = {
     // ─── Academics (class sessions, grades, terms) ────────────────
     academics: {
         getActiveSessions: (params = {}) =>
-            api.get('/api/academics/sessions/', { params: { is_active: true, ...params } }),
+            api.get('/api/academics/class-sessions/', { params: { status: 'active', ...params } }),
         getClassSession: (id) =>
             api.get(`/api/academics/sessions/${id}/`),
         getTerms: (params = {}) =>

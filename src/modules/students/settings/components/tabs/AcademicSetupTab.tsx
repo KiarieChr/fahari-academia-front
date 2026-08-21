@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Calendar, CheckCircle, XCircle, Search, CalendarDays } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, CheckCircle, XCircle, Search, CalendarDays, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../../services/studentSettingsService';
 import DateInput from '../../../../../components/common/DateInput';
 import Modal from '../../../../../components/common/Modal';
 import { inputClass, labelClass } from '../../../../../components/ui/FormField';
 import NewAcademicYearModal from '../modals/NewAcademicYearModal';
+import { useAuth } from '../../../../../auth/AuthProvider';
 
 const AcademicSetupTab = () => {
     const [years, setYears] = useState([]);
@@ -13,6 +14,10 @@ const AcademicSetupTab = () => {
     const [loading, setLoading] = useState(true);
     const [selectedYearId, setSelectedYearId] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Auth context for permissions
+    const { user } = useAuth() as any;
+    const canSetCurrentTerm = user?.is_superuser || user?.role === 'admin' || user?.permissions?.includes('student_settings.can_set_current_term') || user?.permissions?.includes('can_set_current_term');
 
     // Modal states
     const [isYearModalOpen, setIsYearModalOpen] = useState(false);
@@ -119,6 +124,30 @@ const AcademicSetupTab = () => {
         }
     };
 
+    const handleAutoSyncTerms = async () => {
+        if (confirm('This will automatically calculate term statuses and set the current term based on today\'s date. Proceed?')) {
+            try {
+                const res = await studentSettingsService.autoSyncTerms();
+                toast.success(res.message || 'Auto-sync successful');
+                fetchData();
+            } catch (error) {
+                toast.error(error.response?.data?.detail || 'Failed to auto-sync terms');
+            }
+        }
+    };
+
+    const handleSetCurrentTerm = async (id) => {
+        if (confirm('Setting this term as current will deactivate all other terms across the entire system. Proceed?')) {
+            try {
+                await studentSettingsService.updateTerm(id, { is_current: true, status: 'active' });
+                toast.success('Current term updated successfully');
+                fetchData();
+            } catch (error) {
+                toast.error('Failed to set current term');
+            }
+        }
+    };
+
     // Filtering
     const filteredYears = years.filter(y => 
         y.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -206,7 +235,7 @@ const AcademicSetupTab = () => {
                                             </div>
                                         )}
                                     </div>
-                                    {!year.is_current && isSelected && (
+                                    {!year.is_current && isSelected && canSetCurrentTerm && (
                                         <div className="flex justify-end pt-2 border-t border-slate-100">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleSetActiveYear(year.id); }}
@@ -239,17 +268,29 @@ const AcademicSetupTab = () => {
                                 <p className="text-xs text-slate-400 font-medium mt-1">Manage academic terms and semesters for this year</p>
                             </div>
 
-                            <button
-                                onClick={() => {
-                                    setEditingTerm(null);
-                                    setTermFormData({ name: '', academic_year: activeYear.id, order: activeYearTerms.length + 1, start_date: '', end_date: '', is_current: false, status: 'active' });
-                                    setIsTermModalOpen(true);
-                                }}
-                                className="group flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition-all active:scale-95 text-xs font-bold border border-indigo-200"
-                            >
-                                <Plus size={14} className="group-hover:scale-110 transition-transform" />
-                                <span>Add Term</span>
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {canSetCurrentTerm && (
+                                    <button
+                                        onClick={handleAutoSyncTerms}
+                                        className="group flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all active:scale-95 text-xs font-bold border border-slate-200"
+                                        title="Auto-calculate active/closed status and set current term based on today's date"
+                                    >
+                                        <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                                        <span>Auto-Sync</span>
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => {
+                                        setEditingTerm(null);
+                                        setTermFormData({ name: '', academic_year: activeYear.id, order: activeYearTerms.length + 1, start_date: '', end_date: '', is_current: false, status: 'active' });
+                                        setIsTermModalOpen(true);
+                                    }}
+                                    className="group flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition-all active:scale-95 text-xs font-bold border border-indigo-200"
+                                >
+                                    <Plus size={14} className="group-hover:scale-110 transition-transform" />
+                                    <span>Add Term</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div className="p-6 flex-1 bg-white rounded-b-2xl">
@@ -304,6 +345,15 @@ const AcademicSetupTab = () => {
                                                     {term.status === 'active' ? <CheckCircle size={10} /> : <XCircle size={10} />}
                                                     {term.status}
                                                 </span>
+                                                
+                                                {!term.is_current && canSetCurrentTerm && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleSetCurrentTerm(term.id); }}
+                                                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded transition-colors"
+                                                    >
+                                                        Set as Current
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -374,18 +424,20 @@ const AcademicSetupTab = () => {
                                 />
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 pt-1">
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={termFormData.is_current}
-                                    onChange={e => setTermFormData({ ...termFormData, is_current: e.target.checked })}
-                                />
-                                <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                                <span className="ml-3 text-sm font-medium text-slate-700">Set as Current Term</span>
-                            </label>
-                        </div>
+                        {canSetCurrentTerm && (
+                            <div className="flex items-center gap-2 pt-1">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={termFormData.is_current}
+                                        onChange={e => setTermFormData({ ...termFormData, is_current: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                    <span className="ml-3 text-sm font-medium text-slate-700">Set as Current Term</span>
+                                </label>
+                            </div>
+                        )}
                     </form>
                 </Modal>
             )}

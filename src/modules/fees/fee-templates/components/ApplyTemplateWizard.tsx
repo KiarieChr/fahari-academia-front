@@ -154,10 +154,10 @@ const ApplyTemplateWizard = ({ isOpen, onClose, onSuccess, initialTemplate = nul
                                         <button
                                             key={tpl.id}
                                             onClick={() => setSelectedTemplate(tpl)}
-                                            className={`text-left p-4 border-2 rounded-xl transition-all ${
+                                            className={`text-left p-5 rounded-xl border transition-all duration-200 ${
                                                 selectedTemplate?.id === tpl.id
-                                                    ? 'border-indigo-500 bg-indigo-50'
-                                                    : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/40'
+                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.05)] ring-2 ring-indigo-500/20'
+                                                    : 'border-gray-200 bg-white shadow-[2px_2px_8px_rgba(0,0,0,0.04)] hover:border-indigo-300 hover:shadow-[4px_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5'
                                             }`}
                                         >
                                             <div className="flex items-start justify-between gap-2">
@@ -203,8 +203,11 @@ const ApplyTemplateWizard = ({ isOpen, onClose, onSuccess, initialTemplate = nul
                                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Academic Year *</label>
                                     <select
                                         value={selectedYear}
-                                        onChange={e => setSelectedYear(e.target.value)}
-                                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none"
+                                        onChange={e => {
+                                            setSelectedYear(e.target.value);
+                                            setSelectedTerm(''); // Reset term when year changes
+                                        }}
+                                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none shadow-sm transition-all"
                                     >
                                         <option value="">Select year...</option>
                                         {years.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
@@ -215,10 +218,13 @@ const ApplyTemplateWizard = ({ isOpen, onClose, onSuccess, initialTemplate = nul
                                     <select
                                         value={selectedTerm}
                                         onChange={e => setSelectedTerm(e.target.value)}
-                                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none"
+                                        disabled={!selectedYear}
+                                        className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none shadow-sm transition-all ${!selectedYear ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-gray-200 text-gray-800'}`}
                                     >
-                                        <option value="">Select term...</option>
-                                        {terms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                        <option value="">{selectedYear ? 'Select term...' : 'Select an academic year first'}</option>
+                                        {terms
+                                            .filter(t => !selectedYear || String(t.academic_year) === String(selectedYear))
+                                            .map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -231,22 +237,22 @@ const ApplyTemplateWizard = ({ isOpen, onClose, onSuccess, initialTemplate = nul
                                         {selectedClasses.length === classes.length ? 'Deselect All' : 'Select All'}
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-56 overflow-y-auto p-1">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-300">
                                     {classes.map(cls => (
                                         <button
                                             key={cls.id}
                                             onClick={() => toggleClass(cls.id)}
-                                            className={`text-left px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                                            className={`text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
                                                 selectedClasses.includes(cls.id)
-                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                                                    : 'border-gray-200 text-gray-700 hover:border-indigo-300'
+                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.05)] ring-2 ring-indigo-500/20'
+                                                    : 'border-gray-200 bg-white text-gray-700 shadow-[2px_2px_8px_rgba(0,0,0,0.04)] hover:border-indigo-300 hover:shadow-[4px_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5'
                                             }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <span className="truncate">{cls.name}</span>
-                                                {selectedClasses.includes(cls.id) && <CheckCircle size={14} className="text-indigo-600 flex-shrink-0 ml-1" />}
+                                                {selectedClasses.includes(cls.id) && <CheckCircle size={16} className="text-indigo-600 flex-shrink-0 ml-1" />}
                                             </div>
-                                            {cls.level && <span className="text-xs text-gray-400">{cls.level}</span>}
+                                            {cls.level && <span className="text-xs text-gray-400 mt-1 block">{cls.level}</span>}
                                         </button>
                                     ))}
                                 </div>
@@ -256,17 +262,27 @@ const ApplyTemplateWizard = ({ isOpen, onClose, onSuccess, initialTemplate = nul
                             </div>
 
                             {/* Options */}
-                            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                                <input
-                                    type="checkbox"
-                                    id="overwrite"
-                                    checked={overwriteExisting}
-                                    onChange={e => setOverwriteExisting(e.target.checked)}
-                                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                                />
-                                <label htmlFor="overwrite" className="text-sm text-amber-800 cursor-pointer">
-                                    <strong>Overwrite existing</strong> draft structures (leave unchecked to skip classes that already have structures)
-                                </label>
+                            <div
+                                onClick={() => setOverwriteExisting(!overwriteExisting)}
+                                className={`flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 ${
+                                    overwriteExisting
+                                        ? 'bg-amber-50 border border-amber-300 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.05)]'
+                                        : 'bg-white border border-gray-200 shadow-[2px_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[4px_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5'
+                                }`}
+                            >
+                                <div className="flex-shrink-0 mt-0.5">
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${
+                                        overwriteExisting ? 'bg-amber-500 text-white' : 'bg-gray-100 border border-gray-300'
+                                    }`}>
+                                        {overwriteExisting && <CheckCircle size={14} className="text-white" />}
+                                    </div>
+                                </div>
+                                <div className="text-sm">
+                                    <strong className={overwriteExisting ? 'text-amber-800' : 'text-gray-800'}>Overwrite existing draft structures</strong>
+                                    <p className={overwriteExisting ? 'text-amber-700/80 mt-0.5' : 'text-gray-500 mt-0.5'}>
+                                        Check to replace existing fee structures for the selected classes.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}

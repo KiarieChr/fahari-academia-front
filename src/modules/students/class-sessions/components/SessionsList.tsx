@@ -6,11 +6,11 @@ import AttendanceModal from './modals/AttendanceModal';
 
 // Map backend status values → display
 const STATUS_DISPLAY = {
-    planned: { label: 'Upcoming', css: 'bg-gray-100 text-gray-600 border-gray-200' },
-    in_progress: { label: 'Ongoing', css: 'bg-blue-50 text-blue-700 border-blue-200' },
-    completed: { label: 'Completed', css: 'bg-green-50 text-green-700 border-green-200' },
-    cancelled: { label: 'Cancelled', css: 'bg-red-50 text-red-600 border-red-200' },
-    missed: { label: 'Missed', css: 'bg-orange-50 text-orange-600 border-orange-200' },
+    planned: { label: 'Upcoming', css: 'neo-pressed text-gray-600 border-none' },
+    in_progress: { label: 'Ongoing', css: 'neo-pressed text-blue-700 border-none bg-blue-500/10' },
+    completed: { label: 'Completed', css: 'neo-pressed text-green-700 border-none bg-green-500/10' },
+    cancelled: { label: 'Cancelled', css: 'neo-pressed text-red-600 border-none bg-red-500/10' },
+    missed: { label: 'Missed', css: 'neo-pressed text-orange-600 border-none bg-orange-500/10' },
 };
 
 const formatTime = (t) => (t ? t.slice(0, 5) : '—');
@@ -53,7 +53,7 @@ const SessionsList = ({ todaySessions = [], onComplete, onCancel }) => {
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="neo-card overflow-hidden">
             {/* Header / Filters */}
             <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <h3 className="text-lg font-bold text-gray-900">
@@ -70,17 +70,17 @@ const SessionsList = ({ todaySessions = [], onComplete, onCancel }) => {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search sessions..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm
-                                       focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full pl-10 pr-4 py-2 neo-pressed border-none rounded-lg text-sm
+                                       focus:outline-none text-gray-700 bg-transparent"
                         />
                     </div>
                     <button
                         onClick={() => setIsFilterOpen(true)}
-                        className="px-3 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center gap-2 text-sm"
+                        className="px-3 py-2 neo-btn rounded-lg text-gray-600 flex items-center gap-2 text-sm"
                     >
                         <Filter size={16} /> Filter
                     </button>
-                    <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 neo-pressed rounded-lg px-3 py-2 text-sm text-gray-600">
                         <Calendar size={16} />
                         <span>Today</span>
                     </div>
@@ -142,17 +142,16 @@ const SessionsList = ({ todaySessions = [], onComplete, onCancel }) => {
                                                     <>
                                                         <button
                                                             onClick={() => handleOpenAttendance(session)}
-                                                            className="text-xs font-medium text-white bg-green-600 px-3 py-1.5
-                                                                       rounded-lg hover:bg-green-700 flex items-center gap-1 shadow-sm"
+                                                            className="text-xs font-medium text-white neo-btn-accent !bg-green-500 px-3 py-1.5
+                                                                       rounded-lg flex items-center gap-1"
                                                         >
                                                             <Users size={12} /> Attendance
                                                         </button>
                                                         <button
                                                             onClick={() => handleComplete(session.id)}
                                                             disabled={completing === session.id}
-                                                            className="text-xs font-medium text-white bg-indigo-600 px-3 py-1.5
-                                                                       rounded-lg hover:bg-indigo-700 flex items-center gap-1
-                                                                       shadow-sm disabled:opacity-50"
+                                                            className="text-xs font-medium text-white neo-btn-accent px-3 py-1.5
+                                                                       rounded-lg flex items-center gap-1 disabled:opacity-50"
                                                         >
                                                             {completing === session.id
                                                                 ? <Loader2 size={12} className="animate-spin" />
@@ -166,7 +165,7 @@ const SessionsList = ({ todaySessions = [], onComplete, onCancel }) => {
                                                         onClick={() => handleCancel(session.id)}
                                                         disabled={cancelling === session.id}
                                                         className="text-xs font-medium text-red-600 hover:text-red-800
-                                                                   px-2 py-1.5 rounded-lg hover:bg-red-50
+                                                                   px-2 py-1.5 rounded-lg neo-btn hover:!bg-red-50
                                                                    flex items-center gap-1 disabled:opacity-50"
                                                     >
                                                         {cancelling === session.id
@@ -175,7 +174,7 @@ const SessionsList = ({ todaySessions = [], onComplete, onCancel }) => {
                                                         Cancel
                                                     </button>
                                                 )}
-                                                <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                                                <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg neo-btn">
                                                     <MoreVertical size={16} />
                                                 </button>
                                             </div>

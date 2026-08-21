@@ -265,20 +265,22 @@ const ReceiptBookDashboard = () => {
 
     return (
         <DashboardLayout title="Receipt Book">
-            <div className="receipt-book-dashboard">
+            <div className="receipt-book-dashboard min-h-screen neo-bg p-3 relative">
                 {/* Header Section */}
-                <div className="receipt-section-header mb-4">
+                <div className="neo-card flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 p-3">
                     <div>
-                        <h4 className="mb-1">Receipt Book Dashboard</h4>
-                        <p className="text-muted mb-0">Manage all receipts: Student Fees, Non-Fees, Sponsors, and General Income</p>
+                        <h4 className="text-xl font-bold text-gray-700">Receipt Book Dashboard</h4>
+                        <p className="text-sm text-gray-500 font-bold mt-1">Manage all receipts: Student Fees, Non-Fees, Sponsors, and General Income</p>
                     </div>
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => setShowCreateModal(true)}
-                    >
-                        <Plus size={18} className="me-2" />
-                        Create Receipt
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            className="neo-btn neo-btn-accent px-4 py-2 flex items-center gap-2"
+                            onClick={() => setShowCreateModal(true)}
+                        >
+                            <Plus size={18} />
+                            Create Receipt
+                        </button>
+                    </div>
                 </div>
 
                 {/* Summary Cards */}

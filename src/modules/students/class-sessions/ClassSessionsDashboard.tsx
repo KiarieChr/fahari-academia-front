@@ -270,22 +270,20 @@ const ClassSessionsDashboard = () => {
 
     return (
         <DashboardLayout title="Class Sessions">
-            <div className="flex flex-col gap-5 px-1 py-2 pb-16 min-h-screen">
+            <div className="flex flex-col gap-5 px-1 py-2 pb-16 min-h-screen neo-bg">
 
                 {/* ── Page Header ───────────────────────────────────────── */}
                 <div className="relative overflow-hidden flex flex-col md:flex-row justify-between
                                 items-start md:items-center gap-6
-                                bg-gradient-to-br from-white via-white to-indigo-50/40
-                                border border-gray-100 rounded-2xl px-8 py-6
-                                shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                                neo-card px-8 py-6">
 
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-indigo-400 rounded-l-2xl" />
                     <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-50 rounded-full opacity-60 pointer-events-none" />
 
                     {/* Left: icon + breadcrumb + title */}
                     <div className="flex items-start gap-4 relative">
-                        <div className="flex-shrink-0 p-3 rounded-xl bg-indigo-600 shadow-[0_4px_14px_rgba(99,102,241,0.35)]">
-                            <BookOpen size={22} className="text-white" />
+                        <div className="flex-shrink-0 p-3 rounded-xl neo-pressed bg-indigo-50 flex items-center justify-center">
+                            <BookOpen size={22} className="text-indigo-600" />
                         </div>
                         <div className="flex flex-col gap-1">
                             <nav className="flex items-center gap-1.5 text-xs font-medium">
@@ -298,7 +296,7 @@ const ClassSessionsDashboard = () => {
                                 </span>
                             </nav>
                             <div className="flex items-center gap-3 mt-0.5">
-                                <h1 className="text-2xl font-extrabold text-gray-900 leading-tight tracking-tight">
+                                <h1 className="text-2xl font-extrabold neo-text-accent leading-tight tracking-tight">
                                     Class Sessions
                                 </h1>
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 rounded-full text-[0.68rem] font-bold text-green-700 uppercase tracking-wide">
@@ -317,21 +315,21 @@ const ClassSessionsDashboard = () => {
                         <button
                             onClick={refresh}
                             disabled={loading}
-                            className="group inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-600 bg-white text-sm font-medium rounded-xl hover:bg-gray-50 transition-all duration-150 active:scale-95 shadow-sm disabled:opacity-50"
+                            className="group inline-flex items-center gap-2 px-4 py-2.5 neo-btn text-sm font-medium rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50"
                         >
-                            <RefreshCcw size={15} className={loading ? 'animate-spin' : ''} />
+                            <RefreshCcw size={15} className={`text-indigo-600 ${loading ? 'animate-spin' : ''}`} />
                             Refresh
                         </button>
                         <button
                             onClick={() => setIsReportsModalOpen(true)}
-                            className="group inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-gray-600 bg-white text-sm font-medium rounded-xl hover:bg-gray-50 transition-all duration-150 active:scale-95 shadow-sm"
+                            className="group inline-flex items-center gap-2 px-4 py-2.5 neo-btn text-sm font-medium rounded-xl transition-all duration-150 active:scale-95"
                         >
-                            <Download size={15} />
+                            <Download size={15} className="text-indigo-600" />
                             Export
                         </button>
                         <button
                             onClick={() => setIsStartSessionOpen(true)}
-                            className="group inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            className="group inline-flex items-center gap-2 px-5 py-2.5 neo-btn-accent text-white text-sm font-semibold rounded-xl transition-all duration-150 active:scale-95 focus:outline-none"
                         >
                             <Plus size={16} className="transition-transform duration-150 group-hover:rotate-90" />
                             Start Session
@@ -340,8 +338,8 @@ const ClassSessionsDashboard = () => {
                 </div>
 
                 {/* ── Pill Tab Navigation ────────────────────────────────── */}
-                <div className="bg-white border border-gray-100 rounded-2xl px-6 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-                    <div className="inline-flex items-center gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto hide-scrollbar w-full md:w-auto">
+                <div className="neo-card px-6 py-4">
+                    <div className="inline-flex items-center gap-1 neo-pressed rounded-xl p-1 overflow-x-auto hide-scrollbar w-full md:w-auto">
                         {tabs.map((tab) => {
                             const isActive = activeTab === tab.id;
                             return (
@@ -349,18 +347,15 @@ const ClassSessionsDashboard = () => {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={[
-                                        'relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium',
-                                        'whitespace-nowrap transition-all duration-200 select-none',
+                                        'relative flex items-center gap-2 px-4 py-2 text-sm font-medium',
+                                        'whitespace-nowrap transition-all duration-200 select-none rounded-lg',
                                         isActive
-                                            ? 'bg-white text-indigo-700 font-semibold shadow-sm shadow-gray-200 border border-gray-100'
-                                            : 'text-gray-500 hover:text-gray-800 hover:bg-white/60',
+                                            ? 'neo-btn neo-text-accent'
+                                            : 'text-gray-500 hover:text-gray-800',
                                     ].join(' ')}
                                 >
                                     <tab.icon size={15} className={`transition-all duration-200 flex-shrink-0 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
                                     {tab.label}
-                                    {isActive && (
-                                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white" />
-                                    )}
                                 </button>
                             );
                         })}
@@ -379,15 +374,15 @@ const ClassSessionsDashboard = () => {
                     {activeTab === 'overview' && (
                         <>
                             {/* Quick Actions */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {quickActions.map((qa, i) => (
                                     <button
                                         key={i}
                                         onClick={qa.onClick}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-95 shadow-sm text-left ${qa.style}`}
+                                        className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-all duration-150 active:scale-95 text-left ${i === 0 ? 'neo-btn-accent rounded-xl text-white' : 'neo-btn rounded-xl text-gray-700'}`}
                                     >
-                                        <div className={`p-1.5 rounded-lg ${i === 0 ? 'bg-white/20' : 'bg-gray-100'}`}>
-                                            <qa.icon size={16} className={qa.iconStyle} />
+                                        <div className={`p-2 flex items-center justify-center rounded-lg ${i === 0 ? 'bg-white/20' : 'neo-pressed'}`}>
+                                            <qa.icon size={16} className={i === 0 ? 'text-white' : 'text-indigo-600'} />
                                         </div>
                                         {qa.label}
                                     </button>
@@ -451,11 +446,11 @@ const ClassSessionsDashboard = () => {
                     {/* ── REPORTS ── */}
                     {activeTab === 'reports' && (
                         <>
-                            <div className="bg-white border border-gray-100 rounded-2xl px-8 py-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                            <div className="neo-card px-8 py-6">
                                 <div className="flex items-center justify-between mb-5">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2.5 rounded-xl bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.3)]">
-                                            <BarChart3 size={18} className="text-white" />
+                                        <div className="p-3 rounded-xl neo-pressed bg-indigo-50 flex items-center justify-center">
+                                            <BarChart3 size={20} className="text-indigo-600" />
                                         </div>
                                         <div>
                                             <h3 className="text-base font-bold text-gray-900">Session Reports &amp; Analytics</h3>
@@ -464,15 +459,15 @@ const ClassSessionsDashboard = () => {
                                     </div>
                                     <button
                                         onClick={() => setIsReportsModalOpen(true)}
-                                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all active:scale-95"
+                                        className="inline-flex items-center gap-2 px-4 py-2.5 neo-btn text-sm font-semibold rounded-xl transition-all active:scale-95"
                                     >
-                                        <FileText size={14} /> Full Report
+                                        <FileText size={14} className="text-indigo-600" /> Full Report
                                     </button>
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {reportMetrics.map((m, i) => (
-                                        <div key={i} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                        <div key={i} className="neo-pressed rounded-xl p-4 border border-transparent">
                                             <div className={`inline-flex px-2 py-0.5 rounded-md text-xs font-bold mb-2 ${m.bg} ${m.color}`}>{m.label}</div>
                                             <p className={`text-2xl font-extrabold tabular-nums ${m.color}`}>{m.value}</p>
                                             <p className="text-xs text-gray-400 mt-0.5">{m.sub}</p>
