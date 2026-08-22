@@ -1,0 +1,1 @@
+import{j as e}from"./ui-vMFa3nTH.js";import"./vendor-BDwHIWx6.js";const t=()=>e.jsxs("div",{className:"p-6",children:[e.jsx("h1",{className:"text-2xl font-bold mb-4",children:"My Profile"}),e.jsx("p",{className:"text-gray-600",children:"Placeholder for student profile."})]});export{t as default};

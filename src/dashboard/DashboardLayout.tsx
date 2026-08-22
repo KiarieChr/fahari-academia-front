@@ -857,7 +857,7 @@ const DashboardLayout = ({ children, title }) => {
                                     key={opt.label}
                                     onClick={() => { setIsDarkMode(opt.val); document.documentElement.classList.toggle('dark-mode', opt.val); }}
                                     style={{
-                                        flex: 1, padding: '10px 8px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                                        flex: 1, padding: '10px 8px', borderRadius: '10px', cursor: 'pointer',
                                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
                                         fontSize: '0.72rem', fontWeight: 600,
                                         transition: 'all 0.2s',
