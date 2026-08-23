@@ -226,8 +226,8 @@ const CreateInstitutionWizard: React.FC = () => {
                         {step === 1 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                                 <h3 className="text-lg sm:text-xl font-semibold leading-6 text-blue-500 flex items-center mb-2">
-                                    <Building2 className="mr-3 h-5 w-5 sm:h-6 sm:w-6 text-indigo-500" />
-                                    Basic Information
+                                    <Building2 className="mr-4 h-5 w-5 sm:h-6 sm:w-6 text-indigo-500" />
+                                   <b className="pl-2">Basic Information</b>
                                 </h3>
                                 <div className="grid grid-cols-1 gap-2">
                                     <div>
@@ -241,10 +241,10 @@ const CreateInstitutionWizard: React.FC = () => {
                                                 placeholder="e.g. prosperschool"
                                             />
                                             <div className="absolute inset-y-0 right-0 pr-3 sm:pr-4 flex items-center pointer-events-none text-gray-450 text-sm sm:text-base">
-                                                .faharicloud.com
+                                                .royalsoftwares.co.ke
                                             </div>
                                         </div>
-                                        <p className="mt-2 text-xs text-gray-400">Only alphanumeric characters and underscores.</p>
+                                        <p className="mt-2 text-xs text-red-400">Only alphanumeric characters and <b>underscores</b>.</p>
                                     </div>
                                     <div>
                                         <label className={labelClasses}>Business / Institution Name</label>
@@ -323,7 +323,7 @@ const CreateInstitutionWizard: React.FC = () => {
                                     Enable Modules
                                 </h3>
                                 <p className="text-sm text-gray-500 mb-6">Select the features you want to activate for your business ecosystem.</p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4">
                                     {AVAILABLE_MODULES.map(module => (
                                         <label key={module.id} className="flex items-center p-3 sm:p-4 bg-[#e0e5ec] rounded-xl cursor-pointer transition-all shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff]">
                                             <div className="relative flex items-center justify-center">
@@ -331,9 +331,9 @@ const CreateInstitutionWizard: React.FC = () => {
                                                     type="checkbox"
                                                     checked={formData.institution_profile.enabled_modules.includes(module.id)}
                                                     onChange={() => handleModuleToggle(module.id)}
-                                                    className="peer h-5 w-5 sm:h-6 sm:w-6 appearance-none rounded-md shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff] focus:outline-none checked:bg-[#e0e5ec] transition-all cursor-pointer"
+                                                    className="h-5 w-5 sm:h-6 sm:w-6 appearance-none rounded-md shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff] focus:outline-none checked:bg-[#e0e5ec] transition-all cursor-pointer"
                                                 />
-                                                <CheckCircle className="absolute w-3 h-3 sm:w-4 sm:h-4 text-indigo-500 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" strokeWidth={3} />
+                                                <CheckCircle className={`absolute w-3 h-3 sm:w-4 sm:h-4 text-indigo-500 pointer-events-none transition-opacity ${formData.institution_profile.enabled_modules.includes(module.id) ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
                                             </div>
                                             <span className="ml-3 sm:ml-4 text-sm font-medium text-gray-700">{module.label}</span>
                                         </label>
@@ -456,11 +456,11 @@ const CreateInstitutionWizard: React.FC = () => {
                                                 <div className="relative flex items-center justify-center mr-4 shrink-0">
                                                     <input 
                                                         type="checkbox" 
-                                                        className="peer h-6 w-6 appearance-none rounded-md shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff] focus:outline-none checked:bg-[#e0e5ec] transition-all cursor-pointer"
+                                                        className="h-6 w-6 appearance-none rounded-md shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff] focus:outline-none checked:bg-[#e0e5ec] transition-all cursor-pointer"
                                                         checked={recaptchaVerified}
                                                         onChange={(e) => setRecaptchaVerified(e.target.checked)}
                                                     />
-                                                    <CheckCircle className="absolute w-4 h-4 text-green-500 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" strokeWidth={3} />
+                                                    <CheckCircle className={`absolute w-4 h-4 text-green-500 pointer-events-none transition-opacity ${recaptchaVerified ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
                                                 </div>
                                                 <span className="text-sm text-gray-600 font-medium">I am human (reCAPTCHA)</span>
                                             </div>
