@@ -18,7 +18,12 @@
 import axios from 'axios';
 
 // Base API instance - reuse from main api.js or create dedicated one
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const getDynamicApiUrl = () => {
+    const isLocalDevServer = window.location.port === '5173' || window.location.port === '3000';
+    if (isLocalDevServer) return `${window.location.protocol}//${window.location.hostname}:8000`;
+    return import.meta.env.VITE_API_URL || '';
+};
+const API_BASE = getDynamicApiUrl();
 
 const apiClient = axios.create({
     baseURL: API_BASE,

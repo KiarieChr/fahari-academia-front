@@ -1,9 +1,8 @@
 const getApiUrl = () => {
-    // For local development with multi-tenancy, dynamically point to the correct tenant's backend port 8000
-    if (window.location.hostname.includes('localhost')) {
-        return `http://${window.location.hostname}:8000`;
+    const isLocalDevServer = window.location.port === '5173' || window.location.port === '3000';
+    if (isLocalDevServer) {
+        return `${window.location.protocol}//${window.location.hostname}:8000`;
     }
-    // Fallback to env variable for production
     return import.meta.env.VITE_API_URL || '';
 };
 

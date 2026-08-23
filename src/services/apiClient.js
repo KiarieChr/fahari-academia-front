@@ -1,7 +1,15 @@
 // Enhanced API Client with Session Management
 // Features: Auto-logout, session expiry detection, retry, caching
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const getDynamicApiUrl = () => {
+    const isLocalDevServer = window.location.port === '5173' || window.location.port === '3000';
+    if (isLocalDevServer) {
+        return `${window.location.protocol}//${window.location.hostname}:8000`;
+    }
+    return import.meta.env.VITE_API_URL || '';
+};
+
+const API_URL = getDynamicApiUrl();
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
 const USER_KEY = import.meta.env.VITE_USER_KEY || 'academia-user';
 

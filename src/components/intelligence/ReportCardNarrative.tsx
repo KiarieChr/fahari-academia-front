@@ -32,7 +32,8 @@ const ReportCardNarrative = () => {
 
         try {
             const token = localStorage.getItem(import.meta.env.VITE_TOKEN_KEY || 'academia-token') || localStorage.getItem('token');
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const isLocalDevServer = window.location.port === '5173' || window.location.port === '3000';
+            const API_URL = isLocalDevServer ? `${window.location.protocol}//${window.location.hostname}:8000` : (import.meta.env.VITE_API_URL || '');
             
             const response = await fetch(`${API_URL}/api/intelligence/report-card-narrative/`, {
                 method: 'POST',
