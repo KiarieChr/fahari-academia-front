@@ -89,7 +89,7 @@ const OffcanvasChat: React.FC<OffcanvasChatProps> = ({ isOpen, onClose }) => {
         try {
             const token = localStorage.getItem(import.meta.env.VITE_TOKEN_KEY || 'academia-token') || localStorage.getItem('token');
             const isLocalDevServer = window.location.port === '5173' || window.location.port === '3000';
-            const apiUrl = isLocalDevServer ? `${window.location.protocol}//${window.location.hostname}:8000` : (import.meta.env.VITE_API_URL || '');
+            const apiUrl = import.meta.env.PROD ? '' : (isLocalDevServer ? `${window.location.protocol}//${window.location.hostname}:8000` : (import.meta.env.VITE_API_URL || ''));
             
             const response = await fetch(`${apiUrl}/api/intelligence/ask/`, {
                 method: 'POST',

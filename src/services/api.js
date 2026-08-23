@@ -1,4 +1,6 @@
 const getApiUrl = () => {
+    if (import.meta.env.PROD) return ''; // Always use relative paths in production
+    
     const isLocalDevServer = window.location.port === '5173' || window.location.port === '3000';
     if (isLocalDevServer) {
         return `${window.location.protocol}//${window.location.hostname}:8000`;
