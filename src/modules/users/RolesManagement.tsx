@@ -27,6 +27,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { rolesService } from './services/rolesService';
 import { userService } from '../../services/userService';
 import { toast } from 'react-toastify';
+import PageLoader from '../../components/common/PageLoader';
 
 const RolesManagement = () => {
     const { user } = useAuth();
@@ -241,16 +242,7 @@ const RolesManagement = () => {
     });
 
     if (loading) {
-        return (
-            <div className="d-flex justify-content-center align-items-center vh-100">
-                <div className="text-center">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-3">Loading Roles & Permissions...</p>
-                </div>
-            </div>
-        );
+        return <PageLoader message="Loading Roles & Permissions..." />;
     }
 
     return (

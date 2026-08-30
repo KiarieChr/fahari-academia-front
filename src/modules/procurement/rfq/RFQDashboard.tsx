@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import { Plus, RefreshCcw, Send, Eye, Award, X, Copy, ExternalLink } from 'lucide-react';
 import procurementApi from '../../../services/procurementApiService';
+import ContentLoader from '../../../components/common/ContentLoader';
 import { toast } from 'react-toastify';
 
 const statusColors = {
@@ -140,7 +141,7 @@ const RFQDashboard = ({ noLayout = false }) => {
                                 </thead>
                                 <tbody className="divide-y text-sm">
                                     {loading ? (
-                                        <tr><td colSpan="6" className="p-8 text-center text-gray-400">Loading...</td></tr>
+                                        <tr><td colSpan="6" className="p-8"><div className="flex justify-center"><ContentLoader size="md" message="Loading..." /></div></td></tr>
                                     ) : rfqs.length === 0 ? (
                                         <tr><td colSpan="6" className="p-8 text-center text-gray-400">No RFQs found</td></tr>
                                     ) : rfqs.map(rfq => (

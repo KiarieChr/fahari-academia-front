@@ -3,6 +3,7 @@ import DashboardLayout from '../../dashboard/DashboardLayout';
 import { Layers, Save, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { toast } from 'react-toastify';
 import institutionService from '../../services/institutionService';
+import ContentLoader from '../../components/common/ContentLoader';
 
 const AVAILABLE_MODULES = [
     { id: 'academics', title: 'Academics & Grading', desc: 'Manage terms, exams, and grading' },
@@ -14,6 +15,7 @@ const AVAILABLE_MODULES = [
     { id: 'inventory', title: 'Inventory', desc: 'Stock management and requisitions' },
     { id: 'timetable', title: 'Timetabling', desc: 'Class scheduling and lesson tracking' },
     { id: 'communication', title: 'Communication (CRM)', desc: 'SMS, Emails, and messaging' },
+    { id: 'fleet', title: 'Fleet Management', desc: 'Vehicles, live tracking, trips and fuel logs' },
 ];
 
 const SystemModulesPage = () => {
@@ -59,21 +61,21 @@ const SystemModulesPage = () => {
 
     if (loading) {
         return (
-            <DashboardLayout>
+            <DashboardLayout title="System Modules">
                 <div className="flex justify-center items-center h-full min-h-[500px]">
-                    <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <ContentLoader size="lg" message="Loading modules..." />
                 </div>
             </DashboardLayout>
         );
     }
 
     return (
-        <DashboardLayout>
-            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
-                <div className="bg-[#f8f9fa] rounded-[30px] border border-white shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] p-8 space-y-8">
+        <DashboardLayout title="System Modules">
+           <div className="max-w-7xl mx-auto py-5 px-4 sm:px-3 lg:px-5 animate-in fade-in duration-300">
+                <div className="bg-[#f8f9fa] rounded-[30px] border border-white shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] p-5 space-y-8">
                     
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white shadow-[0_2px_5px_#e5e7eb] pb-6 mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white neo-card pb-3 px-3 py-2 mb-3">
                         <div>
                             <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-3 drop-shadow-sm">
                                 <Layers className="text-indigo-600" size={28} />
@@ -87,7 +89,7 @@ const SystemModulesPage = () => {
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#f8f9fa] text-indigo-700 rounded-xl text-sm font-extrabold tracking-wider cursor-pointer shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-white disabled:opacity-50"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#f8f9fa] text-indigo-700 rounded-xl text-sm font-extrabold tracking-wider cursor-pointer neo-btn hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-white disabled:opacity-50"
                         >
                             <Save size={18} /> {saving ? 'Saving...' : 'Save Configuration'}
                         </button>

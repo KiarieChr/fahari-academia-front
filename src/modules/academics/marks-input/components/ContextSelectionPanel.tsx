@@ -5,6 +5,7 @@ import studentSettingsService from '../../../../services/studentSettingsService'
 import { curriculumService } from '../../../../services/curriculumService';
 import { examService } from '../../../../services/examService';
 import { institutionService } from '../../../../services/institutionService';
+import { api } from '../../../../services/apiClient';
 
 const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
     const [academicYears, setAcademicYears] = useState([]);
@@ -193,8 +194,9 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
     };
 
     return (
-        <div className="bg-transparent border-b border-slate-200 dark:border-slate-700 relative z-20 transition-all duration-300">
-            <div className="max-w-[1600px] mx-auto p-4">
+        <div className="bg-transparent relative z-20 transition-all duration-300">
+            <div className="max-w-[1600px] mx-auto p-4 pt-6">
+                <div className="neo-card border-none p-6">
                 {isCollapsed && isReady ? (
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
@@ -222,7 +224,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Year</label>
                                 <select
-                                    className="w-full pl-2 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm font-medium focus:outline-none bg-transparent text-slate-700"
                                     value={context.academicYear}
                                     onChange={e => handleChange('academicYear', e.target.value)}
                                 >
@@ -237,7 +239,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Term</label>
                                 <select
-                                    className="w-full pl-2 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm font-medium focus:outline-none bg-transparent text-slate-700"
                                     value={context.term}
                                     onChange={e => handleChange('term', e.target.value)}
                                 >
@@ -254,7 +256,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Class</label>
                                 <select
-                                    className="w-full pl-2 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm font-medium focus:outline-none bg-transparent text-slate-700"
                                     value={context.grade}
                                     onChange={e => handleChange('grade', e.target.value)}
                                 >
@@ -269,7 +271,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Stream</label>
                                 <select
-                                    className="w-full pl-2 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm font-medium focus:outline-none bg-transparent text-slate-700"
                                     value={context.stream}
                                     onChange={e => handleChange('stream', e.target.value)}
                                 >
@@ -286,7 +288,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Subject</label>
                                 <select
-                                    className="w-full pl-2 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm font-medium focus:outline-none bg-transparent text-slate-700"
                                     value={context.subject}
                                     onChange={e => handleChange('subject', e.target.value)}
                                     title={!context.grade ? 'Select a Class first' : ''}
@@ -302,7 +304,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Assessment</label>
                                 <select
-                                    className="w-full pl-2 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm font-medium focus:outline-none bg-transparent text-slate-700"
                                     value={context.assessmentType}
                                     onChange={e => handleChange('assessmentType', e.target.value)}
                                 >
@@ -338,6 +340,7 @@ const ContextSelectionPanel = ({ context, setContext, maxMark = 100 }) => {
                         </div>
                     </div>
                 )}
+                </div>
             </div>
         </div>
     );

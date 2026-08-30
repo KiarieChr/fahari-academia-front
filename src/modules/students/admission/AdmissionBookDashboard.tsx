@@ -29,17 +29,13 @@ const AdmissionBookDashboard = () => {
                 onNewApplicant={() => setShowNewAppModal(true)}
                 onImport={() => setShowImportModal(true)}
             >
-                <div className="flex flex-col gap-6 px-4 md:px-8 py-6 pb-20 min-h-screen">
+                <div className="flex flex-col neo-bg gap-6 py-5 pb-20 min-h-screen" style={{paddingInline:'30px'}}>
 
                     {/* ── Page Header ─────────────────────────────────────────── */}
                     {isOverview && (
                         <div
-                            style={{
-                                background: 'var(--card-bg)',
-                                borderColor: 'var(--border-color-light)',
-                                boxShadow: 'var(--shadow-card)',
-                            }}
-                            className="relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border rounded-[32px] px-3 py-2"
+                           
+                            className="neo-card border-none relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border rounded-[32px] px-3 py-2"
                         >
                             {/* Decorative background accents */}
                             <div
@@ -70,18 +66,18 @@ const AdmissionBookDashboard = () => {
 
                                 <div className="flex flex-col gap-3">
                                     {/* Breadcrumb */}
-                                    <nav className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                        <Home size={12} className="text-slate-300" />
-                                        <ChevronRight size={10} className="text-slate-200" />
+                                    <nav className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                                        <Home size={12} className="text-blue-300" />
+                                        <ChevronRight size={10} className="text-blue-200" />
                                         <span
                                             className="hover:text-indigo-600 transition-colors cursor-pointer"
                                             style={{ color: 'var(--text-secondary)' }}
                                         >
                                             Admissions
                                         </span>
-                                        <ChevronRight size={10} className="text-slate-200" />
+                                        <ChevronRight size={10} className="text-blue-200" />
                                         <span
-                                            className="font-black px-2 py-0.5 rounded-md"
+                                            className="font-black px-2 py-1 rounded-md"
                                             style={{ color: 'var(--primary-color)', background: 'var(--primary-light)' }}
                                         >
                                             Register
@@ -97,7 +93,7 @@ const AdmissionBookDashboard = () => {
                                             Admission Book
                                         </h1>
                                         {/* Live status badge */}
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-100/60 rounded-full text-[9px] font-black text-emerald-600 uppercase tracking-widest shadow-sm">
+                                        <div className="neo-btn inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black text-emerald-600 uppercase tracking-widest">
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                                             Active Cycle
                                         </div>
@@ -114,21 +110,25 @@ const AdmissionBookDashboard = () => {
 
                             {/* Right: action buttons */}
                             <div className="flex items-center gap-4 flex-shrink-0 relative z-10 mt-4 md:mt-0">
-                                <Button variant="outline" icon={Download}>
-                                    <span className="hidden sm:inline">Export</span>
-                                </Button>
-                                <Button variant="secondary" icon={Upload} onClick={() => setShowImportModal(true)}>
-                                    <span className="hidden sm:inline">Import</span>
-                                </Button>
+
+                                <button className='neo-btn px-3 py-2 '>
+                                    <Download size={16} />
+                                    <span>Download</span>
+                                </button>
+
+                                <button className='neo-btn px-3 py-2' onClick={()=>setShowImportModal(true)}>
+                                    <Upload size={16}/>
+                                    <span>Import</span>
+                                </button>
+
+                                
+                                
                                 <div className="w-px h-8 bg-slate-100 mx-2 hidden sm:block" />
-                                <Button
-                                    variant="primary"
-                                    icon={ArrowUpRight}
-                                    iconPosition="right"
-                                    onClick={() => setShowNewAppModal(true)}
-                                >
-                                    New Applicant
-                                </Button>
+                                <button onClick={() => setShowNewAppModal(true)} className='px-3 py-2 btn-primary neo-btn '>
+                                    <ArrowUpRight size={16}/>
+                                    <span>New Applicant</span>
+                                </button>
+                               
                             </div>
                         </div>
                     )}

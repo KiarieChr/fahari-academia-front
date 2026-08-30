@@ -12,6 +12,7 @@ const TermSetup = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTerm, setEditingTerm] = useState(null);
+    const [showAllTerms, setShowAllTerms] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         academic_year: '',
@@ -89,19 +90,30 @@ const TermSetup = () => {
                     <h3 className="text-xl font-bold text-gray-900">Academic Terms</h3>
                     <p className="text-sm text-gray-500">Configure terms/semesters for each academic year</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingTerm(null);
-                        setFormData({ name: '', academic_year: years[0]?.id || '', order: terms.length + 1, start_date: '', end_date: '', is_current: false, status: 'active' });
-                        setIsModalOpen(true);
-                    }}
-                    className="btn btn-primary px-4 py-2 d-flex align-items-center gap-2 rounded-pill shadow-sm"
-                >
-                    <Plus size={18} /> Add Term
-                </button>
+                <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors">
+                        <input 
+                            type="checkbox" 
+                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            checked={showAllTerms}
+                            onChange={(e) => setShowAllTerms(e.target.checked)}
+                        />
+                        <span className="text-sm font-semibold text-gray-600">Show all terms</span>
+                    </label>
+                    <button
+                        onClick={() => {
+                            setEditingTerm(null);
+                            setFormData({ name: '', academic_year: years[0]?.id || '', order: terms.length + 1, start_date: '', end_date: '', is_current: false, status: 'active' });
+                            setIsModalOpen(true);
+                        }}
+                        className="btn btn-primary px-4 py-2 d-flex align-items-center gap-2 rounded-pill shadow-sm"
+                    >
+                        <Plus size={18} /> Add Term
+                    </button>
+                </div>
             </div>
 
-            {terms.length === 0 ? (
+            {terms.filter(t => showAllTerms || t.status === 'active').length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                     <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                     <p className="text-gray-500">No terms configured yet.</p>
@@ -119,7 +131,7 @@ const TermSetup = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {terms.map((term) => (
+                            {terms.filter(t => showAllTerms || t.status === 'active').map((term) => (
                                 <tr
                                     key={term.id}
                                     className={`hover:bg-gray-50/50 transition-colors ${term.is_current ? 'bg-indigo-50/60 border-l-4 border-indigo-500' : ''}`}

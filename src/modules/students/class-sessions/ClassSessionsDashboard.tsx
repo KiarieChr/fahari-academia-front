@@ -84,9 +84,9 @@ const TodaysSessionsPanel = ({ todayPlanned = [], todaySessions = [], loading = 
     };
 
     return (
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+        <div className="neo-card mt-4 mb-3 mx-2 shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
             {/* Panel header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-2 py-2 border-b border-gray-100 m-2 ">
                 <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.3)]">
                         <Activity size={16} className="text-white" />
@@ -100,14 +100,14 @@ const TodaysSessionsPanel = ({ todayPlanned = [], todaySessions = [], loading = 
                 </div>
                 <div className="flex items-center gap-2">
                     {!loading && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
                             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                             Live
                         </span>
                     )}
                     <button
                         onClick={onStartSession}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-150 active:scale-95 shadow-sm shadow-indigo-200"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-150 active:scale-95 shadow-sm shadow-indigo-200"
                     >
                         <Plus size={13} /> New Session
                     </button>
@@ -121,7 +121,7 @@ const TodaysSessionsPanel = ({ todayPlanned = [], todaySessions = [], loading = 
                     <span className="ml-2 text-sm text-gray-400">Loading today's sessions…</span>
                 </div>
             ) : timeSlotGroups.length === 0 ? (
-                <div className="px-6 py-10 text-center">
+                <div className="px-3 py-8 text-center">
                     <p className="text-sm text-gray-400">No lessons planned for today.</p>
                     <button onClick={onStartSession} className="mt-3 text-xs text-indigo-600 font-semibold hover:underline">Start an ad-hoc session</button>
                 </div>
@@ -184,7 +184,7 @@ const TodaysSessionsPanel = ({ todayPlanned = [], todaySessions = [], loading = 
 
             {/* Footer progress */}
             {!loading && totalCount > 0 && (
-                <div className="px-6 py-3 bg-gray-50/70 border-t border-gray-100 flex items-center justify-between">
+                <div className="px-4 py-3 bg-gray-50/70 border-t border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex-1 w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                             <div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full" style={{ width: `${progressPct}%` }} />
@@ -338,7 +338,7 @@ const ClassSessionsDashboard = () => {
                 </div>
 
                 {/* ── Pill Tab Navigation ────────────────────────────────── */}
-                <div className="neo-card px-6 py-4">
+                <div className="neo-card px-3 py-4">
                     <div className="inline-flex items-center gap-1 neo-pressed rounded-xl p-1 overflow-x-auto hide-scrollbar w-full md:w-auto">
                         {tabs.map((tab) => {
                             const isActive = activeTab === tab.id;
@@ -401,7 +401,7 @@ const ClassSessionsDashboard = () => {
                             <SessionStats analytics={analytics} />
 
                             {/* Detail panels */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-3">
                                 <div className="lg:col-span-2 space-y-5">
                                     <AttendancePanel todaySessions={todaySessions} />
                                     <TeacherPerformance analytics={analytics} />

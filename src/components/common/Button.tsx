@@ -13,23 +13,23 @@ const Button = ({
     ...props
 }) => {
     // Base classes common to all buttons
-    const baseClasses = "group inline-flex items-center justify-center font-medium transition-all duration-200 active:scale-[0.98] rounded-xl focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
+    const baseClasses = "group inline-flex items-center justify-center font-medium transition-all duration-200 active:scale-[0.98] focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
 
     // Sizing
     const sizes = {
         sm: "px-3 py-1.5 text-xs gap-1.5",
         md: "px-4 py-2 text-sm gap-2",
-        lg: "px-6 py-2.5 text-base gap-2.5",
+        lg: "px-5 py-3 text-base gap-2.5",
         icon: "p-2",
     };
 
     // Variants (matching the "New Sale" screenshot aesthetic)
     const variants = {
-        primary: "bg-indigo-600 text-white hover:bg-indigo-700 shadow-[0_4px_12px_rgba(79,70,229,0.25)] border border-transparent",
-        secondary: "bg-indigo-50/50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 shadow-sm",
-        outline: "bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 shadow-sm",
-        ghost: "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent",
-        danger: "bg-red-500 text-white hover:bg-red-600 shadow-[0_4px_12px_rgba(239,68,68,0.25)] border border-transparent",
+        primary: "border border-transparent",
+        secondary: "text-indigo-700  border border-indigo-200/80 shadow-sm",
+        outline: "text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-slate-200 shadow-sm",
+        ghost: " text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent",
+        danger: "0 text-white hover:bg-red-600 shadow-[0_4px_12px_rgba(239,68,68,0.25)] border border-transparent",
     };
 
     const combinedClasses = `${baseClasses} ${sizes[size]} ${variants[variant]} ${className}`;

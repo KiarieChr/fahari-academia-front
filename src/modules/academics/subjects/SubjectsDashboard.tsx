@@ -88,7 +88,7 @@ const SubjectsDashboard = () => {
         ...s,
         category: s.subject_type_display || s.subject_type || 'Core',
         type: s.subject_type || 'compulsory',
-        curriculum: s.curriculum_name || '',
+        curriculumName: s.curriculum_name || '',
         classes: [],
         lessons: s.weekly_lessons || 0,
         teachers: [],
@@ -165,6 +165,9 @@ const SubjectsDashboard = () => {
                                     {/* Main Table */}
                                     <SubjectsTable
                                         subjects={mappedSubjects}
+                                        curricula={curricula}
+                                        curriculumLevels={curriculumLevels}
+                                        learningAreas={learningAreas}
                                         onEdit={handleEditSubject}
                                         onDelete={handleDeleteSubject}
                                     />

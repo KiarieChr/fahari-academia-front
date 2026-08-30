@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Eye, Printer, Search, Filter, Plus } from 'lucide-react';
 import { inventoryService } from "../../../services/inventoryService";
+import ContentLoader from '../../../components/common/ContentLoader';
 import { toast } from 'react-toastify';
 
 const GRNList = ({ onView, onCreate }) => {
@@ -63,7 +64,7 @@ const GRNList = ({ onView, onCreate }) => {
         return matchesSearch && matchesFilter;
     });
 
-    if (loading) return <div className="p-8 text-center">Loading...</div>;
+    if (loading) return <div className="p-8 flex justify-center"><ContentLoader size="lg" message="Loading..." /></div>;
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">

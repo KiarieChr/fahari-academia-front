@@ -5,30 +5,29 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Session Provider for enhanced session management
 import { SessionProvider } from './components/providers/SessionProvider';
-// Loading fallback component for lazy-loaded routes
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen bg-gray-50">
-    <div className="text-center">
-      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-gray-600">Loading...</p>
-    </div>
-  </div>
+import PageLoader from './components/common/PageLoader';
+
+const Loadable = (Component: any) => (props: any) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component {...props} />
+  </Suspense>
 );
+
 
 /* --- Auth Components --- */
 import Login from './auth/Login'; // Keep Login eager so the first screen is instant
-const ForgotPassword = lazy(() => import('./auth/ForgotPassword'));
-const VerifyOtp = lazy(() => import('./auth/VerifyOtp'));
-const ResetPassword = lazy(() => import('./auth/ResetPassword'));
-const FirstTimeSetup = lazy(() => import('./auth/FirstTimeSetup'));
-const CreateInstitutionWizard = lazy(() => import('./modules/onboarding/CreateInstitutionWizard'));
+const ForgotPassword = Loadable(lazy(() => import('./auth/ForgotPassword')));
+const VerifyOtp = Loadable(lazy(() => import('./auth/VerifyOtp')));
+const ResetPassword = Loadable(lazy(() => import('./auth/ResetPassword')));
+const FirstTimeSetup = Loadable(lazy(() => import('./auth/FirstTimeSetup')));
+const CreateInstitutionWizard = Loadable(lazy(() => import('./modules/onboarding/CreateInstitutionWizard')));
 
 /* --- Layout & Dashboards --- */
-const DashboardHome = lazy(() => import('./dashboard/DashboardHome'));
+const DashboardHome = Loadable(lazy(() => import('./dashboard/DashboardHome')));
 
 /* --- Students Module (Lazy loaded) --- */
-const StudentManagement = lazy(() => import('./modules/students/StudentManagement'));
-const AdmissionBookDashboard = lazy(() => import('./modules/students/admission/AdmissionBookDashboard'));
+const StudentManagement = Loadable(lazy(() => import('./modules/students/StudentManagement')));
+const AdmissionBookDashboard = Loadable(lazy(() => import('./modules/students/admission/AdmissionBookDashboard')));
 /* Admission sub-pages */
 const AdmissionsOverviewPage   = lazy(() => import('./modules/students/admission/pages/AdmissionsOverviewPage'));
 const EnquiriesPage            = lazy(() => import('./modules/students/admission/pages/EnquiriesPage'));
@@ -38,115 +37,124 @@ const NominalRollPage          = lazy(() => import('./modules/students/admission
 const StudentReportingPage     = lazy(() => import('./modules/students/admission/pages/StudentReportingPage'));
 const RepeatersPage            = lazy(() => import('./modules/students/admission/pages/RepeatersPage'));
 /* ── */
-const ClassSessionsDashboard = lazy(() => import('./modules/students/class-sessions/ClassSessionsDashboard'));
-const AcademicSessionsDashboard = lazy(() => import('./modules/students/academic-sessions/AcademicSessionsDashboard'));
-const CurriculumDashboard = lazy(() => import('./modules/students/curriculum/CurriculumDashboard'));
-const StudentSettingsDashboard = lazy(() => import('./modules/students/settings/StudentSettingsDashboard'));
-const StudentReportsDashboard = lazy(() => import('./modules/students/reports/StudentReportsDashboard'));
-const ClassTimesDashboard = lazy(() => import('./modules/students/class-times/ClassTimesDashboard'));
-const TimetableDashboard = lazy(() => import('./modules/timetable/TimetableDashboard'));
+const ClassSessionsDashboard = Loadable(lazy(() => import('./modules/students/class-sessions/ClassSessionsDashboard')));
+const AcademicSessionsDashboard = Loadable(lazy(() => import('./modules/students/academic-sessions/AcademicSessionsDashboard')));
+const CurriculumDashboard = Loadable(lazy(() => import('./modules/students/curriculum/CurriculumDashboard')));
+const StudentSettingsDashboard = Loadable(lazy(() => import('./modules/students/settings/StudentSettingsDashboard')));
+const StudentReportsDashboard = Loadable(lazy(() => import('./modules/students/reports/StudentReportsDashboard')));
+const ClassTimesDashboard = Loadable(lazy(() => import('./modules/students/class-times/ClassTimesDashboard')));
+const TimetableDashboard = Loadable(lazy(() => import('./modules/timetable/TimetableDashboard')));
 
 /* --- Academics Module (Lazy loaded) --- */
-const StudentAcademics = lazy(() => import('./modules/academics/StudentAcademics'));
-const MarksInputDashboard = lazy(() => import('./modules/academics/marks-input/MarksInputDashboard'));
-const ExamSchedulesDashboard = lazy(() => import('./modules/academics/exam-schedules/ExamSchedulesDashboard'));
-const GradingSystemDashboard = lazy(() => import('./modules/academics/grading-system/GradingSystemDashboard'));
-const ReportsDashboard = lazy(() => import('./modules/academics/reports/ReportsDashboard'));
-const AssignmentsDashboard = lazy(() => import('./modules/academics/assignments/AssignmentsDashboard'));
-const CurriculumSetupDashboard = lazy(() => import('./modules/academics/curriculum-setup/CurriculumSetupDashboard'));
-const SubjectsDashboard = lazy(() => import('./modules/academics/subjects/SubjectsDashboard'));
-const SubjectAllocationDashboard = lazy(() => import('./modules/academics/subject-allocation/SubjectAllocationDashboard'));
+const AcademicsSettingsHub = Loadable(lazy(() => import('./modules/academics/settings/AcademicsSettingsHub')));
+const StudentAcademics = Loadable(lazy(() => import('./modules/academics/StudentAcademics')));
+const MarksInputDashboard = Loadable(lazy(() => import('./modules/academics/marks-input/MarksInputDashboard')));
+const ExamSchedulesDashboard = Loadable(lazy(() => import('./modules/academics/exam-schedules/ExamSchedulesDashboard')));
+const GradingSystemDashboard = Loadable(lazy(() => import('./modules/academics/grading-system/GradingSystemDashboard')));
+const ReportsDashboard = Loadable(lazy(() => import('./modules/academics/reports/ReportsDashboard')));
+const AssignmentsDashboard = Loadable(lazy(() => import('./modules/academics/assignments/AssignmentsDashboard')));
+const CurriculumSetupDashboard = Loadable(lazy(() => import('./modules/academics/curriculum-setup/CurriculumSetupDashboard')));
+const SubjectsDashboard = Loadable(lazy(() => import('./modules/academics/subjects/SubjectsDashboard')));
+const SubjectAllocationDashboard = Loadable(lazy(() => import('./modules/academics/subject-allocation/SubjectAllocationDashboard')));
 
 /* --- Fees Module (Lazy loaded) --- */
-const StudentFees = lazy(() => import('./modules/fees/StudentFees'));
-const ReceiptBookDashboard = lazy(() => import('./modules/fees/receipt-book/ReceiptBookDashboard'));
-const StudentInvoicesDashboard = lazy(() => import('./modules/fees/invoices/StudentInvoicesDashboard'));
-const FeeSetupDashboard = lazy(() => import('./modules/fees/fee-structure/FeeSetupDashboard'));
-const FeeSettingsDashboard = lazy(() => import('./modules/fees/settings/FeeSettingsDashboard'));
-const ArrearsDashboard = lazy(() => import('./modules/fees/arrears/ArrearsDashboard'));
+const StudentFees = Loadable(lazy(() => import('./modules/fees/StudentFees')));
+const ReceiptBookDashboard = Loadable(lazy(() => import('./modules/fees/receipt-book/ReceiptBookDashboard')));
+const StudentInvoicesDashboard = Loadable(lazy(() => import('./modules/fees/invoices/StudentInvoicesDashboard')));
+const FeeSetupDashboard = Loadable(lazy(() => import('./modules/fees/fee-structure/FeeSetupDashboard')));
+const FeeSettingsDashboard = Loadable(lazy(() => import('./modules/fees/settings/FeeSettingsDashboard')));
+const ArrearsDashboard = Loadable(lazy(() => import('./modules/fees/arrears/ArrearsDashboard')));
 
 /* --- Finance Module (Lazy loaded) --- */
-const Finance = lazy(() => import('./modules/finance/Finance'));
-const AccountsPayableDashboard = lazy(() => import('./modules/finance/accountsPayable/AccountsPayableDashboard'));
-const AccountsReceivableDashboard = lazy(() => import('./modules/finance/accountsReceivable/AccountsReceivableDashboard'));
-const ChartOfAccounts = lazy(() => import('./modules/finance/ChartOfAccounts'));
-const Journals = lazy(() => import('./modules/finance/Journals'));
-const FinanceReports = lazy(() => import('./modules/finance/FinanceReports'));
-const FinanceSettingsDashboard = lazy(() => import('./modules/finance/settings/FinanceSettingsDashboard'));
-const BudgetingDashboard = lazy(() => import('./modules/finance/budgeting/BudgetingDashboard'));
+const Finance = Loadable(lazy(() => import('./modules/finance/Finance')));
+const AccountsPayableDashboard = Loadable(lazy(() => import('./modules/finance/accountsPayable/AccountsPayableDashboard')));
+const AccountsReceivableDashboard = Loadable(lazy(() => import('./modules/finance/accountsReceivable/AccountsReceivableDashboard')));
+const ChartOfAccounts = Loadable(lazy(() => import('./modules/finance/ChartOfAccounts')));
+const Journals = Loadable(lazy(() => import('./modules/finance/Journals')));
+const FinanceReports = Loadable(lazy(() => import('./modules/finance/FinanceReports')));
+const FinanceSettingsDashboard = Loadable(lazy(() => import('./modules/finance/settings/FinanceSettingsDashboard')));
+const BudgetingDashboard = Loadable(lazy(() => import('./modules/finance/budgeting/BudgetingDashboard')));
 
 /* --- Procurement Module (Lazy loaded) --- */
-const Procurement = lazy(() => import('./modules/procurement/Procurement'));
-const PurchaseRequisitionDashboard = lazy(() => import('./modules/procurement/requisition/PurchaseRequisitionDashboard'));
-const PurchaseOrderDashboard = lazy(() => import('./modules/procurement/purchase-order/PurchaseOrderDashboard'));
-const InventoryDashboard = lazy(() => import('./modules/inventory/InventoryDashboard'));
-const GRNDashboard = lazy(() => import('./modules/procurement/grn/GRNDashboard'));
-const ProcurementSettings = lazy(() => import('./modules/procurement/settings/ProcurementSettings'));
-const RFQDashboard = lazy(() => import('./modules/procurement/rfq/RFQDashboard'));
-const ContractsDashboard = lazy(() => import('./modules/procurement/contracts/ContractsDashboard'));
-const PublicQuotation = lazy(() => import('./modules/procurement/public/PublicQuotation'));
-const PublicEnquiryPage = lazy(() => import('./modules/students/admission/pages/PublicEnquiryPage'));
-const FleetDashboard = lazy(() => import('./modules/fleet/FleetDashboard'));
+const Procurement = Loadable(lazy(() => import('./modules/procurement/Procurement')));
+const PurchaseRequisitionDashboard = Loadable(lazy(() => import('./modules/procurement/requisition/PurchaseRequisitionDashboard')));
+const PurchaseOrderDashboard = Loadable(lazy(() => import('./modules/procurement/purchase-order/PurchaseOrderDashboard')));
+const InventoryDashboard = Loadable(lazy(() => import('./modules/inventory/InventoryDashboard')));
+const GRNDashboard = Loadable(lazy(() => import('./modules/procurement/grn/GRNDashboard')));
+const ProcurementSettings = Loadable(lazy(() => import('./modules/procurement/settings/ProcurementSettings')));
+const RFQDashboard = Loadable(lazy(() => import('./modules/procurement/rfq/RFQDashboard')));
+const ContractsDashboard = Loadable(lazy(() => import('./modules/procurement/contracts/ContractsDashboard')));
+const PublicQuotation = Loadable(lazy(() => import('./modules/procurement/public/PublicQuotation')));
+const PublicEnquiryPage = Loadable(lazy(() => import('./modules/students/admission/pages/PublicEnquiryPage')));
+const FleetDashboard = Loadable(lazy(() => import('./modules/fleet/FleetDashboard')));
+const LiveTrackingPage = Loadable(lazy(() => import('./modules/fleet/pages/LiveTrackingPage')));
+const VehiclesPage = Loadable(lazy(() => import('./modules/fleet/pages/VehiclesPage')));
+const DriversPage = Loadable(lazy(() => import('./modules/fleet/pages/DriversPage')));
+const TripsPage = Loadable(lazy(() => import('./modules/fleet/pages/TripsPage')));
+const FuelLogsPage = Loadable(lazy(() => import('./modules/fleet/pages/FuelLogsPage')));
+const MaintenancePage = Loadable(lazy(() => import('./modules/fleet/pages/MaintenancePage')));
+const ExpensesPage = Loadable(lazy(() => import('./modules/fleet/pages/ExpensesPage')));
+const FinancialAnalyticsPage = Loadable(lazy(() => import('./modules/fleet/pages/FinancialAnalyticsPage')));
 
 /* --- HR & Other Modules (Lazy loaded) --- */
 /* --- CRM Module (Lazy loaded) --- */
-const CrmDashboard = lazy(() => import('./modules/crm/components/CrmDashboard').then(m => ({ default: m.CrmDashboard })));
-const ParentList = lazy(() => import('./modules/crm/components/ParentList').then(m => ({ default: m.ParentList })));
-const CampaignWizard = lazy(() => import('./modules/crm/components/CampaignWizard').then(m => ({ default: m.CampaignWizard })));
-const UnifiedInbox = lazy(() => import('./modules/crm/components/UnifiedInbox').then(m => ({ default: m.UnifiedInbox })));
-const MessageTemplates = lazy(() => import('./modules/crm/components/MessageTemplates').then(m => ({ default: m.MessageTemplates })));
-const ProviderSettings = lazy(() => import('./modules/crm/components/ProviderSettings').then(m => ({ default: m.ProviderSettings })));
+const CrmDashboard = Loadable(lazy(() => import('./modules/crm/components/CrmDashboard').then(m => ({ default: m.CrmDashboard }))));
+const ParentList = Loadable(lazy(() => import('./modules/crm/components/ParentList').then(m => ({ default: m.ParentList }))));
+const CampaignWizard = Loadable(lazy(() => import('./modules/crm/components/CampaignWizard').then(m => ({ default: m.CampaignWizard }))));
+const UnifiedInbox = Loadable(lazy(() => import('./modules/crm/components/UnifiedInbox').then(m => ({ default: m.UnifiedInbox }))));
+const MessageTemplates = Loadable(lazy(() => import('./modules/crm/components/MessageTemplates').then(m => ({ default: m.MessageTemplates }))));
+const ProviderSettings = Loadable(lazy(() => import('./modules/crm/components/ProviderSettings').then(m => ({ default: m.ProviderSettings }))));
 
 // Use new modern HR Dashboard
-const HumanResource = lazy(() => import('./modules/hr/HumanResourceDashboard'));
+const HumanResource = Loadable(lazy(() => import('./modules/hr/HumanResourceDashboard')));
 // Use new modern Staff Register  
-const StaffRegister = lazy(() => import('./modules/hr/StaffRegisterV2'));
-const LeaveDashboard = lazy(() => import('./modules/hr/leave/LeaveDashboard'));
-const HrSettingsDasboard = lazy(() => import('./modules/hr/settings/HRSettingsDashboard'));
-const StaffAttendanceDashboard = lazy(() => import('./modules/hr/attendance/StaffAttendanceDashboard'));
-const StaffPerformanceDashboard = lazy(() => import('./modules/hr/performance/StaffPerformanceDashboard'));
-const Payroll = lazy(() => import('./modules/payroll/Payroll'));
-const RecruitmentDashboard = lazy(() => import('./modules/hr/recruitment/RecruitmentDashboard'));
-const PublicJobApplicationPage = lazy(() => import('./modules/hr/recruitment/PublicJobApplicationPage'));
-const SchoolSetupPage = lazy(() => import('./modules/settings/SchoolSetupPage').then(m => ({ default: m.default })));
-const UserAccessPage = lazy(() => import('./modules/settings/UserAccessPage').then(m => ({ default: m.default })));
-const ApiConfigPage = lazy(() => import('./modules/settings/ApiConfigPage').then(m => ({ default: m.default })));
-const GeneralSettingsPage = lazy(() => import('./modules/settings/GeneralSettingsPage').then(m => ({ default: m.default })));
-const StudentSettingsPage = lazy(() => import('./modules/settings/StudentSettingsPage').then(m => ({ default: m.default })));
-const SystemLogsPage = lazy(() => import('./modules/settings/SystemLogsPage').then(m => ({ default: m.default })));
-const SystemModulesPage = lazy(() => import('./modules/settings/SystemModulesPage').then(m => ({ default: m.default })));
-const PayrollDashboard = lazy(() => import('./modules/payroll/PayrollDashboard'));
-const EmployeeDeductionsDashboard = lazy(() => import('./modules/payroll/EmployeeDeductionsDashboard'));
-const EmployeeEarningsDashboard = lazy(() => import('./modules/payroll/EmployeeEarningsDashboard'));
-const FinancialInstitutionsDashboard = lazy(() => import('./modules/payroll/FinancialInstitutionsDashboard'));
-const StatutorySettingsDashboard = lazy(() => import('./modules/payroll/StatutoryDashboard'));
-const PayrollSettings = lazy(() => import('./modules/payroll/PayrollSettings'));
-const PensionDashboard = lazy(() => import('./modules/payroll/PensionDashboard'));
-const PayrollReports = lazy(() => import('./modules/payroll/PayrollReports'));
+const StaffRegister = Loadable(lazy(() => import('./modules/hr/StaffRegisterV2')));
+const LeaveDashboard = Loadable(lazy(() => import('./modules/hr/leave/LeaveDashboard')));
+const HrSettingsDasboard = Loadable(lazy(() => import('./modules/hr/settings/HRSettingsDashboard')));
+const StaffAttendanceDashboard = Loadable(lazy(() => import('./modules/hr/attendance/StaffAttendanceDashboard')));
+const StaffPerformanceDashboard = Loadable(lazy(() => import('./modules/hr/performance/StaffPerformanceDashboard')));
+const Payroll = Loadable(lazy(() => import('./modules/payroll/Payroll')));
+const RecruitmentDashboard = Loadable(lazy(() => import('./modules/hr/recruitment/RecruitmentDashboard')));
+const PublicJobApplicationPage = Loadable(lazy(() => import('./modules/hr/recruitment/PublicJobApplicationPage')));
+const SchoolSetupPage = Loadable(lazy(() => import('./modules/settings/SchoolSetupPage').then(m => ({ default: m.default }))));
+const UserAccessPage = Loadable(lazy(() => import('./modules/settings/UserAccessPage').then(m => ({ default: m.default }))));
+const ApiConfigPage = Loadable(lazy(() => import('./modules/settings/ApiConfigPage').then(m => ({ default: m.default }))));
+const GeneralSettingsPage = Loadable(lazy(() => import('./modules/settings/GeneralSettingsPage').then(m => ({ default: m.default }))));
+const StudentSettingsPage = Loadable(lazy(() => import('./modules/settings/StudentSettingsPage').then(m => ({ default: m.default }))));
+const SystemLogsPage = Loadable(lazy(() => import('./modules/settings/SystemLogsPage').then(m => ({ default: m.default }))));
+const SystemModulesPage = Loadable(lazy(() => import('./modules/settings/SystemModulesPage').then(m => ({ default: m.default }))));
+const PayrollDashboard = Loadable(lazy(() => import('./modules/payroll/PayrollDashboard')));
+const EmployeeDeductionsDashboard = Loadable(lazy(() => import('./modules/payroll/EmployeeDeductionsDashboard')));
+const EmployeeEarningsDashboard = Loadable(lazy(() => import('./modules/payroll/EmployeeEarningsDashboard')));
+const FinancialInstitutionsDashboard = Loadable(lazy(() => import('./modules/payroll/FinancialInstitutionsDashboard')));
+const StatutorySettingsDashboard = Loadable(lazy(() => import('./modules/payroll/StatutoryDashboard')));
+const PayrollSettings = Loadable(lazy(() => import('./modules/payroll/PayrollSettings')));
+const PensionDashboard = Loadable(lazy(() => import('./modules/payroll/PensionDashboard')));
+const PayrollReports = Loadable(lazy(() => import('./modules/payroll/PayrollReports')));
 
 /* --- User management and Settings (Lazy loaded) --- */
-const MyAccount = lazy(() => import('./modules/users/MyAccount'));
-const UsersManagement = lazy(() => import('./modules/users/UsersManagement'));
-const RolesManagement = lazy(() => import('./modules/users/RolesManagement'));
+const MyAccount = Loadable(lazy(() => import('./modules/users/MyAccount')));
+const UsersManagement = Loadable(lazy(() => import('./modules/users/UsersManagement')));
+const RolesManagement = Loadable(lazy(() => import('./modules/users/RolesManagement')));
 
 /* --- Intelligence Module (Lazy loaded) --- */
-const IntelligenceDashboard = lazy(() => import('./components/intelligence/IntelligenceDashboard'));
+const IntelligenceDashboard = Loadable(lazy(() => import('./components/intelligence/IntelligenceDashboard')));
 
 /* --- Student & Parent Portal (Lazy loaded) --- */
-const StudentDashboard = lazy(() => import('./modules/student-portal/StudentDashboard'));
-const MyProfile = lazy(() => import('./modules/student-portal/MyProfile'));
-const MyFeeStatement = lazy(() => import('./modules/student-portal/MyFeeStatement'));
-const MyPaymentHistory = lazy(() => import('./modules/student-portal/MyPaymentHistory'));
-const MyResults = lazy(() => import('./modules/student-portal/MyResults'));
-const MyTimetable = lazy(() => import('./modules/student-portal/MyTimetable'));
-const MyAttendance = lazy(() => import('./modules/student-portal/MyAttendance'));
-const MyAssignments = lazy(() => import('./modules/student-portal/MyAssignments'));
-const MyFinancialStatement = lazy(() => import('./modules/student-portal/MyFinancialStatement'));
-const ParentDashboard = lazy(() => import('./modules/parent-portal/ParentDashboard'));
-const ParentChildren = lazy(() => import('./modules/parent-portal/ParentChildren'));
-const ChildDetail = lazy(() => import('./modules/parent-portal/ChildDetail'));
-const ParentFeeBalances = lazy(() => import('./modules/parent-portal/ParentFeeBalances'));
-const ChildAssignments = lazy(() => import('./modules/parent-portal/ChildAssignments'));
+const StudentDashboard = Loadable(lazy(() => import('./modules/student-portal/StudentDashboard')));
+const MyProfile = Loadable(lazy(() => import('./modules/student-portal/MyProfile')));
+const MyFeeStatement = Loadable(lazy(() => import('./modules/student-portal/MyFeeStatement')));
+const MyPaymentHistory = Loadable(lazy(() => import('./modules/student-portal/MyPaymentHistory')));
+const MyResults = Loadable(lazy(() => import('./modules/student-portal/MyResults')));
+const MyTimetable = Loadable(lazy(() => import('./modules/student-portal/MyTimetable')));
+const MyAttendance = Loadable(lazy(() => import('./modules/student-portal/MyAttendance')));
+const MyAssignments = Loadable(lazy(() => import('./modules/student-portal/MyAssignments')));
+const MyFinancialStatement = Loadable(lazy(() => import('./modules/student-portal/MyFinancialStatement')));
+const ParentDashboard = Loadable(lazy(() => import('./modules/parent-portal/ParentDashboard')));
+const ParentChildren = Loadable(lazy(() => import('./modules/parent-portal/ParentChildren')));
+const ChildDetail = Loadable(lazy(() => import('./modules/parent-portal/ChildDetail')));
+const ParentFeeBalances = Loadable(lazy(() => import('./modules/parent-portal/ParentFeeBalances')));
+const ChildAssignments = Loadable(lazy(() => import('./modules/parent-portal/ChildAssignments')));
 
 /* --- Role-based route guard --- */
 import RoleBasedRoute from './auth/RoleBasedRoute';
@@ -194,6 +202,8 @@ function App() {
             <Route path="/dashboard/students/settings" element={<ProtectedRoute><PermissionGate module="students"><StudentSettingsDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/students/reports" element={<ProtectedRoute><PermissionGate module="students"><StudentReportsDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/students/times" element={<ProtectedRoute><PermissionGate module="students"><ClassTimesDashboard /></PermissionGate></ProtectedRoute>} />
+
+            <Route path="/dashboard/academics/settings" element={<ProtectedRoute><PermissionGate module="academics"><AcademicsSettingsHub /></PermissionGate></ProtectedRoute>} />
 
             {/* Timetables — top-level module */}
             <Route path="/dashboard/timetables" element={<ProtectedRoute><PermissionGate module="timetables"><TimetableDashboard /></PermissionGate></ProtectedRoute>} />
@@ -256,6 +266,14 @@ function App() {
 
             {/* Fleet Module */}
             <Route path="/dashboard/fleet" element={<ProtectedRoute><PermissionGate module="fleet"><FleetDashboard /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/live" element={<ProtectedRoute><PermissionGate module="fleet"><LiveTrackingPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/vehicles" element={<ProtectedRoute><PermissionGate module="fleet"><VehiclesPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/drivers" element={<ProtectedRoute><PermissionGate module="fleet"><DriversPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/trips" element={<ProtectedRoute><PermissionGate module="fleet"><TripsPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/fuel" element={<ProtectedRoute><PermissionGate module="fleet"><FuelLogsPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/maintenance" element={<ProtectedRoute><PermissionGate module="fleet"><MaintenancePage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/expenses" element={<ProtectedRoute><PermissionGate module="fleet"><ExpensesPage /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/fleet/analytics" element={<ProtectedRoute><PermissionGate module="fleet"><FinancialAnalyticsPage /></PermissionGate></ProtectedRoute>} />
 
             {/* CRM Module */}
             <Route path="/dashboard/crm" element={<ProtectedRoute><PermissionGate module="crm"><CrmDashboard /></PermissionGate></ProtectedRoute>} />

@@ -51,10 +51,10 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
     }
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="neo-card border-none overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10">
+                    <thead className="text-xs text-slate-500 uppercase bg-transparent border-b border-gray-100 sticky top-0 z-10 font-bold">
                         <tr>
                             <th className="px-4 py-4 font-semibold w-10">
                                 <input
@@ -122,10 +122,10 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                                                     id={`mark-input-${index}`}
                                                     type="number"
                                                     
-                                                    className={`w-20 text-center py-1.5 rounded-lg border text-sm font-bold outline-none focus:ring-2 transition-all ${
-                                                        !isValid ? 'border-red-500 bg-red-50 text-red-700 focus:ring-red-500' :
-                                                        hasMarks ? 'border-blue-200 bg-blue-50 text-blue-700 focus:ring-blue-500' :
-                                                        'border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-600 focus:ring-blue-500'
+                                                    className={`w-20 text-center py-1.5 rounded-xl text-sm font-bold outline-none transition-all ${
+                                                        !isValid ? 'bg-red-50 border border-red-200 text-red-700 focus:ring-2 focus:ring-red-500' :
+                                                        hasMarks ? 'bg-white shadow-[inset_1px_1px_3px_#c3c8ce,inset_-1px_-1px_3px_#ffffff] text-blue-700' :
+                                                        'neo-pressed border-none text-slate-700'
                                                     }`}
                                                     placeholder="—"
                                                     value={student.raw_mark ?? ''}
@@ -145,7 +145,7 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         {student.grade ? (
-                                            <span className="inline-flex items-center justify-center w-10 h-7 rounded font-bold text-xs bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                                            <span className="inline-flex items-center justify-center w-10 h-7 rounded-xl font-bold text-xs bg-[#e0e5ec] shadow-[2px_2px_4px_#c3c8ce,-2px_-2px_4px_#ffffff] text-indigo-700">
                                                 {student.grade}
                                             </span>
                                         ) : (
@@ -182,7 +182,7 @@ const StudentMarksTable = ({ students, onUpdateStudent, selectedStudents, onSele
             )}
 
             {students.length > 0 && (
-                <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between text-xs text-slate-500">
+                <div className="px-4 py-3 border-t border-gray-100 bg-transparent flex items-center justify-between text-xs text-slate-500 font-medium">
                     <span>{students.length} students</span>
                     <span>
                         {students.filter(s => s.raw_mark !== null && s.raw_mark !== undefined && !s.is_absent).length} marks entered

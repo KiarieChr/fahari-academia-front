@@ -8,12 +8,15 @@ const GradingSimulator = ({ scales = [], curriculumCode }) => {
     const activeScale = scales.find(s => s.id === selectedScaleId) || scales[0];
 
     const getGrade = (s) => {
-        if (!activeScale) return { grade: '—', label: 'No scale loaded', color: '#94a3b8', status: 'N/A' };
+        if (!activeScale || !activeScale.levels || activeScale.levels.length === 0) {
+            return { grade: '—', label: 'No scale loaded', color: '#94a3b8' };
+        }
 
-        // We need levels from the detail endpoint, but we can approximate from scale info
-        // For a simple simulator using the list data, we'll show the scale name
-        // The actual grade lookup happens once detail is loaded
-        return { grade: '—', label: 'Select a scale', color: '#94a3b8', status: 'N/A' };
+        const level = activeScale.levels.find(l => s >= l.min_mark && s <= l.max_mark);
+        if (level) {
+            return { grade: level.grade, label: level.label, color: level.color_hex };
+        }
+        return { grade: '—', label: 'Out of range', color: '#94a3b8' };
     };
 
     return (
@@ -70,15 +73,24 @@ const GradingSimulator = ({ scales = [], curriculumCode }) => {
                             </span>
                         )}
                     </div>
-                    <div className="mt-4">
-                        <span className={`inline-flex px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${
-                            score >= (activeScale?.pass_mark || 50)
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-red-100 text-red-700'
-                        }`}>
-                            {score >= (activeScale?.pass_mark || 50) ? 'PASS' : 'FAIL'}
-                        </span>
-                    </div>
+                    
+                    {/* Simulated Grade Result */}
+                    {activeScale?.levels && activeScale.levels.length > 0 && (
+                        <div className="mt-4 flex flex-col items-center gap-2">
+                            <span 
+                                className="inline-flex px-3 py-2 rounded-xl text-lg font-black shadow-sm"
+                                style={{ 
+                                    backgroundColor: `${getGrade(score).color}20`, 
+                                    color: getGrade(score).color 
+                                }}
+                            >
+                                {getGrade(score).grade}
+                            </span>
+                            <span className="text-xs font-bold" style={{ color: getGrade(score).color }}>
+                                {getGrade(score).label}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -24,18 +24,18 @@ const TeacherPerformance = ({ analytics = null }) => {
     }, [workload]);
 
     return (
-        <div className="neo-card overflow-hidden p-6">
-            <div className="flex items-center justify-between mb-5">
+        <div className="neo-card overflow-hidden p-6 mb-4">
+            <div className="flex items-center justify-between ">
                 <div>
                     <h3 className="text-base font-bold text-gray-900">Teacher Performance</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Sessions conducted &amp; avg. attendance %</p>
+                    <p className="text-xs text-gray-400 mt-1">Sessions conducted &amp; avg. attendance %</p>
                 </div>
-                <div className="inline-flex neo-pressed rounded-lg p-0.5">
+                <div className="inline-flex neo-pressed rounded-lg p-1">
                     {['week', 'month', 'term'].map(p => (
                         <button
                             key={p}
                             onClick={() => setPeriod(p)}
-                            className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${period === p
+                            className={`px-2 py-1 text-xs rounded-md font-medium transition-colors ${period === p
                                 ? 'neo-btn neo-text-accent'
                                 : 'text-gray-500 hover:text-gray-700'
                                 }`}

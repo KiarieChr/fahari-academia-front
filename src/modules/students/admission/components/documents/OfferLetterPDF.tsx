@@ -7,6 +7,9 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
+import { renderTemplate } from '../../../../../utils/templateEngine';
+import { HtmlToPdf } from '../../../../../utils/HtmlToPdf';
+
 const today = () =>
     new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -108,6 +111,28 @@ const OfferLetterPDF = ({ admission = {}, institution = {} }) => {
         'Transfer letter from previous school (if applicable)',
     ];
 
+    // Load and render dynamic template for the body
+    const rawTemplate = institution.offer_letter_template || `
+        <p>Dear <strong>{{guardian_name}}</strong>,</p>
+        <p><br></p>
+        <p><strong>RE: CONDITIONAL OFFER OF ADMISSION — {{student_name}}</strong></p>
+        <p><br></p>
+        <p>We are pleased to offer <strong>{{student_name}}</strong> a place at our institution in <strong>{{class_name}}</strong> for the <strong>{{intake_name}}</strong> intake.</p>
+        <p><br></p>
+        <p>This offer is conditional upon receipt of all required documents and the prescribed admission fee deposit by the deadline.</p>
+        <p><br></p>
+        <p><strong>Required Documents:</strong></p>
+        <ul>
+            <li>Certified copy of Birth Certificate</li>
+            <li>Original Primary/Junior School Leaving Certificate</li>
+            <li>4 recent passport-size photographs</li>
+            <li>Medical examination form</li>
+        </ul>
+        <p><br></p>
+        <p>Yours faithfully,</p>
+    `;
+    const htmlContent = renderTemplate(rawTemplate, admission);
+
     return (
         <Document title={`Offer Letter — ${studentName}`} author={institution.name}>
             <Page size="A4" style={styles.page}>
@@ -148,54 +173,8 @@ const OfferLetterPDF = ({ admission = {}, institution = {} }) => {
                     {admission.guardian_email ? <Text style={styles.addressLine}>{admission.guardian_email}</Text> : null}
                 </View>
 
-                <Text style={styles.bodyText}>Dear {guardianName},</Text>
-
-                <View style={styles.reBlock}>
-                    <Text style={styles.reText}>RE: CONDITIONAL OFFER OF ADMISSION — {studentName.toUpperCase()}</Text>
-                </View>
-
-                {/* Green offer box */}
-                <View style={styles.offerBox}>
-                    <Text style={styles.offerTitle}>✓ Offer of Admission</Text>
-                    <Text style={styles.offerBody}>
-                        We are pleased to offer <Text style={{ fontFamily: 'Helvetica-Bold' }}>{studentName}</Text> a place
-                        at {institution.name || 'this institution'} in <Text style={{ fontFamily: 'Helvetica-Bold' }}>{className}</Text> for the <Text style={{ fontFamily: 'Helvetica-Bold' }}>{intakeName}</Text> intake.
-                        This offer is conditional upon receipt of all required documents and the prescribed admission fee deposit by the deadline below.
-                    </Text>
-                </View>
-
-                {/* Deadline table */}
-                <View style={styles.deadlineTable}>
-                    <View style={styles.dtLabel}><Text style={styles.dtLabelText}>Response Deadline</Text></View>
-                    <View style={styles.dtValue}><Text style={styles.dtValueText}>{deadlineStr}</Text></View>
-                </View>
-                <View style={styles.deadlineTable}>
-                    <View style={styles.dtLabel}><Text style={styles.dtLabelText}>Fee Deposit Required</Text></View>
-                    <View style={styles.dtValue}><Text style={styles.dtValueText}>As per the current Fee Structure (contact the bursar's office)</Text></View>
-                </View>
-
-                <Text style={[styles.listTitle, { marginTop: 8 }]}>Required Documents (submit before the deadline):</Text>
-                {requiredDocs.map((doc, i) => (
-                    <View key={i} style={styles.listItem}>
-                        <Text style={styles.listBullet}>☐</Text>
-                        <Text style={styles.listText}>{doc}</Text>
-                    </View>
-                ))}
-
-                <View style={styles.warningBox}>
-                    <Text style={styles.warningText}>
-                        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Important: </Text>
-                        This offer will lapse automatically if the above requirements are not met by <Text style={{ fontFamily: 'Helvetica-Bold' }}>{deadlineStr}</Text>.
-                        The school reserves the right to withdraw this offer and allocate the place to another candidate.
-                    </Text>
-                </View>
-
-                <Text style={styles.bodyText}>
-                    To accept this offer, please complete the attached Acceptance Form, attach the required fee receipt and documents,
-                    and return them to the school office in person or by registered mail.
-                </Text>
-
-                <Text style={styles.bodyText}>Yours faithfully,</Text>
+                {/* ── DYNAMIC BODY CONTENT ── */}
+                <HtmlToPdf html={htmlContent} />
 
                 {/* Signature block */}
                 <View style={styles.sigBlock}>

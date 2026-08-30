@@ -8,31 +8,12 @@ import {
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import { api } from '../../../services/api';
 import { toast } from 'react-toastify';
+import MpesaConfigModal from './components/MpesaConfigModal';
+import PlaneSwitch from '../../../components/ui/PlaneSwitch';
 
 /* ── helpers ─────────────────────────────────────────── */
-const Toggle = ({ checked, onChange, id }) => (
-    <button
-        id={id}
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        style={{
-            width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-            background: checked ? 'var(--primary-color)' : 'var(--border-color-light)',
-            position: 'relative', flexShrink: 0,
-            transition: 'background var(--transition-fast)',
-            boxShadow: checked ? `0 0 0 3px var(--primary-light)` : 'none',
-        }}
-    >
-        <span style={{
-            position: 'absolute', top: 2, left: checked ? 22 : 2,
-            width: 20, height: 20, borderRadius: '50%', background: '#fff',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-            transition: 'left var(--transition-fast)',
-        }} />
-    </button>
-);
+const Toggle = PlaneSwitch;
+
 
 const SettingRow = ({ label, description, children, last }) => (
     <div style={{
@@ -48,34 +29,26 @@ const SettingRow = ({ label, description, children, last }) => (
 );
 
 const SectionCard = ({ title, icon: Icon, accent, children, badge }) => (
-    <div style={{
-        background: 'var(--card-bg)', borderRadius: 'var(--border-radius)',
-        border: '1px solid var(--border-color-light)', boxShadow: 'var(--shadow-sm)',
-        overflow: 'hidden', marginBottom: 20,
-    }}>
-        <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid var(--border-color-light)',
-            background: 'var(--bg-light)',
-        }}>
-            <div style={{
-                width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-                background: accent || 'var(--primary-color)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-                <Icon size={16} color="#fff" />
+    <div className="neo-card border-none overflow-hidden mb-5">
+        <div className="flex items-center gap-3 p-4 bg-gray-50/50 border-b border-gray-100/50">
+            <div 
+                className="w-9 h-9 rounded-xl flex items-center justify-center neo-pressed"
+                style={{ color: accent || 'var(--primary-color)' }}
+            >
+                <Icon size={18} />
             </div>
-            <div style={{ flex: 1 }}>
-                <span style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-main)' }}>{title}</span>
+            <div className="flex-1 flex items-center">
+                <span className="font-bold text-[0.92rem] text-gray-800">{title}</span>
                 {badge && (
-                    <span style={{ marginLeft: 8, fontSize: '0.65rem', fontWeight: 700, background: 'var(--primary-light)', color: 'var(--primary-color)', borderRadius: 999, padding: '1px 8px', textTransform: 'uppercase' }}>
+                    <span className="ml-2 text-[0.65rem] font-bold bg-primary-50 text-primary-600 rounded-full px-2 py-0.5 uppercase tracking-wider">
                         {badge}
                     </span>
                 )}
             </div>
         </div>
-        <div style={{ padding: '0.25rem 1.25rem' }}>{children}</div>
+        <div className="p-4 bg-white/40">
+            {children}
+        </div>
     </div>
 );
 
@@ -128,17 +101,11 @@ const InfoBox = ({ children, type = 'info' }) => {
 
 const PaymentMethodCard = ({ label, icon, enabled, onChange }) => (
     <div
-        style={{
-            background: enabled ? 'var(--primary-light)' : 'var(--bg-light)',
-            border: `2px solid ${enabled ? 'var(--primary-color)' : 'var(--border-color-light)'}`,
-            borderRadius: 'var(--border-radius-sm)', padding: '0.85rem', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-            minWidth: 100, transition: 'all var(--transition-fast)', textAlign: 'center',
-        }}
+        className={`flex flex-col items-center gap-2 p-3 min-w-[100px] rounded-xl cursor-pointer transition-all ${enabled ? 'neo-pressed' : 'neo-card border-none hover:shadow-lg'}`}
         onClick={() => onChange(!enabled)}
     >
-        <div style={{ fontSize: 22 }}>{icon}</div>
-        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: enabled ? 'var(--primary-color)' : 'var(--text-secondary)' }}>{label}</span>
+        <div className="text-[22px]">{icon}</div>
+        <span className={`text-[0.78rem] font-bold ${enabled ? 'text-primary-600' : 'text-gray-500'}`}>{label}</span>
         <Toggle checked={enabled} onChange={onChange} />
     </div>
 );
@@ -197,6 +164,8 @@ const FeeSettingsDashboard = () => {
     const [activeTab, setActiveTab] = useState('billing');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isMpesaModalOpen, setIsMpesaModalOpen] = useState(false);
+
 
     /* ── state ── */
     const [billing, setBilling] = useState({
@@ -320,11 +289,12 @@ const FeeSettingsDashboard = () => {
     return (
         <DashboardLayout title="Fee Module Settings">
             <style>{`
-                .fee-settings-tab { display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:var(--border-radius-sm); border:none; background:transparent; color:var(--text-secondary); font-size:0.83rem; font-weight:500; cursor:pointer; text-align:left; width:100%; transition:all var(--transition-fast); }
-                .fee-settings-tab:hover:not(.active) { background:var(--bg-light); color:var(--text-main); }
-                .fee-settings-tab.active { background:var(--primary-color); color:#fff; font-weight:700; box-shadow:0 2px 8px rgba(63,81,181,0.25); }
-                .fee-settings-tab.active svg { color:#fff !important; }
-                .fee-settings-tab-icon { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+                .fee-settings-tab { display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; border:none; background:transparent; color:#6b7280; font-size:0.87rem; font-weight:600; cursor:pointer; text-align:left; width:100%; transition:all 0.3s ease; margin-bottom: 8px; }
+                .fee-settings-tab:hover:not(.active) { background:rgba(255,255,255,0.4); color:#374151; box-shadow: 2px 2px 5px rgba(0,0,0,0.02); }
+                .fee-settings-tab.active { background:#e2e8f0; color:var(--primary-color); font-weight:700; box-shadow: inset 4px 4px 8px #cbd5e1, inset -4px -4px 8px #ffffff; }
+                .fee-settings-tab.active svg { color:var(--primary-color) !important; }
+                .fee-settings-tab-icon { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:transparent; transition:all 0.3s ease; }
+                .fee-settings-tab.active .fee-settings-tab-icon { background:#fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
                 .fee-settings-save-btn { display:flex; align-items:center; gap:7px; padding:9px 20px; border-radius:var(--border-radius-sm); border:none; background:var(--primary-color); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 8px rgba(63,81,181,0.25); transition:all var(--transition-fast); }
                 .fee-settings-save-btn:hover:not(:disabled) { background:var(--primary-dark); }
                 .fee-settings-save-btn:disabled { opacity:0.7; cursor:not-allowed; }
@@ -362,19 +332,15 @@ const FeeSettingsDashboard = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, alignItems: 'start' }}>
 
                     {/* Sidebar */}
-                    <div style={{
-                        background: 'var(--card-bg)', borderRadius: 'var(--border-radius)',
-                        border: '1px solid var(--border-color-light)', boxShadow: 'var(--shadow-sm)',
-                        padding: '0.5rem', position: 'sticky', top: 90,
-                    }}>
+                    <div className="neo-card border-none p-4 sticky top-[90px]">
                         {TABS.map(({ id, label, icon: Icon }) => (
                             <button
                                 key={id}
                                 className={`fee-settings-tab${activeTab === id ? ' active' : ''}`}
                                 onClick={() => changeTab(id)}
                             >
-                                <span className="fee-settings-tab-icon" style={{ background: activeTab === id ? 'rgba(255,255,255,0.15)' : 'var(--bg-light)' }}>
-                                    <Icon size={14} color={activeTab === id ? '#fff' : 'var(--primary-color)'} />
+                                <span className="fee-settings-tab-icon">
+                                    <Icon size={16} color={activeTab === id ? 'var(--primary-color)' : '#9ca3af'} />
                                 </span>
                                 {label}
                             </button>
@@ -676,16 +642,16 @@ const FeeSettingsDashboard = () => {
                                 {activeTab === 'integrations' && (
                                     <SectionCard title="System Integrations" icon={LinkIcon}>
                                         {[
-                                            { name: 'M-Pesa Auto-Reconciliation',    description: 'Automatic matching of M-Pesa payments to student invoices via Daraja API', status: 'connected' },
-                                            { name: 'WhatsApp Business API',         description: 'Send fee statements, payment reminders and receipts via WhatsApp', status: 'disconnected' },
-                                            { name: 'QuickBooks / Xero Sync',        description: 'Sync invoices and receipts to your accounting software automatically', status: 'disconnected' },
-                                            { name: 'SMS Gateway (Africa\'s Talking)', description: 'Send SMS notifications and payment confirmations to parents', status: 'disconnected' },
-                                            { name: 'National e-Citizen Integration',description: 'Kenya Revenue Authority & eCitizen payment gateway connectivity', status: 'disconnected' },
+                                            { name: 'M-Pesa Auto-Reconciliation',    description: 'Automatic matching of M-Pesa payments to student invoices via Daraja API', status: 'connected', action: () => setIsMpesaModalOpen(true) },
+                                            { name: 'WhatsApp Business API',         description: 'Send fee statements, payment reminders and receipts via WhatsApp', status: 'disconnected', action: () => toast.info('WhatsApp Business API integration coming soon.') },
+                                            { name: 'QuickBooks / Xero Sync',        description: 'Sync invoices and receipts to your accounting software automatically', status: 'disconnected', action: () => toast.info('QuickBooks / Xero Sync coming soon.') },
+                                            { name: 'SMS Gateway (Africa\'s Talking)', description: 'Send SMS notifications and payment confirmations to parents', status: 'disconnected', action: () => toast.info('SMS Gateway coming soon.') },
+                                            { name: 'National e-Citizen Integration',description: 'Kenya Revenue Authority & eCitizen payment gateway connectivity', status: 'disconnected', action: () => toast.info('e-Citizen integration coming soon.') },
                                         ].map((int, i, arr) => (
                                             <IntegrationRow
                                                 key={int.name}
                                                 {...int}
-                                                onConnect={() => toast.info(`${int.name} — Integration coming soon.`)}
+                                                onConnect={int.action}
                                             />
                                         ))}
                                         <div style={{ height: 6 }} />
@@ -696,6 +662,11 @@ const FeeSettingsDashboard = () => {
                     </div>
                 </div>
             </div>
+            
+            <MpesaConfigModal 
+                isOpen={isMpesaModalOpen} 
+                onClose={() => setIsMpesaModalOpen(false)} 
+            />
         </DashboardLayout>
     );
 };

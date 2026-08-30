@@ -95,6 +95,18 @@ const getTheme = (color) => {
   };
 };
 
+interface StatCardMiniProps {
+  title?: React.ReactNode;
+  value?: React.ReactNode;
+  count?: React.ReactNode;
+  change?: number;
+  trend?: number;
+  trendLabel?: string;
+  icon?: string | React.ElementType;
+  color?: string;
+  iconColor?: string;
+}
+
 const StatCardMini = ({
   title,
   value,
@@ -104,7 +116,7 @@ const StatCardMini = ({
   trendLabel,
   icon = 'chart',
   color = '#3b82f6',
-}) => {
+}: StatCardMiniProps) => {
   const IconComponent = typeof icon === 'string' ? iconComponents[icon] : icon;
   const displayValue = count || value;
 

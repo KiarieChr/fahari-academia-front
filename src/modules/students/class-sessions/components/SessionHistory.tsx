@@ -18,10 +18,11 @@ const SessionHistory = () => {
                         <Calendar className="absolute left-3 top-2.5 text-gray-400" size={16} />
                         <input
                             type="date"
-                            className="pl-9 pr-3 py-1.5 neo-pressed border-none rounded-lg text-sm focus:outline-none text-gray-700 bg-transparent"
+                            className="pr-3 py-2 neo-pressed border-none rounded-lg text-sm focus:outline-none text-gray-700 bg-transparent"
+                            style={{paddingLeft:'30px'}}
                         />
                     </div>
-                    <button className="px-3 py-1.5 neo-btn rounded-lg text-gray-600 flex items-center gap-2 text-sm">
+                    <button className="px-3 py-2 neo-btn rounded-lg text-gray-600 flex items-center gap-2 text-sm">
                         <Filter size={14} /> Filter
                     </button>
                 </div>
@@ -31,32 +32,32 @@ const SessionHistory = () => {
                 <table className="w-full text-sm text-left text-gray-600">
                     <thead className="bg-gray-50 text-gray-700 uppercase font-bold text-xs">
                         <tr>
-                            <th className="px-6 py-4">Date</th>
-                            <th className="px-6 py-4">Class</th>
-                            <th className="px-6 py-4">Subject</th>
-                            <th className="px-6 py-4">Teacher</th>
-                            <th className="px-6 py-4">Duration</th>
-                            <th className="px-6 py-4 text-center">Attendance</th>
-                            <th className="px-6 py-4 text-center">Status</th>
-                            <th className="px-6 py-4 text-right">View</th>
+                            <th className="px-4 py-4">Date</th>
+                            <th className="px-4 py-4">Class</th>
+                            <th className="px-4 py-4">Subject</th>
+                            <th className="px-4 py-4">Teacher</th>
+                            <th className="px-4 py-4">Duration</th>
+                            <th className="px-4 py-4 text-center">Attendance</th>
+                            <th className="px-4 py-4 text-center">Status</th>
+                            <th className="px-4 py-4 text-right">View</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {history.map((record) => (
                             <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4">{record.date}</td>
-                                <td className="px-6 py-4 font-medium">{record.class}</td>
-                                <td className="px-6 py-4">{record.subject}</td>
-                                <td className="px-6 py-4">{record.teacher}</td>
-                                <td className="px-6 py-4">{record.duration}</td>
-                                <td className="px-6 py-4 text-center font-bold">{record.attendance}</td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-4 py-4">{record.date}</td>
+                                <td className="px-4 py-4 font-medium">{record.class}</td>
+                                <td className="px-4 py-4">{record.subject}</td>
+                                <td className="px-4 py-4">{record.teacher}</td>
+                                <td className="px-4 py-4">{record.duration}</td>
+                                <td className="px-4 py-4 text-center font-bold">{record.attendance}</td>
+                                <td className="px-4 py-4 text-center">
                                     <span className={`px-2 py-1 rounded-full text-xs font-semibold neo-pressed ${record.status === 'Completed' ? 'text-green-700' : 'text-red-700'
                                         }`}>
                                         {record.status}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-4 py-4 text-right">
                                     <button className="p-1.5 neo-btn rounded-lg text-gray-400">
                                         <FileText size={18} />
                                     </button>

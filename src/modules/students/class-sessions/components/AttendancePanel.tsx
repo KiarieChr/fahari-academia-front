@@ -88,14 +88,14 @@ const AttendancePanel = ({ todaySessions = [] }) => {
     // No sessions at all
     if (todaySessions.length === 0) {
         return (
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8 text-center text-gray-400 text-sm">
+            <div className="neo-pressed shadow-sm p-5 text-center text-gray-400 text-sm">
                 No sessions found for today. Start a session to mark attendance.
             </div>
         );
     }
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="neo-card overflow-hidden shadow-sm">
             {/* Header: session selector */}
             <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="flex-1 min-w-0">

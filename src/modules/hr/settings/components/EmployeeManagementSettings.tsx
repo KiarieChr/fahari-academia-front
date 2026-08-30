@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Building, Briefcase, MapPin, Banknote } from 'lucide-react';
 import { api } from '../../../../services/api';
+import ContentLoader from '../../../../components/common/ContentLoader';
 import { toast } from 'react-toastify';
 
 const EmployeeManagementSettings = () => {
@@ -38,10 +39,10 @@ const EmployeeManagementSettings = () => {
                     api.get('/workforce/api/campuses/')
                 ]);
                 setDepartments(deptRes.results || deptRes || []);
-                setCampuses(campusRes.results || campusRes || []);
+                setCampuses(Array.isArray(campusRes?.results) ? campusRes.results : (Array.isArray(campusRes) ? campusRes : []));
             } else if (activeTab === 'campuses') {
                 const res = await api.get('/workforce/api/campuses/');
-                setCampuses(res.results || res || []);
+                setCampuses(Array.isArray(res?.results) ? res.results : (Array.isArray(res) ? res : []));
             } else if (activeTab === 'job_grades') {
                 const res = await api.get('/workforce/api/job-grades/');
                 setJobGrades(res.results || res || []);
@@ -235,7 +236,9 @@ const EmployeeManagementSettings = () => {
             </div>
 
             {loading ? (
-                <div className="text-center py-8 text-slate-500">Loading...</div>
+                <div className="py-8 flex justify-center">
+                    <ContentLoader size="lg" message="Loading..." />
+                </div>
             ) : (
                 <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">

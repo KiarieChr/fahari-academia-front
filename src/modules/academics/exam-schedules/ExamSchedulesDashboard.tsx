@@ -29,7 +29,7 @@ const ExamSchedulesDashboard = () => {
     const [loading, setLoading] = useState(false);
     const [generating, setGenerating] = useState(false);
     const [editingExamId, setEditingExamId] = useState(null);
-    const [editForm, setEditForm] = useState({ exam_date: '', start_time: '', duration_minutes: 120 });
+    const [editForm, setEditForm] = useState({ exam_date: '', start_time: '', duration_minutes: 120, grading_scale: '' });
     const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
     const [generateConfig, setGenerateConfig] = useState({
         startDate: new Date().toISOString().split('T')[0],
@@ -149,7 +149,7 @@ const ExamSchedulesDashboard = () => {
         const session = classSessions.find(s => s.id == context.classSession);
         if (!session) return;
         
-        const curId = session.curriculum;
+        const curId = grades.find(g => g.id == context.grade)?.curriculum;
 
         const scale = gradingScales.find(s => s.curriculum == curId && s.is_active);
         if (!scale) {
@@ -237,6 +237,7 @@ const ExamSchedulesDashboard = () => {
             exam_date: exam.exam_date || '',
             start_time: exam.start_time || '',
             duration_minutes: exam.duration_minutes || 120,
+            grading_scale: typeof exam.grading_scale === 'object' ? exam.grading_scale?.id : exam.grading_scale
         });
     };
 
@@ -247,7 +248,7 @@ const ExamSchedulesDashboard = () => {
                 class_session: typeof exam.class_session === 'object' ? exam.class_session.id : exam.class_session,
                 assessment_type: typeof exam.assessment_type === 'object' ? exam.assessment_type.id : exam.assessment_type,
                 subject: typeof exam.subject === 'object' ? exam.subject.id : exam.subject,
-                grading_scale: typeof exam.grading_scale === 'object' ? exam.grading_scale.id : exam.grading_scale,
+                grading_scale: editForm.grading_scale || (typeof exam.grading_scale === 'object' ? exam.grading_scale.id : exam.grading_scale),
                 exam_date: editForm.exam_date,
                 start_time: editForm.start_time,
                 duration_minutes: editForm.duration_minutes,
@@ -302,7 +303,7 @@ const ExamSchedulesDashboard = () => {
     return (
         <DashboardLayout title="Exam Schedules">
             <div className="min-h-screen neo-bg pb-20 relative">
-                <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+                <div className="max-w-[1600px] mx-auto p-4 space-y-6">
                     <div className="flex justify-between items-center">
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -337,7 +338,7 @@ const ExamSchedulesDashboard = () => {
                     </div>
 
                     {/* Filters */}
-                    <div className="neo-card border-none p-6 grid grid-cols-5 md:grid-cols-5 lg:grid-cols-5 sm:grid-cols-2 gap-5">
+                    <div className="neo-card border-none p-4 grid grid-cols-5 md:grid-cols-5 lg:grid-cols-5 sm:grid-cols-2 gap-5 mb-4">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-2">Academic Year</label>
                             <select
@@ -428,6 +429,7 @@ const ExamSchedulesDashboard = () => {
                                 <thead>
                                     <tr className="border-b-2 border-slate-100">
                                         <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Subject</th>
+                                        <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Grading Scale</th>
                                         <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Date</th>
                                         <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Start Time</th>
                                         <th className="py-4 px-4 font-bold text-sm text-slate-500 uppercase tracking-wider">Duration (min)</th>
@@ -439,11 +441,37 @@ const ExamSchedulesDashboard = () => {
                                     {examinations.map(exam => {
                                         const isEditing = editingExamId === exam.id;
                                         const subjectName = typeof exam.subject === 'object' ? exam.subject.name : (subjects.find(s => s.id == exam.subject)?.name || 'Unknown');
+                                        const currentScaleId = typeof exam.grading_scale === 'object' ? exam.grading_scale?.id : exam.grading_scale;
+                                        const scaleObj = gradingScales.find(s => s.id == currentScaleId);
+                                        const scaleName = scaleObj ? `${scaleObj.name} (${scaleObj.code})` : 'Unknown Scale';
                                         
+                                        // Get available scales for this exam's curriculum
+                                        const activeCurr = grades.find(g => g.id == context.grade)?.curriculum;
+                                        const availableScales = activeCurr ? gradingScales.filter(s => s.curriculum == activeCurr) : gradingScales;
+
                                         return (
                                             <tr key={exam.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
                                                 <td className="py-4 px-4 font-bold text-slate-700">{subjectName}</td>
                                                 
+                                                <td className="py-4 px-4">
+                                                    {isEditing ? (
+                                                        <select
+                                                            className="w-full px-3 py-2 neo-pressed border-none rounded-xl text-sm outline-none bg-transparent"
+                                                            value={editForm.grading_scale}
+                                                            onChange={e => setEditForm({...editForm, grading_scale: e.target.value})}
+                                                        >
+                                                            <option value="">Select Scale</option>
+                                                            {availableScales.map(s => (
+                                                                <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <span className="text-slate-600 font-medium">
+                                                            {scaleName}
+                                                        </span>
+                                                    )}
+                                                </td>
+
                                                 <td className="py-4 px-4">
                                                     {isEditing ? (
                                                         <input 

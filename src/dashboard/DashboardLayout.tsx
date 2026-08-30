@@ -183,13 +183,15 @@ const DashboardLayout = ({ children, title }) => {
             path: '/dashboard/fleet',
             module: 'fleet',
             subItems: [
-                { label: 'Fleet Dashboard', path: '/dashboard/fleet' },
-                { label: 'Vehicles', path: '/dashboard/fleet?tab=vehicles' },
-                { label: 'Drivers', path: '/dashboard/fleet?tab=drivers' },
-                { label: 'Trips', path: '/dashboard/fleet?tab=trips' },
-                { label: 'Fuel & Mileage', path: '/dashboard/fleet?tab=fuel' },
-                { label: 'Maintenance', path: '/dashboard/fleet?tab=maintenance' },
-                { label: 'Expenses', path: '/dashboard/fleet?tab=expenses' },
+                { label: 'Fleet Summary', path: '/dashboard/fleet' },
+                { label: 'Live Tracking', path: '/dashboard/fleet/live' },
+                { label: 'Vehicles', path: '/dashboard/fleet/vehicles' },
+                { label: 'Drivers', path: '/dashboard/fleet/drivers' },
+                { label: 'Trips', path: '/dashboard/fleet/trips' },
+                { label: 'Fuel & Mileage', path: '/dashboard/fleet/fuel' },
+                { label: 'Maintenance', path: '/dashboard/fleet/maintenance' },
+                { label: 'Expenses', path: '/dashboard/fleet/expenses' },
+                { label: 'Financial Analytics', path: '/dashboard/fleet/analytics' },
             ]
         },
         { sectionLabel: 'CRM & ENGAGEMENT' },
@@ -489,7 +491,7 @@ const DashboardLayout = ({ children, title }) => {
                 <div className="sidebar-header">
                     <div className="brand-text">
                         <GraduationCap size={28} />
-                        <span className="brand-name">Fahari ERP</span>
+                        <span className="brand-name">Fahari</span>
                     </div>
                     <button
                         className="sidebar-close-btn"

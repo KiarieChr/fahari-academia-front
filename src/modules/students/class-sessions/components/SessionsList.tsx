@@ -70,8 +70,9 @@ const SessionsList = ({ todaySessions = [], onComplete, onCancel }) => {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search sessions..."
-                            className="w-full pl-10 pr-4 py-2 neo-pressed border-none rounded-lg text-sm
+                            className="w-full pr-4 py-2 neo-pressed border-none rounded-lg text-sm
                                        focus:outline-none text-gray-700 bg-transparent"
+                            style={{paddingLeft:'30px'}}
                         />
                     </div>
                     <button

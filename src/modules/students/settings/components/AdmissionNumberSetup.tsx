@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Save, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import studentSettingsService from '../../../../services/studentSettingsService';
+import ContentLoader from '../../../../components/common/ContentLoader';
 
 const neoCardClass = 'bg-[#f8f9fa] rounded-3xl shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] border border-white p-6 space-y-6';
 const inputClass = 'w-full px-4 py-3 bg-gray-50/80 rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400';
@@ -35,7 +36,7 @@ const AdmissionNumberSetup = () => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div className="p-8 flex justify-center"><ContentLoader size="lg" message="Loading..." /></div>;
     if (!config) return <div>No configuration found.</div>;
 
     const getPreview = () => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 /**
@@ -73,7 +74,7 @@ const Modal = ({
 
     if (!isOpen) return null;
 
-    return (
+    const modalContent = (
         <div className="fixed inset-0 z-[8000] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
             {/* Backdrop */}
             <div
@@ -135,6 +136,9 @@ const Modal = ({
             </div>
         </div>
     );
+
+    // Use portal to avoid being trapped in overflow-hidden containers
+    return createPortal(modalContent, document.body);
 };
 
 /* ─── Convenience sub-components ─── */
@@ -157,7 +161,7 @@ Modal.CancelButton = ({ onClick, children = 'Cancel' }) => (
 );
 
 /** Standard primary action button for modal footers */
-Modal.SubmitButton = ({ onClick, form, disabled, loading, children, label, className = '' }) => (
+Modal.SubmitButton = ({ onClick, form, disabled = false, loading = false, children, label, className = '' }) => (
     <button
         type={form ? 'submit' : 'button'}
         form={form}
@@ -182,7 +186,7 @@ Modal.SubmitButton = ({ onClick, form, disabled, loading, children, label, class
 );
 
 /** Standard danger action button for modal footers */
-Modal.DangerButton = ({ onClick, disabled, loading, children = 'Delete' }) => (
+Modal.DangerButton = ({ onClick, disabled = false, loading = false, children = 'Delete' }) => (
     <button
         type="button"
         onClick={onClick}

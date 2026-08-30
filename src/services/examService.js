@@ -20,6 +20,9 @@ export const examService = {
     duplicateGradingScale: (id) =>
         api.post(`/api/examinations/grading-scales/${id}/duplicate/`),
 
+    seedGradingData: () =>
+        api.post('/api/examinations/grading-scales/seed_defaults/'),
+
     // ── Assessment Types ────────────────────────────────────────
     getAssessmentTypes: (params = {}) =>
         api.get('/api/examinations/assessment-types/', { params }),

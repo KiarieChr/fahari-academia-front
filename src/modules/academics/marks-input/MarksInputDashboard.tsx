@@ -24,12 +24,15 @@ const MarksInputDashboard = () => {
         examination: '',
     });
 
+    const [gradingScales, setGradingScales] = useState([]);
+    const [editingScale, setEditingScale] = useState(false);
+
     const [students, setStudents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [showInsights, setShowInsights] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [saveStatus, setSaveStatus] = useState('saved');
-    const [examMeta, setExamMeta] = useState({ max_mark: 100, exam_name: '', grading_scale: null });
+    const [examMeta, setExamMeta] = useState({ max_mark: 100, exam_name: '', grading_scale: null, grading_scale_name: '', grading_scale_code: '', curriculum_id: null });
     const [analysis, setAnalysis] = useState(null);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -40,6 +43,11 @@ const MarksInputDashboard = () => {
 
     // Load students when exam is selected
     useEffect(() => {
+        // Load grading scales once
+        if (gradingScales.length === 0) {
+            examService.getGradingScales().then(data => setGradingScales(data.results || data)).catch(() => {});
+        }
+
         if (!context.examination) {
             setStudents([]);
             setAnalysis(null);
@@ -56,6 +64,9 @@ const MarksInputDashboard = () => {
                 max_mark: data.max_mark,
                 exam_name: data.exam_name,
                 grading_scale: data.grading_scale,
+                grading_scale_name: data.grading_scale_name,
+                grading_scale_code: data.grading_scale_code,
+                curriculum_id: data.curriculum_id
             });
             setStudents(data.students.map(s => ({
                 ...s,
@@ -251,7 +262,7 @@ const MarksInputDashboard = () => {
 
     return (
         <DashboardLayout title="Marks Input">
-            <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 pb-20 relative">
+            <div className="min-h-screen neo-bg pb-20 relative">
                 {/* Hidden file input */}
                 <input
                     type="file"
@@ -273,8 +284,48 @@ const MarksInputDashboard = () => {
                         {/* Toolbar */}
                         <div className="mb-4 flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                                <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                                     {examMeta.exam_name || 'Marks Entry'}
+                                    {editingScale ? (
+                                        <select 
+                                            className="text-xs neo-pressed border-none rounded-lg outline-none bg-transparent py-1 px-2 text-indigo-700 font-bold"
+                                            value={examMeta.grading_scale || ''}
+                                            onChange={async (e) => {
+                                                const newScaleId = e.target.value;
+                                                setEditingScale(false);
+                                                if (newScaleId && newScaleId != examMeta.grading_scale) {
+                                                    try {
+                                                        setLoading(true);
+                                                        await examService.updateExamination(context.examination, {
+                                                            grading_scale: newScaleId
+                                                        });
+                                                        toast.success('Grading scale updated. Grades recalculated.');
+                                                        await loadExamStudents(context.examination);
+                                                    } catch (err) {
+                                                        toast.error('Failed to update grading scale');
+                                                        setLoading(false);
+                                                    }
+                                                }
+                                            }}
+                                            onBlur={() => setEditingScale(false)}
+                                            autoFocus
+                                        >
+                                            <option value="">Select Scale</option>
+                                            {gradingScales.filter(s => s.curriculum == examMeta.curriculum_id).map(s => (
+                                                <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        examMeta.grading_scale_name && (
+                                            <button 
+                                                onClick={() => setEditingScale(true)}
+                                                className="!text-[12px] uppercase tracking-normal font-black bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full border border-indigo-200/50 shadow-sm hover:bg-indigo-200 transition-colors cursor-pointer" 
+                                                title={`Code: ${examMeta.grading_scale_code} (Click to change)`}
+                                            >
+                                                Scale: {examMeta.grading_scale_name}
+                                            </button>
+                                        )
+                                    )}
                                 </h1>
                                 <div className="flex items-center gap-1 text-xs font-medium text-slate-400">
                                     {saveStatus === 'saving' && <span className="animate-pulse text-blue-500">Saving...</span>}
@@ -283,59 +334,58 @@ const MarksInputDashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex gap-3">
                                 <button
                                     onClick={handleToggleInsights}
-                                    className="px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                    className="px-4 py-2 neo-btn rounded-xl text-sm font-bold text-slate-600 transition-colors"
                                     title="Performance Insights"
                                 >
-                                    <BarChart2 size={16} />
+                                    <BarChart2 size={18} />
                                 </button>
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={!context.examination || loading}
-                                    className="px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                    className="px-4 py-2 neo-btn rounded-xl text-sm font-bold text-slate-600 transition-colors disabled:opacity-50 flex items-center gap-2"
                                     title="Upload Excel/CSV"
                                 >
-                                    <Upload size={16} />
+                                    <Upload size={18} />
                                     <span className="hidden sm:inline">Upload</span>
                                 </button>
                                 <button
                                     onClick={() => context.examination && loadExamStudents(context.examination)}
                                     disabled={!context.examination || loading}
-                                    className="px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                                    className="px-4 py-2 neo-btn rounded-xl text-sm font-bold text-slate-600 transition-colors disabled:opacity-50"
                                     title="Reload"
                                 >
-                                    <RotateCcw size={16} />
+                                    <RotateCcw size={18} />
                                 </button>
                                 <button
                                     onClick={() => setShowReviewModal(true)}
                                     disabled={students.length === 0}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="px-6 py-2 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-[4px_4px_10px_#c3c8ce,-4px_-4px_10px_#ffffff] hover:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.1),inset_-4px_-4px_8px_rgba(255,255,255,0.2)] disabled:opacity-50 disabled:shadow-none transition-all ml-2"
                                 >
                                     Review & Submit
                                 </button>
                             </div>
                         </div>
 
-                        {/* Marks Table or Warning */}
                         {context.examination && context._examObj && (!context._examObj.exam_date && context._examObj.status === 'draft') ? (
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center mt-8 shadow-sm">
-                                <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Clock size={32} />
+                            <div className="neo-card border-none rounded-3xl p-12 text-center mt-8 mx-auto max-w-2xl">
+                                <div className="w-20 h-20 neo-card rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Clock size={36} className="text-amber-500" />
                                 </div>
-                                <h3 className="text-xl font-bold text-amber-900 mb-2">Examination Not Scheduled</h3>
-                                <p className="text-amber-700 max-w-md mx-auto">
+                                <h3 className="text-2xl font-black text-slate-700 mb-3">Examination Not Scheduled</h3>
+                                <p className="text-slate-500 font-medium">
                                     This examination exists but has not been scheduled yet. Please go to the <strong>Exam Schedules</strong> module to schedule it before entering marks.
                                 </p>
                             </div>
                         ) : !context.examination ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mb-4">
-                                    <BarChart2 size={32} />
+                            <div className="flex flex-col items-center justify-center py-24 text-center neo-card border-none rounded-3xl mx-4 mt-8 p-12">
+                                <div className="w-20 h-20 neo-card rounded-full flex items-center justify-center mb-6">
+                                    <BarChart2 size={36} className="text-slate-400" />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">No Exam Selected</h3>
-                                <p className="text-slate-500 max-w-md mx-auto">
+                                <h3 className="text-2xl font-black text-slate-700 mb-3">No Exam Selected</h3>
+                                <p className="text-slate-500 max-w-md mx-auto font-medium">
                                     Please use the filters above to select a Class, Subject, and Assessment Type.
                                 </p>
                             </div>

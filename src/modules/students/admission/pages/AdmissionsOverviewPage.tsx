@@ -109,11 +109,7 @@ const AdmissionsOverviewPage = () => {
                             <button
                                 key={item.path}
                                 onClick={() => navigate(item.path)}
-                                className="group flex flex-col gap-3 p-4 rounded-2xl border text-left transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-                                style={{
-                                    background: 'var(--card-bg)',
-                                    borderColor: 'var(--border-color-light)',
-                                }}
+                                className="neo-card group flex flex-col gap-3 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
                             >
                                 <div
                                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110"

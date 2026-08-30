@@ -9,37 +9,55 @@ import {
     AreaChart, Area
 } from 'recharts';
 
-const ReportsOverview = ({ curriculum }) => {
-    // Mock Data based on curriculum
-    const metrics = [
-        { label: 'Total Assessed', value: '450', sub: '98% Attendance', icon: Users, color: 'blue' },
-        { label: curriculum === 'CBC' ? 'Exceeding Exp.' : 'Distinctions (A*-A)', value: curriculum === 'CBC' ? '120' : '85', sub: '+12% vs last term', icon: TrendingUp, color: 'emerald' },
-        { label: 'Class Average', value: curriculum === 'CBC' ? 'Meets Exp.' : '72% (B)', sub: 'Top 10% in School', icon: BookOpen, color: 'violet' },
-        { label: 'Needs Support', value: '18', sub: 'Action Plan Required', icon: AlertCircle, color: 'amber' },
-    ];
-
-    const gradeData = curriculum === 'CBC'
-        ? [
-            { name: 'EE', count: 120 }, { name: 'ME', count: 210 },
-            { name: 'AE', count: 85 }, { name: 'BE', count: 35 }
-        ]
-        : [
-            { name: 'A*', count: 25 }, { name: 'A', count: 60 }, { name: 'B', count: 110 },
-            { name: 'C', count: 140 }, { name: 'D', count: 65 }, { name: 'E', count: 30 }, { name: 'U', count: 20 }
+const ReportsOverview = ({ curriculum, analysis, loading }) => {
+    // Unpack analysis data or fallback to defaults
+    const analysisData = analysis?.data || analysis || {};
+    
+    const totalStudents = analysisData.total_students || 0;
+    const overallMean = analysisData.overall_mean || 0;
+    
+    // Grade Distribution mapping for charts
+    const gradeDist = analysisData.grade_distribution || {};
+    
+    let gradeData = [];
+    if (curriculum === 'CBC') {
+        gradeData = [
+            { name: 'EE', count: gradeDist['EE'] || 0 },
+            { name: 'ME', count: gradeDist['ME'] || 0 },
+            { name: 'AE', count: gradeDist['AE'] || 0 },
+            { name: 'BE', count: gradeDist['BE'] || 0 }
         ];
+    } else {
+        gradeData = [
+            { name: 'A*', count: gradeDist['A*'] || 0 },
+            { name: 'A', count: gradeDist['A'] || 0 },
+            { name: 'B', count: gradeDist['B'] || 0 },
+            { name: 'C', count: gradeDist['C'] || 0 },
+            { name: 'D', count: gradeDist['D'] || 0 },
+            { name: 'E', count: gradeDist['E'] || 0 },
+            { name: 'U', count: gradeDist['U'] || 0 }
+        ];
+    }
+    
+    const topPerformers = curriculum === 'CBC' ? (gradeDist['EE'] || 0) : ((gradeDist['A*'] || 0) + (gradeDist['A'] || 0));
+    const needsSupport = curriculum === 'CBC' ? (gradeDist['BE'] || 0) : ((gradeDist['E'] || 0) + (gradeDist['U'] || 0));
 
-    const radarData = [
-        { subject: 'Math', A: 120, B: 110, fullMark: 150 },
-        { subject: 'Eng', A: 98, B: 130, fullMark: 150 },
-        { subject: 'Sci', A: 86, B: 130, fullMark: 150 },
-        { subject: 'Hist', A: 99, B: 100, fullMark: 150 },
-        { subject: 'Geog', A: 85, B: 90, fullMark: 150 },
-        { subject: 'Arts', A: 65, B: 85, fullMark: 150 },
+    const metrics = [
+        { label: 'Total Assessed', value: totalStudents, sub: 'Current Session', icon: Users, color: 'blue' },
+        { label: curriculum === 'CBC' ? 'Exceeding Exp.' : 'Distinctions (A*-A)', value: topPerformers, sub: 'Top Performers', icon: TrendingUp, color: 'emerald' },
+        { label: 'Class Average', value: curriculum === 'CBC' ? 'Check Metrics' : `${overallMean.toFixed(1)}%`, sub: 'Overall Mean Mark', icon: BookOpen, color: 'violet' },
+        { label: 'Needs Support', value: needsSupport, sub: 'Action Plan Required', icon: AlertCircle, color: 'amber' },
     ];
+
+    const radarData = (analysisData.subject_means || []).map(s => ({
+        subject: s.code || s.subject.substring(0, 4),
+        Average: s.mean,
+        fullMark: 100
+    }));
 
     const themeColor = curriculum === 'CBC' ? '#0d9488' : '#4f46e5'; // Teal vs Indigo
 
-    const attendanceData = [
+    const attendanceData = analysisData.attendance_trends || [
         { month: 'Jan', attendance: 92 },
         { month: 'Feb', attendance: 95 },
         { month: 'Mar', attendance: 88 },
@@ -48,25 +66,8 @@ const ReportsOverview = ({ curriculum }) => {
         { month: 'Jun', attendance: 94 },
     ];
 
-    const gradingSchemes = {
-        CBC: [
-            { grade: 'EE', range: '80-100%', desc: 'Exceeding Expectations', color: 'bg-teal-100 text-teal-800' },
-            { grade: 'ME', range: '65-79%', desc: 'Meeting Expectations', color: 'bg-emerald-100 text-emerald-800' },
-            { grade: 'AE', range: '50-64%', desc: 'Approaching Expectations', color: 'bg-yellow-100 text-yellow-800' },
-            { grade: 'BE', range: '0-49%', desc: 'Below Expectations', color: 'bg-red-100 text-red-800' },
-        ],
-        IGCSE: [
-            { grade: 'A*', range: '90-100%', desc: 'Outstanding', color: 'bg-indigo-100 text-indigo-800' },
-            { grade: 'A', range: '80-89%', desc: 'Excellent', color: 'bg-blue-100 text-blue-800' },
-            { grade: 'B', range: '70-79%', desc: 'Very Good', color: 'bg-cyan-100 text-cyan-800' },
-            { grade: 'C', range: '60-69%', desc: 'Good', color: 'bg-green-100 text-green-800' },
-            { grade: 'D', range: '50-59%', desc: 'Pass', color: 'bg-yellow-100 text-yellow-800' },
-            { grade: 'E', range: '40-49%', desc: 'Weak Pass', color: 'bg-orange-100 text-orange-800' },
-            { grade: 'U', range: '0-39%', desc: 'Ungraded', color: 'bg-red-100 text-red-800' },
-        ]
-    };
-
-    const currentScheme = gradingSchemes[curriculum] || gradingSchemes.IGCSE;
+    const currentScheme = analysisData.grading_scheme || [];
+    // currentScheme is mapped directly from analysisData.grading_scheme
 
     return (
         <div className="space-y-6">
@@ -127,8 +128,8 @@ const ReportsOverview = ({ curriculum }) => {
                             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                                 <PolarGrid stroke="#e2e8f0" />
                                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12 }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                                <Radar name="Class Average" dataKey="A" stroke={themeColor} fill={themeColor} fillOpacity={0.3} />
+                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                <Radar name="Class Average" dataKey="Average" stroke={themeColor} fill={themeColor} fillOpacity={0.3} />
                                 <Legend />
                                 <RechartsTooltip />
                             </RadarChart>

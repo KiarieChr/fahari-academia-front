@@ -100,7 +100,7 @@ const TrendChart = React.memo(({ data, chartType = 'area', highlightMetric = nul
 
     if (chartType === 'bar') {
         return (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                 <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={22}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={borderLight} />
                     <XAxis 
@@ -141,7 +141,7 @@ const TrendChart = React.memo(({ data, chartType = 'area', highlightMetric = nul
     }
 
     return (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                     <linearGradient id="colorApps" x1="0" y1="0" x2="0" y2="1">
@@ -318,7 +318,7 @@ const StatusPieChart = React.memo(({ data, total, highlightMetric }) => {
     }, [total]);
 
     return (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
             <PieChart>
                 <Pie
                     data={sortedData}
@@ -463,7 +463,7 @@ const GenderBarChart = React.memo(({ data }) => {
             </div>
 
             <div className="w-full" style={{ height: 320 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                     <BarChart data={processedData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }} barSize={32}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis 
@@ -562,8 +562,8 @@ const AdmissionStats = () => {
                     studentManagementService.getIntakes()
                 ]);
                 setOptions({
-                    campuses: campusesRes.results || campusesRes || [],
-                    intakes: intakesRes.results || intakesRes || []
+                    campuses: Array.isArray(campusesRes?.results) ? campusesRes.results : (Array.isArray(campusesRes) ? campusesRes : []),
+                    intakes: Array.isArray(intakesRes?.results) ? intakesRes.results : (Array.isArray(intakesRes) ? intakesRes : [])
                 });
             } catch (err) {
                 console.error("Failed to fetch filter options", err);
@@ -683,10 +683,10 @@ const AdmissionStats = () => {
         return (
             <div 
                 onClick={onClick}
-                className={`relative overflow-hidden cursor-pointer transition-all duration-500 rounded-[32px] p-4 h-[160px] flex flex-col justify-between border ${
+                className={`relative overflow-hidden cursor-pointer transition-all duration-500 rounded-[32px] p-4 h-[160px] flex flex-col justify-between border neo-card ${
                     isActive 
-                    ? `bg-indigo-600 border-indigo-500 shadow-[0_20px_40px_rgba(79,70,229,0.3)] scale-[1.03] z-10` 
-                    : 'bg-white dark:bg-slate-900 border-slate-200/60 dark:border-slate-800/60 hover:scale-[1.02] shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_35px_rgba(0,0,0,0.06)]'
+                    ? `neo-card` 
+                    : 'neo-card:hover'
                 }`}
             >
                 <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-[40px] pointer-events-none opacity-40 transition-opacity group-hover:opacity-60" style={{ background: highlightColor }} />
@@ -696,7 +696,7 @@ const AdmissionStats = () => {
                         <p className={`text-[10px] font-black uppercase tracking-widest mb-1.5 ${isActive ? 'text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>{title}</p>
                         <h4 className={`text-4xl font-black tabular-nums tracking-tighter ${isActive ? 'text-white' : 'text-slate-800 dark:text-white'}`}>{value}</h4>
                     </div>
-                    <div className={`p-3 rounded-[18px] shadow-sm backdrop-blur-sm ${isActive ? 'bg-white/20 text-white' : `${iconBg} ${iconColor}`}`}>
+                    <div className={`p-3 rounded-[18px] neo-pressed backdrop-blur-sm ${isActive ? 'bg-white/20 text-white' : `${iconBg} ${iconColor}`}`}>
                         <Icon size={24} />
                     </div>
                 </div>
@@ -707,7 +707,7 @@ const AdmissionStats = () => {
 
                 {/* Sparkline Background */}
                 <div className="absolute bottom-0 left-0 right-0 h-20 opacity-40 pointer-events-none">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={0} minWidth={0}>
                         <AreaChart data={trendData}>
                             <defs>
                                 <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
@@ -760,20 +760,20 @@ const AdmissionStats = () => {
                         <select
                             value={filters.campus_id}
                             onChange={(e) => handleFilterChange('campus_id', e.target.value)}
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
+                            className="w-full neo-pressed dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
                         >
                             <option value="">All Campuses</option>
-                            {options.campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            {options.campuses?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
                     <div className="flex-1 min-w-[140px]">
                         <select
                             value={filters.intake_id}
                             onChange={(e) => handleFilterChange('intake_id', e.target.value)}
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
+                            className="w-full neo-pressed dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
                         >
                             <option value="">All Intakes</option>
-                            {options.intakes.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                            {options.intakes?.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                         </select>
                     </div>
                     <div className="flex-1 min-w-[130px]">
@@ -781,7 +781,7 @@ const AdmissionStats = () => {
                             type="date"
                             value={filters.date_start}
                             onChange={(e) => handleFilterChange('date_start', e.target.value)}
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
+                            className="w-full neo-pressed dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
                         />
                     </div>
                     <div className="flex-1 min-w-[130px] relative">
@@ -789,12 +789,12 @@ const AdmissionStats = () => {
                             type="date"
                             value={filters.date_end}
                             onChange={(e) => handleFilterChange('date_end', e.target.value)}
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
+                            className="w-full neo-pressed dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-4 py-3 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none shadow-sm transition-all"
                         />
                         {Object.values(filters).some(v => v !== '') && (
                             <button
                                 onClick={handleResetFilters}
-                                className="absolute -top-3 -right-3 p-1.5 bg-white dark:bg-slate-700 text-slate-400 hover:text-indigo-600 rounded-full border border-slate-200 dark:border-slate-600 shadow-md"
+                                className="absolute -top-3 -right-3 p-1.5 neo-pressed dark:bg-slate-700 text-slate-400 hover:text-indigo-600 rounded-full border border-slate-200 dark:border-slate-600 shadow-md"
                                 title="Reset filters"
                             >
                                 <RefreshCw size={14} />
@@ -881,7 +881,7 @@ const AdmissionStats = () => {
             <div className="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-6 p-3">
                 {/* Enrollment Velocity Trends Card */}
                 <div
-                    className="border border-slate-200/60 dark:border-slate-800/60 rounded-[40px] lg:col-span-2 transition-all duration-500 hover:shadow-[0_20px_48px_rgba(0,0,0,0.06)] hover:-translate-y-1 group overflow-hidden bg-white dark:bg-slate-900 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.3)] relative p-4"
+                    className="border border-slate-200/60 dark:border-slate-800/60 lg:col-span-2 transition-all duration-500  hover:-translate-y-1 group overflow-hidden neo-card dark:bg-slate-900 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.3)] relative p-4"
                 >
                     <div className="absolute -top-32 -left-10 w-96 h-96 bg-indigo-50/50 dark:bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
                     
@@ -906,7 +906,7 @@ const AdmissionStats = () => {
                                 <button
                                     onClick={() => setChartType('area')}
                                     style={chartType === 'area' ? { background: 'var(--card-bg)', color: 'var(--primary-color)' } : { color: 'var(--text-muted)' }}
-                                    className="p-2 rounded-lg transition-all shadow-sm"
+                                    className="p-2 rounded-lg neo-pressed transition-all shadow-sm"
                                 >
                                     <LineChart size={15} />
                                 </button>

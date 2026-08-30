@@ -2,6 +2,7 @@ import { api } from './api';
 
 export const fleetService = {
     getDashboardSummary: () => api.get('/api/fleet/vehicles/dashboard_summary/'),
+    getFinancialAnalytics: (months = 6) => api.get('/api/fleet/vehicles/financial_analytics/', { params: { months } }),
 
     vehicles: {
         list: (params = {}) => api.get('/api/fleet/vehicles/', { params }),

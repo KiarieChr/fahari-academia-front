@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Save, Upload, Loader2, Building2, Mail, Phone,
+    Save, Upload, Building2, Mail, Phone, Loader2,
     Globe, MapPin, Palette, PenTool, Stamp, X, Trash2, CheckCircle
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { institutionService } from '../../../services/institutionService';
+import institutionService from '../../../services/institutionService';
+import ContentLoader from '../../../components/common/ContentLoader';
 
 const inputClass = 'w-full px-4 py-3 bg-gray-50/80 rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400';
 const labelClass = 'text-[13px] font-bold text-slate-600 block mb-2 tracking-wide ml-1';
@@ -232,9 +233,8 @@ const InstitutionProfile = () => {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-20">
-            <Loader2 className="animate-spin text-gray-400" size={32} />
-            <span className="ml-3 text-gray-500">Loading institution profile...</span>
+        <div className="flex items-center justify-center min-h-[500px]">
+            <ContentLoader size="lg" message="Loading institution profile..." />
         </div>
     );
 

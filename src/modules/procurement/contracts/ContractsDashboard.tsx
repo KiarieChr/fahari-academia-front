@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import { Plus, RefreshCcw, FileText, Calendar, AlertTriangle, CheckCircle, X, Upload } from 'lucide-react';
 import procurementApi from '../../../services/procurementApiService';
+import ContentLoader from '../../../components/common/ContentLoader';
 import { toast } from 'react-toastify';
 
 const statusColors = {
@@ -194,7 +195,7 @@ const ContractsDashboard = ({ noLayout = false }) => {
                                 </thead>
                                 <tbody className="divide-y">
                                     {loading ? (
-                                        <tr><td colSpan="8" className="p-8 text-center text-gray-400">Loading...</td></tr>
+                                        <tr><td colSpan="8" className="p-8"><div className="flex justify-center"><ContentLoader size="md" message="Loading..." /></div></td></tr>
                                     ) : contracts.length === 0 ? (
                                         <tr><td colSpan="8" className="p-8 text-center text-gray-400">No contracts found</td></tr>
                                     ) : contracts.map(c => (

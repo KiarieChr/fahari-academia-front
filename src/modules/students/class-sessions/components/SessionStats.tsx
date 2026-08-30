@@ -81,7 +81,7 @@ const SessionStats = ({ analytics = null }) => {
     return (
         <div className="space-y-4">
             {/* Operational progress bar */}
-            <div className="neo-card px-6 py-4">
+            <div className="neo-card px-4 py-4 mb-3">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-gray-700">Today's Session Progress</span>
                     <span className="text-sm font-bold text-indigo-600 tabular-nums">
@@ -101,7 +101,7 @@ const SessionStats = ({ analytics = null }) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
                 {/* KPI Cards */}
                 <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4">
                     {kpiData.map((kpi, index) => {
@@ -113,7 +113,7 @@ const SessionStats = ({ analytics = null }) => {
                             >
                                 {/* top accent strip */}
                                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r
-                                                from-indigo-400 via-indigo-500 to-indigo-400 rounded-t-2xl" />
+                                                from-indigo-400 via-indigo-500 to-indigo-400 rounded-t-2xl opacity-0" />
                                 <div className="flex justify-between items-start mb-3">
                                     <div className={`p-2 rounded-lg neo-pressed ${c.text} transition-transform
                                                     duration-200 group-hover:scale-110`}>
@@ -150,15 +150,15 @@ const SessionStats = ({ analytics = null }) => {
                 </div>
 
                 {/* Chart with period filter */}
-                <div className="neo-card p-5">
+                <div className="neo-card p-4 mb-3">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-bold text-gray-900">Sessions by Grade</h3>
-                        <div className="inline-flex neo-pressed rounded-lg p-0.5">
+                        <div className="inline-flex neo-pressed rounded-lg p-1">
                             {['today', 'week', 'month'].map(p => (
                                 <button
                                     key={p}
                                     onClick={() => setChartPeriod(p)}
-                                    className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${chartPeriod === p
+                                    className={`px-2 py-1 text-xs rounded-md font-medium transition-colors ${chartPeriod === p
                                             ? 'neo-btn neo-text-accent'
                                             : 'text-gray-500 hover:text-gray-700'
                                         }`}

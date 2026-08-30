@@ -4,6 +4,7 @@ import { Search, Filter, Plus, Edit, AlertCircle, FileText } from 'lucide-react'
 import { inventoryService } from '../../services/inventoryService';
 import ItemMaster from './ItemMaster'; // We will create this next
 import StockAdjustments from './StockAdjustments';
+import ContentLoader from '../../components/common/ContentLoader';
 import { toast } from 'react-toastify';
 
 const StockRegister = () => {
@@ -117,7 +118,7 @@ const StockRegister = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {loading ? (
-                            <tr><td colSpan="8" className="p-8 text-center text-gray-500">Loading...</td></tr>
+                            <tr><td colSpan="8" className="p-8"><div className="flex justify-center"><ContentLoader size="md" message="Loading..." /></div></td></tr>
                         ) : filteredItems.length === 0 ? (
                             <tr><td colSpan="8" className="p-8 text-center text-gray-500">No items found.</td></tr>
                         ) : (

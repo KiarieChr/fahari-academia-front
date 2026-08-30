@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LayoutDashboard, Users, Layers, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../../dashboard/DashboardLayout';
+import ContentLoader from '../../components/common/ContentLoader';
 
 import KPIGrid from './components/dashboard/KPIGrid';
 import WorkflowStatus from './components/dashboard/WorkflowStatus';
@@ -88,7 +89,7 @@ const PayrollDashboard = ({ noLayout = false }) => {
             <div className="flex flex-1 overflow-hidden">
                 {/* Content Area */}
                 <div className="flex-1 bg-gray-50/10 overflow-y-auto relative p-4">
-                    <React.Suspense fallback={<div className="flex h-full items-center justify-center"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                    <React.Suspense fallback={<ContentLoader size="md" message="Loading..." />}>
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={activeTab}

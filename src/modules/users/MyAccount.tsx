@@ -3,6 +3,7 @@ import DashboardLayout from '../../dashboard/DashboardLayout';
 import { api } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
+import PageLoader from '../../components/common/PageLoader';
 import './MyAccount.css';
 import {
     User,
@@ -316,12 +317,7 @@ const MyAccount = ({ noLayout = false }) => {
     };
 
     if (loading) {
-        return (
-            <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <p>Loading your profile...</p>
-            </div>
-        );
+        return <PageLoader message="Loading your profile..." />;
     }
 
     const innerContent = (
@@ -634,7 +630,7 @@ const MyAccount = ({ noLayout = false }) => {
                                                             {isEditing ? (
                                                                 <textarea
                                                                     className="form-control"
-                                                                    rows="4"
+                                                                    rows={4}
                                                                     value={userData.bio}
                                                                     onChange={(e) => handleProfileUpdate('bio', e.target.value)}
                                                                     placeholder="Tell us about yourself..."
@@ -1100,7 +1096,7 @@ const MyAccount = ({ noLayout = false }) => {
         </div>
     );
 
-    return noLayout ? innerContent : <DashboardLayout>{innerContent}</DashboardLayout>;
+    return noLayout ? innerContent : <DashboardLayout title="My Account">{innerContent}</DashboardLayout>;
 };
 
 export default MyAccount;

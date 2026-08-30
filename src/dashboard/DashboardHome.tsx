@@ -17,6 +17,7 @@ import DashboardCharts from './components/DashboardCharts';
 import FeesCollectionTab from './tabs/FeesCollectionTab';
 import { usePermissions } from '../auth/PermissionProvider';
 import { api } from '../services/api';
+import ContentLoader from '../components/common/ContentLoader';
 import './dashboard.css';
 
 const DashboardHome = () => {
@@ -440,7 +441,7 @@ const DashboardHome = () => {
                             </div>
                             <div className="mt-4 space-y-3">
                                 {loading ? (
-                                    <div className="p-4 text-center text-slate-500 text-sm font-medium">Loading exams...</div>
+                                    <ContentLoader size="sm" message="Loading exams..." />
                                 ) : exams.length > 0 ? (
                                     exams.slice(0, 5).map((exam, i) => (
                                         <div key={i} className="p-4 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-100">
@@ -512,8 +513,8 @@ const DashboardHome = () => {
                     <div className="neo-card p-6 border-none">
                         <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Payroll Status</h3>
                         {loading ? (
-                            <div className="p-4 text-center text-slate-500 text-sm font-medium">Loading payroll data...</div>
-                        ) : (
+                            <ContentLoader size="sm" message="Loading payroll data..." />
+                        ) : payrollData ? (
                             <>
                                 <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100 mb-4">
                                     <div>
@@ -542,13 +543,13 @@ const DashboardHome = () => {
                                     </div>
                                 </div>
                             </>
-                        )}
+                        ) : null}
                     </div>
                     <div className="neo-card p-6 border-none">
                         <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Workforce Overview</h3>
                         {loading ? (
-                            <div className="p-4 text-center text-slate-500 text-sm font-medium">Loading workforce stats...</div>
-                        ) : (
+                            <ContentLoader size="sm" message="Loading workforce stats..." />
+                        ) : hrStats ? (
                             <>
                                 <div className="p-4 border border-slate-100 rounded-xl mb-4">
                                     <div className="flex justify-between items-center mb-2">
@@ -567,7 +568,7 @@ const DashboardHome = () => {
                                     Manage Employees
                                 </button>
                             </>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </motion.div>
@@ -575,7 +576,7 @@ const DashboardHome = () => {
     };
 
     return (
-        <DashboardLayout>
+        <DashboardLayout title="Fahari Analytics Dashboard">
             <div className="dashboard-page-container neo-bg">
                 {/* Unified Dashboard Header - Neomorphic */}
                 <div className="neo-card p-3 border-none mb-3 flex flex-col md:flex-row justify-between md:items-center bg-white/40 relative z-20">

@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import StudentEditModal from './StudentEditModal';
 import Modal from '../../../../components/common/Modal';
 import LazyImage from '../../../../components/common/LazyImage';
+import ContentLoader from '../../../../components/common/ContentLoader';
 
 const AdmittedStudentsTable = () => {
     const [students, setStudents] = useState([]);
@@ -20,6 +21,7 @@ const AdmittedStudentsTable = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [pageSize, setPageSize] = useState(10);
+    const [filters, setFilters] = useState({ status: '', gender: '', entry_type: '' });
     
     // States for Drawer & Modals
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -86,7 +88,7 @@ const AdmittedStudentsTable = () => {
 
     useEffect(() => {
         fetchAdmissions();
-    }, [currentPage, debouncedSearch]);
+    }, [currentPage, debouncedSearch, filters]);
 
     const fetchAdmissions = async () => {
         setLoading(true);
@@ -96,6 +98,10 @@ const AdmittedStudentsTable = () => {
                 page_size: pageSize,
                 search: debouncedSearch
             };
+            if (filters.status) params.status = filters.status;
+            if (filters.gender) params.student__gender = filters.gender; // Or student_gender depending on backend
+            if (filters.entry_type) params.entry_type = filters.entry_type;
+            
             const response = await studentManagementService.getAdmissions(params);
             
             let rawResults = [];
@@ -226,10 +232,10 @@ const AdmittedStudentsTable = () => {
     };
 
     return (
-        <div className="bg-[#f8f9fa] rounded-[28px] border border-white shadow-[6px_6px_16px_#e5e7eb,-6px_-6px_16px_#ffffff] overflow-hidden flex flex-col h-full relative">
+        <div className="bg-[#e0e5ec] rounded-[28px] shadow-[8px_8px_16px_#c3c8ce,-8px_-8px_16px_#ffffff] overflow-hidden flex flex-col h-full relative">
             
             {/* Header controls bar */}
-            <div className="p-4 sm:p-5 md:py-6 md:px-6 border-b border-white flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden bg-gray-50/30">
+            <div className=" p-4 sm:p-5 md:py-6 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
                 
                 <div className="flex gap-3 items-center w-full md:w-auto">
                     <h3 className="text-[10px] font-extrabold text-slate-800 uppercase tracking-normal hidden md:block drop-shadow-sm">Admission Register</h3>
@@ -238,29 +244,72 @@ const AdmittedStudentsTable = () => {
                         <input
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-4 pr-4 py-3 bg-gray-50/80 rounded-2xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400 font-bold"
-                            style={{paddingLeft: '15px'}}
+                            className="w-full pl-4 pr-4 py-3 bg-[#e0e5ec] rounded-2xl shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#c3c8ce,inset_-6px_-6px_12px_#ffffff] focus:outline-none transition-all text-slate-700 placeholder-slate-400 font-bold"
+                            style={{paddingLeft: '30px'}}
                             placeholder="Search by student name or admission number..."
                         />
                     </div>
                 </div>
                 
                 <div className="flex gap-3 items-center">
-                    {selectedStudentIds.length > 0 && (
-                        <button 
-                            onClick={() => setShowBulkEditModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider text-white bg-indigo-600 rounded-xl shadow-md hover:bg-indigo-700 transition-all border border-indigo-500"
-                        >
-                            <Settings size={13} /> Bulk Edit Context ({selectedStudentIds.length})
-                        </button>
-                    )}
-                    <button className="flex items-center gap-2 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 bg-[#f8f9fa] rounded-xl shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-white">
+                    <button className="flex items-center gap-2 px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-600 bg-[#e0e5ec] rounded-xl shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] active:shadow-[inset_6px_6px_12px_#c3c8ce,inset_-6px_-6px_12px_#ffffff] transition-all">
                         <Printer size={13} className="text-slate-500" /> Print List
                     </button>
-                    <button className="flex items-center gap-2 px-5 py-3 text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 bg-[#f8f9fa] rounded-xl shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all border border-white">
+                    <button className="flex items-center gap-1 px-2 py-2 text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 bg-[#e0e5ec] rounded-xl shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] active:shadow-[inset_6px_6px_12px_#c3c8ce,inset_-6px_-6px_12px_#ffffff] transition-all">
                         <Download size={13} className="text-indigo-500" /> Export CSV
                     </button>
                 </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="px-4 sm:px-6 py-3 flex flex-wrap items-center gap-4 bg-transparent border-b border-[#c3c8ce]/30">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mr-2 flex items-center gap-1">
+                    Filters:
+                </span>
+                <select
+                    value={filters.status}
+                    onChange={(e) => { setFilters(prev => ({...prev, status: e.target.value})); setCurrentPage(1); }}
+                    className="bg-[#e0e5ec] text-[11px] font-bold text-slate-600 px-3 py-2 rounded-xl shadow-[inset_2px_2px_5px_#c3c8ce,inset_-2px_-2px_5px_#ffffff] focus:outline-none focus:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] transition-all cursor-pointer outline-none border-none appearance-none pr-8 relative"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', backgroundSize: '12px' }}
+                >
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="withdrawn">Withdrawn</option>
+                    <option value="graduated">Graduated</option>
+                    <option value="suspended">Suspended</option>
+                </select>
+
+                <select
+                    value={filters.entry_type}
+                    onChange={(e) => { setFilters(prev => ({...prev, entry_type: e.target.value})); setCurrentPage(1); }}
+                    className="bg-[#e0e5ec] text-[11px] font-bold text-slate-600 px-3 py-2 rounded-xl shadow-[inset_2px_2px_5px_#c3c8ce,inset_-2px_-2px_5px_#ffffff] focus:outline-none focus:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] transition-all cursor-pointer outline-none border-none appearance-none pr-8 relative"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', backgroundSize: '12px' }}
+                >
+                    <option value="">All Admission Types</option>
+                    <option value="New Admission">New Admission</option>
+                    <option value="Transfer">Transfer</option>
+                    <option value="Re-admission">Re-admission</option>
+                </select>
+
+                <select
+                    value={filters.gender}
+                    onChange={(e) => { setFilters(prev => ({...prev, gender: e.target.value})); setCurrentPage(1); }}
+                    className="bg-[#e0e5ec] text-[11px] font-bold text-slate-600 px-3 py-2 rounded-xl shadow-[inset_2px_2px_5px_#c3c8ce,inset_-2px_-2px_5px_#ffffff] focus:outline-none focus:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] transition-all cursor-pointer outline-none border-none appearance-none pr-8 relative"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', backgroundSize: '12px' }}
+                >
+                    <option value="">All Genders</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+                
+                {(filters.status || filters.gender || filters.entry_type) && (
+                    <button 
+                        onClick={() => { setFilters({ status: '', gender: '', entry_type: '' }); setCurrentPage(1); }}
+                        className="ml-auto flex items-center gap-1 text-[10px] font-black uppercase text-rose-500 hover:text-rose-600 transition-colors bg-[#e0e5ec] px-3 py-2 rounded-lg shadow-[3px_3px_6px_#c3c8ce,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff]"
+                    >
+                        <X size={12} /> Clear Filters
+                    </button>
+                )}
             </div>
 
             {/* Admissions table */}
@@ -276,22 +325,19 @@ const AdmittedStudentsTable = () => {
                                     onChange={handleSelectAll}
                                 />
                             </th>
-                            <th className="px-6 py-5 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Admission No</th>
-                            <th className="px-6 py-5 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Student Details</th>
-                            <th className="hidden md:table-cell px-6 py-5 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Class / Stream</th>
-                            <th className="hidden lg:table-cell px-6 py-5 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Admission Date</th>
-                            <th className="hidden xl:table-cell px-6 py-5 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Admission Type</th>
-                            <th className="px-6 py-5 text-center text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Status</th>
+                            <th className="px-3 py-3 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Admission No</th>
+                            <th className="px-3 py-3 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Student Details</th>
+                            <th className="hidden md:table-cell px-3 py-2 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Class / Stream</th>
+                            <th className="hidden lg:table-cell px-3 py-2 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Admission Date</th>
+                            <th className="hidden xl:table-cell px-3 py-2 text-left text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Admission Type</th>
+                            <th className="px-3 py-5 text-center text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Status</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/50 bg-transparent">
                         {loading ? (
                             <tr>
-                                <td colSpan="7" className="py-24">
-                                    <div className="flex flex-col items-center justify-center gap-3">
-                                        <div className="w-10 h-10 border-4 border-slate-50 border-t-indigo-600 rounded-full animate-spin" />
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Loading Admissions...</p>
-                                    </div>
+                                <td colSpan={7} className="py-24">
+                                    <ContentLoader message="Loading Admissions..." />
                                 </td>
                             </tr>
                         ) : students.length === 0 ? (
@@ -316,7 +362,7 @@ const AdmittedStudentsTable = () => {
                                         setShowEditModal(true);
                                     }}
                                 >
-                                    <td className="px-4 py-4.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                                    <td className="px-3 py-2 whitespace-nowrap" onClick={e => e.stopPropagation()}>
                                         <input 
                                             type="checkbox"
                                             className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer"
@@ -325,14 +371,14 @@ const AdmittedStudentsTable = () => {
                                         />
                                     </td>
                                     {/* Admission Number */}
-                                    <td className="px-6 py-4.5 whitespace-nowrap">
+                                    <td className="px-3 py-2 whitespace-nowrap">
                                         <span className="text-[12px] font-black font-mono text-slate-600 group-hover/row:text-indigo-600 transition-colors">
                                             #{s.admission_number || 'Pending'}
                                         </span>
                                     </td>
 
                                     {/* Student Name */}
-                                    <td className="px-6 py-4.5 whitespace-nowrap">
+                                    <td className="px-3 py-2 whitespace-nowrap">
                                         <div className="flex items-center gap-3.5">
                                             <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 shadow-sm relative shrink-0">
                                                 <LazyImage 
@@ -353,25 +399,25 @@ const AdmittedStudentsTable = () => {
                                     </td>
 
                                     {/* Class name */}
-                                    <td className="hidden md:table-cell px-6 py-4.5 whitespace-nowrap">
+                                    <td className="hidden md:table-cell px-3 py-2 whitespace-nowrap">
                                         <span className="inline-flex items-center px-3 py-1 bg-slate-50 rounded-lg border border-slate-100 text-[10px] font-black text-slate-600 uppercase tracking-wide">
                                             {s.class_name}
                                         </span>
                                     </td>
 
                                     {/* Admission Date */}
-                                    <td className="hidden lg:table-cell px-6 py-4.5 whitespace-nowrap text-[11px] font-bold text-slate-500">
+                                    <td className="hidden lg:table-cell px-3 py-2 whitespace-nowrap text-[11px] font-bold text-slate-500">
                                         {new Date(s.admission_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                     </td>
 
                                     {/* Admission Type */}
-                                    <td className="hidden xl:table-cell px-6 py-4.5 whitespace-nowrap text-[11px] font-bold text-slate-500">
+                                    <td className="hidden xl:table-cell px-3 py-2 whitespace-nowrap text-[11px] font-bold text-slate-500">
                                         {s.entry_type}
                                     </td>
 
                                     {/* Status */}
-                                    <td className="px-6 py-4.5 whitespace-nowrap text-center">
-                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                                    <td className="px-3 py-2 whitespace-nowrap text-center">
+                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border ${
                                             s.status === 'active' 
                                             ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
                                             : s.status === 'withdrawn' 
@@ -390,7 +436,7 @@ const AdmittedStudentsTable = () => {
 
             {/* Pagination Controls */}
             {totalCount > 0 && (
-                <div className="p-8 border-t border-white flex flex-col sm:flex-row justify-between items-center gap-4 bg-transparent">
+                <div className="p-3 flex flex-col sm:flex-row justify-between items-center gap-4 bg-transparent">
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                         Showing <span className="text-slate-700 font-black">{Math.min((currentPage - 1) * pageSize + 1, totalCount)}</span> to <span className="text-slate-700 font-black">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="text-slate-700 font-black">{totalCount}</span> admitted students
                     </p>
@@ -398,7 +444,7 @@ const AdmittedStudentsTable = () => {
                         <button
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1 || loading}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#f8f9fa] shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] text-slate-500 hover:text-indigo-600 active:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] disabled:opacity-50 disabled:active:shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] transition-all cursor-pointer border border-white"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#e0e5ec] shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] text-slate-500 hover:text-indigo-600 active:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] disabled:opacity-50 disabled:shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] transition-all cursor-pointer"
                         >
                             <ChevronLeft size={18} />
                         </button>
@@ -416,10 +462,10 @@ const AdmittedStudentsTable = () => {
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-10 h-10 rounded-xl text-[13px] font-bold transition-all duration-200 cursor-pointer border border-white ${
+                                        className={`w-10 h-10 rounded-xl text-[13px] font-bold transition-all duration-200 cursor-pointer ${
                                             currentPage === pageNum 
-                                            ? 'bg-white shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] text-indigo-700' 
-                                            : 'bg-[#f8f9fa] shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] text-slate-500'
+                                            ? 'bg-[#e0e5ec] shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] text-indigo-700' 
+                                            : 'bg-[#e0e5ec] shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] text-slate-500'
                                         }`}
                                     >
                                         {pageNum}
@@ -431,13 +477,83 @@ const AdmittedStudentsTable = () => {
                         <button
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages || loading}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#f8f9fa] shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] text-slate-500 hover:text-indigo-600 active:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] disabled:opacity-50 disabled:active:shadow-[3px_3px_8px_#e5e7eb,-3px_-3px_8px_#ffffff] transition-all cursor-pointer border border-white"
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#e0e5ec] shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] text-slate-500 hover:text-indigo-600 active:shadow-[inset_4px_4px_8px_#c3c8ce,inset_-4px_-4px_8px_#ffffff] disabled:opacity-50 disabled:shadow-[4px_4px_8px_#c3c8ce,-4px_-4px_8px_#ffffff] transition-all cursor-pointer"
                         >
                             <ChevronRight size={18} />
                         </button>
                     </div>
                 </div>
             )}
+
+            {/* Floating Action Bar */}
+            <AnimatePresence>
+                {selectedStudentIds.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-4 py-3 bg-white/90 backdrop-blur-md border border-white rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.1),inset_0_2px_4px_rgba(255,255,255,1)]"
+                    >
+                        <div className="flex items-center gap-2 pr-4 border-r border-slate-200">
+                            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-black text-sm">
+                                {selectedStudentIds.length}
+                            </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setShowBulkEditModal(true)}
+                                className="flex items-center gap-2 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-white bg-indigo-600 rounded-xl shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all"
+                                title="Bulk Edit Context"
+                            >
+                                <Settings size={14} /> Context
+                            </button>
+                            
+                            <div className="w-px h-6 bg-slate-200 mx-1"></div>
+
+                            <button
+                                onClick={() => toast.info('Printing registration details...')}
+                                className="flex items-center gap-2 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            >
+                                <Printer size={14} /> Register
+                            </button>
+                            <button
+                                onClick={() => toast.info('Generating fees balance document...')}
+                                className="flex items-center gap-2 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            >
+                                <FileText size={14} /> Fee Balance
+                            </button>
+                            <button
+                                onClick={() => toast.info('Generating student statement...')}
+                                className="flex items-center gap-2 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            >
+                                <FileText size={14} /> Statement
+                            </button>
+                            <button
+                                onClick={() => toast.info('Generating admission letters...')}
+                                className="flex items-center gap-2 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            >
+                                <Mail size={14} /> Admission Ltr
+                            </button>
+                            <button
+                                onClick={() => toast.info('Generating cover letters...')}
+                                className="flex items-center gap-2 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            >
+                                <BookOpen size={14} /> Cover Ltr
+                            </button>
+
+                            <div className="w-px h-6 bg-slate-200 mx-1"></div>
+
+                            <button
+                                onClick={() => setSelectedStudentIds([])}
+                                className="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Desktop Slide-Out Details Drawer Panel */}
             <AnimatePresence>

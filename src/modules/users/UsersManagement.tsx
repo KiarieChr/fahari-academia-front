@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { userService } from '../../services/userService';
 import { toast } from 'react-toastify';
 import Modal from '../../components/common/Modal';
+import ContentLoader from '../../components/common/ContentLoader';
 import './users.css';
 import {
     Users,
@@ -234,10 +235,7 @@ const UsersManagement = ({ noLayout = false }) => {
     const content = (
             <div className="users-page-container">
                 {loading ? (
-                    <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px' }}>
-                        <div className="loading-spinner"></div>
-                        <p>Loading users...</p>
-                    </div>
+                    <ContentLoader size="lg" message="Loading users..." />
                 ) : error ? (
                     <div className="error-container" style={{ background: '#fee2e2', color: '#991b1b', padding: '2rem', borderRadius: '8px', textAlign: 'center' }}>
                         <p>{error}</p>

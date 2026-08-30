@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { studentManagementService } from '../../../../services/studentManagementService';
 import { institutionService } from '../../../../services/institutionService';
+import { userService } from '../../../services/userService';
+import ContentLoader from '../../../../components/common/ContentLoader';
 import { toast } from 'react-toastify';
 import Button from '../../../../components/common/Button';
 
@@ -255,7 +257,7 @@ const EnquiriesManagement = () => {
     return (
         <div className="space-y-6">
             {/* ── Page Intro ── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="neo-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3 p-3">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>
                         Admissions Pipeline: Enquiries
@@ -271,7 +273,7 @@ const EnquiriesManagement = () => {
                         onClick={fetchEnquiries}
                         disabled={loading}
                         style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', color: 'var(--text-secondary)' }}
-                        className="inline-flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider border px-4 py-2 rounded-xl transition-all disabled:opacity-50 h-10 cursor-pointer"
+                        className="neo-btn inline-flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider border px-4 py-2 rounded-xl transition-all disabled:opacity-50 h-10 cursor-pointer"
                     >
                         <RefreshCw size={12} className={loading ? 'animate-spin' : ''} style={{ color: 'var(--primary-color)' }} />
                         Refresh
@@ -281,7 +283,7 @@ const EnquiriesManagement = () => {
                         variant="primary"
                         icon={Plus}
                         onClick={() => setShowCreateModal(true)}
-                        className="h-10 text-xs font-black uppercase tracking-wider w-full sm:w-auto"
+                        className="neo-btn bg-blue-400 !px-3 h-10 text-xs font-black uppercase tracking-tight w-full sm:w-auto"
                     >
                         Log Enquiry
                     </Button>
@@ -289,13 +291,10 @@ const EnquiriesManagement = () => {
             </div>
 
             {/* ── Glassmorphic Stats Grid ── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                 {/* Total Enquiries */}
-                <div 
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    className="p-5 border rounded-2xl flex items-center gap-4 shadow-sm"
-                >
-                    <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/20 text-indigo-500">
+                <div className="neo-card p-5 rounded-2xl flex items-center gap-4">
+                    <div className="p-3 rounded-xl neo-pressed dark:bg-indigo-950/20 text-indigo-500">
                         <Users size={20} />
                     </div>
                     <div>
@@ -305,11 +304,8 @@ const EnquiriesManagement = () => {
                 </div>
 
                 {/* New Leads */}
-                <div 
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    className="p-5 border rounded-2xl flex items-center gap-4 shadow-sm"
-                >
-                    <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 text-blue-500">
+                <div className="neo-card p-5 rounded-2xl flex items-center gap-4 ">
+                    <div className="p-3 neo-pressed rounded-xl bg-blue-50 dark:bg-blue-950/20 text-blue-500">
                         <Calendar size={20} />
                     </div>
                     <div>
@@ -319,11 +315,8 @@ const EnquiriesManagement = () => {
                 </div>
 
                 {/* Converted */}
-                <div 
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    className="p-5 border rounded-2xl flex items-center gap-4 shadow-sm"
-                >
-                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500">
+                <div className="neo-card p-5 rounded-2xl flex items-center gap-4 ">
+                    <div className="p-3 neo-pressed rounded-xl bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500">
                         <CheckCircle2 size={20} />
                     </div>
                     <div>
@@ -333,11 +326,8 @@ const EnquiriesManagement = () => {
                 </div>
 
                 {/* Conversion Rate */}
-                <div 
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                    className="p-5 border rounded-2xl flex items-center gap-4 shadow-sm"
-                >
-                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 text-amber-500">
+                <div className="neo-card p-5 rounded-2xl flex items-center gap-4">
+                    <div className="p-3 neo-pressed rounded-xl bg-amber-50 dark:bg-amber-950/20 text-amber-500">
                         <ArrowUpRight size={20} />
                     </div>
                     <div>
@@ -348,10 +338,7 @@ const EnquiriesManagement = () => {
             </div>
 
             {/* ── Filters & Search ── */}
-            <div 
-                style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                className="p-4 border rounded-2xl flex flex-col gap-4 shadow-sm"
-            >
+            <div className="neo-card p-4 rounded-2xl flex flex-col gap-4 mt-3">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* Live Search */}
                     <div className="relative flex-1 group">
@@ -359,10 +346,10 @@ const EnquiriesManagement = () => {
                         <input
                             type="text"
                             placeholder="Search by parent name, child, phone, email..."
-                            value={search}
+                            value={search} 
                             onChange={(e) => setSearch(e.target.value)}
-                            style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                            className="w-full pl-9 pr-4 py-2.5 text-xs font-bold border rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/40 transition-all duration-300"
+                            style={{  borderColor: 'var(--border-color-light)', color: 'var(--text-main)',paddingLeft:'30px' }}
+                            className="w-full neo-input pr-4 py-2 text-xs font-bold border rounded-xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/40 transition-all duration-300"
                         />
                     </div>
 
@@ -372,8 +359,8 @@ const EnquiriesManagement = () => {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                            className="px-3 py-2 text-xs font-black border rounded-xl outline-none"
+                            style={{ borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
+                            className="px-3 neo-input py-2 text-xs font-black border rounded-xl outline-none"
                         >
                             <option value="">All Statuses</option>
                             <option value="new">New Interests</option>
@@ -386,8 +373,8 @@ const EnquiriesManagement = () => {
                         <select
                             value={sourceFilter}
                             onChange={(e) => setSourceFilter(e.target.value)}
-                            style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                            className="px-3 py-2 text-xs font-black border rounded-xl outline-none"
+                            style={{ borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
+                            className="px-3 neo-input py-2 text-xs font-black border rounded-xl outline-none"
                         >
                             <option value="">All Sources</option>
                             <option value="walk_in">Walk-in</option>
@@ -404,8 +391,8 @@ const EnquiriesManagement = () => {
                         <select
                             value={gradeFilter}
                             onChange={(e) => setGradeFilter(e.target.value)}
-                            style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                            className="px-3 py-2 text-xs font-black border rounded-xl outline-none"
+                            style={{borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
+                            className="neo-input px-3 py-2 text-xs font-black border rounded-xl outline-none"
                         >
                             <option value="">All Class Levels</option>
                             {grades.map(g => (
@@ -417,8 +404,8 @@ const EnquiriesManagement = () => {
                         <select
                             value={intakeFilter}
                             onChange={(e) => setIntakeFilter(e.target.value)}
-                            style={{ background: 'var(--bg-light)', borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
-                            className="px-3 py-2 text-xs font-black border rounded-xl outline-none"
+                            style={{ borderColor: 'var(--border-color-light)', color: 'var(--text-main)' }}
+                            className="neo-input px-3 py-2 text-xs font-black border rounded-xl outline-none"
                         >
                             <option value="">All Intakes</option>
                             {intakes.map(i => (
@@ -431,12 +418,9 @@ const EnquiriesManagement = () => {
 
             {/* ── Pipeline Table ── */}
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <Loader2 size={32} className="animate-spin text-indigo-500" />
-                    <p className="text-xs font-bold text-slate-400">Querying leads pipeline data...</p>
-                </div>
+                <ContentLoader size="md" message="Querying leads pipeline data..." />
             ) : error ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="flex flex-col items-center justify-center py-20 text-center mt-2">
                     <div className="p-4 rounded-full bg-red-50 mb-3 text-red-500">
                         <AlertCircle size={28} />
                     </div>
@@ -447,12 +431,9 @@ const EnquiriesManagement = () => {
                     </button>
                 </div>
             ) : (
-                <div 
-                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
-                    className="border rounded-[24px] overflow-hidden"
-                >
+                <div className="neo-card rounded-[24px] overflow-hidden mt-3">
                     {filteredEnquiries.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-center">
+                        <div className="flex flex-col items-center justify-center py-4 text-center">
                             <div className="p-4 rounded-full bg-slate-50 dark:bg-slate-800/40 mb-4 text-slate-300">
                                 <Users size={32} />
                             </div>
@@ -466,7 +447,7 @@ const EnquiriesManagement = () => {
                             </button>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto ">
                             <table className="min-w-full divide-y" style={{ divideColor: 'var(--border-color-light)' }}>
                                 <thead style={{ background: 'var(--bg-light)' }}>
                                     <tr>
@@ -609,10 +590,7 @@ const EnquiriesManagement = () => {
             {/* ── MODAL: CREATE LEAD ENQUIRY ── */}
             {showCreateModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 ">
-                    <div 
-                        style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)' }}
-                        className="w-full max-w-2xl border rounded-[32px] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-20 p-3"
-                    >
+                    <div className="neo-card w-full max-w-2xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-20 p-3">
                         {/* Modal Header */}
                         <div className="px-8 py-6 border-b flex justify-between items-center" style={{ borderColor: 'var(--border-color-light)' }}>
                             <div>

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Modal from '../../../components/common/Modal';
+import ContentLoader from '../../../components/common/ContentLoader';
 import { userService } from '../../../services/userService';
 import { api } from '../../../services/api';
 
@@ -135,7 +136,7 @@ const RoleManagement = () => {
             ...prev,
             permissions: allSelected
                 ? prev.permissions.filter(id => !modPermIds.includes(id))
-                : [...new Set([...prev.permissions, ...modPermIds])]
+                : Array.from(new Set([...prev.permissions, ...modPermIds]))
         }));
     };
 
@@ -255,9 +256,10 @@ const RoleManagement = () => {
                 </div>
             </div>
 
-            {/* Roles Grid */}
             {loading ? (
-                <div className="py-16 text-center text-gray-400 text-sm">Loading roles...</div>
+                <div className="py-16 flex justify-center">
+                    <ContentLoader size="lg" message="Loading roles..." />
+                </div>
             ) : roles.length === 0 ? (
                 <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
                     <Shield size={40} className="mx-auto mb-3 text-gray-300" />
@@ -349,10 +351,10 @@ const RoleManagement = () => {
 
                             {/* Module Accordion */}
                             <div className="border border-gray-200 rounded-xl overflow-hidden max-h-[400px] overflow-y-auto">
-                                {Object.entries(permissionsByModule).map(([mod, perms]) => {
+                                {Object.entries(permissionsByModule).map(([mod, perms]: [string, any]) => {
                                     const isExpanded = expandedModules[mod];
                                     const modLabel = MODULE_LABELS[mod] || mod.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                                    const selectedInModule = perms.filter(p => formData.permissions.includes(p.id)).length;
+                                    const selectedInModule = perms.filter((p: any) => formData.permissions.includes(p.id)).length;
                                     const allInModuleSelected = selectedInModule === perms.length;
 
                                     return (
@@ -383,7 +385,7 @@ const RoleManagement = () => {
                                             {isExpanded && (
                                                 <div className="px-4 py-2 bg-white">
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                                                        {perms.map(perm => (
+                                                        {perms.map((perm: any) => (
                                                             <button key={perm.id} onClick={() => togglePerm(perm.id)}
                                                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-all ${isPermSelected(perm.id)
                                                                     ? 'bg-indigo-50 text-indigo-800'
@@ -410,16 +412,13 @@ const RoleManagement = () => {
             {/* ── Delete Confirm ──────────────────────────────── */}
             {deleteConfirm && (
                 <Modal isOpen={true} onClose={() => setDeleteConfirm(null)}
-                    title="Delete Role" size="sm" accentColor="bg-red-500"
-                    footer={
-                        <>
-                            <Modal.CancelButton onClick={() => setDeleteConfirm(null)} />
-                            <Modal.DangerButton onClick={() => handleDelete(deleteConfirm.id)}>
-                                Delete Role
-                            </Modal.DangerButton>
-                        </>
-                    }
-                >
+                title="Delete Role" size="sm" accentColor="bg-red-500"
+                footer={<>
+                    <Modal.CancelButton onClick={() => setDeleteConfirm(null)} />
+                    <Modal.DangerButton onClick={() => handleDelete(deleteConfirm.id)}>
+                        Delete Role
+                    </Modal.DangerButton>
+                </>} subtitle={undefined} icon={undefined}                >
                     <div className="flex items-start gap-3 p-1">
                         <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
                             <AlertCircle size={20} className="text-red-600" />
@@ -447,7 +446,9 @@ const RoleManagement = () => {
                     footer={<Modal.CancelButton onClick={() => setMembersRole(null)}>Close</Modal.CancelButton>}
                 >
                     {loadingMembers ? (
-                        <div className="py-12 text-center text-gray-400 text-sm">Loading...</div>
+                        <div className="py-12 flex justify-center">
+                            <ContentLoader size="md" message="Loading members..." />
+                        </div>
                     ) : members.length === 0 ? (
                         <div className="py-12 text-center">
                             <Users size={32} className="mx-auto mb-2 text-gray-300" />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Loader2, MapPin, Phone, Mail, User, Building2, Search } from 'lucide-react';
+import { MapPinned, Plus, Edit2, Trash2, X, Search, Loader2, MapPin, Phone, Mail, User, Building2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { institutionService } from '../../../services/institutionService';
+import institutionService from '../../../services/institutionService';
+import ContentLoader from '../../../components/common/ContentLoader';
 import Modal from '../../../components/common/Modal';
 
 const inputClass = 'w-full px-4 py-3 bg-gray-50/80 rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-white/40 focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] focus:border-indigo-200 outline-none text-sm transition-all text-slate-700 placeholder-slate-400';
@@ -29,7 +30,8 @@ const CampusManagement = () => {
     const fetchCampuses = async () => {
         try {
             const res = await institutionService.getCampuses();
-            setCampuses(res.data?.results || res.data || res.results || res);
+            const data = res.data?.results || res.data || res.results || res;
+            setCampuses(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to load campuses:', error);
             toast.error('Failed to load campuses');
@@ -93,7 +95,7 @@ const CampusManagement = () => {
         if (!confirm(`Delete campus "${campus.name}"? This cannot be undone.`)) return;
         try {
             await institutionService.deleteCampus(campus.id);
-            setCampuses(campuses.filter(c => c.id !== campus.id));
+            setCampuses((Array.isArray(campuses) ? campuses : []).filter(c => c.id !== campus.id));
             toast.success('Campus deleted');
         } catch (error) {
             console.error('Delete failed:', error);
@@ -101,17 +103,16 @@ const CampusManagement = () => {
         }
     };
 
-    const filtered = campuses.filter(c =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.code.toLowerCase().includes(search.toLowerCase()) ||
-        (c.location || '').toLowerCase().includes(search.toLowerCase())
+    const filtered = (Array.isArray(campuses) ? campuses : []).filter(c =>
+        (c.name || '').toLowerCase().includes((search || '').toLowerCase()) ||
+        (c.code || '').toLowerCase().includes((search || '').toLowerCase()) ||
+        (c.location || '').toLowerCase().includes((search || '').toLowerCase())
     );
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="animate-spin text-gray-400" size={32} />
-                <span className="ml-3 text-gray-500">Loading campuses...</span>
+            <div className="flex items-center justify-center min-h-[500px]">
+                <ContentLoader size="lg" message="Loading campuses..." />
             </div>
         );
     }

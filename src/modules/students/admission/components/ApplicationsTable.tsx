@@ -12,6 +12,7 @@ import ApplicationDetailsModal from './ApplicationDetailsModal';
 import ExistingParentDialog from './ExistingParentDialog';
 import DirectAdmissionModal from './DirectAdmissionModal';
 import LazyImage from '../../../../components/common/LazyImage';
+import ContentLoader from '../../../../components/common/ContentLoader';
 import { useAdmission } from '../AdmissionContext';
 
 import { studentManagementService } from '../../../../services/studentManagementService';
@@ -117,7 +118,7 @@ const ApplicationsTable = () => {
     const loadFilterData = async () => {
         try {
             const [classesData, curriculumsData] = await Promise.all([
-                studentManagementService.getClasses(),
+                studentManagementService.getGrades(),
                 studentManagementService.getCurriculums()
             ]);
             setGrades(classesData.results || classesData || []);
@@ -276,9 +277,7 @@ const ApplicationsTable = () => {
     return (
         <div className="space-y-6 relative">
             {/* Header & Main Controls Bar */}
-            <div 
-                style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color-light)', boxShadow: 'var(--shadow-card)' }}
-                className="p-4 sm:p-5 rounded-[24px] sm:rounded-[32px] border relative overflow-hidden"
+            <div className="p-4 neo-card sm:p-5 rounded-[24px] sm:rounded-[32px] border relative overflow-hidden mb-3"
             >
                 <div className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" style={{ background: 'var(--primary-light)' }} />
                 
@@ -286,7 +285,7 @@ const ApplicationsTable = () => {
                     {/* Search Bar */}
                     <div className="flex-1 relative group">
                         <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                            <Search className="text-slate-400 group-focus-within:text-[var(--primary-color)] transition-all duration-300" size={16} style={{ color: 'var(--primary-color)' }} />
+                            <Search className="text-slate-400 group-focus-within:text-[var(--primary-color)] transition-all duration-300" size={16} />
                         </div>
                         <input
                             type="text"
@@ -300,12 +299,12 @@ const ApplicationsTable = () => {
                                 borderColor: 'var(--border-color-light)', 
                                 color: 'var(--text-main)' 
                             }}
-                            className="w-full py-3 border rounded-[20px] focus:ring-[4px] focus:ring-[var(--primary-color)]/15 focus:border-[var(--primary-color)]/40 outline-none transition-all duration-300 font-bold text-[13px] placeholder:text-slate-400"
+                            className="w-full py-2 neo-input border rounded-[20px] focus:ring-[4px] focus:ring-[var(--primary-color)]/15 focus:border-[var(--primary-color)]/40 outline-none transition-all duration-300 font-bold text-[10px] placeholder:text-slate-400"
                         />
                         {searchTerm && (
                             <button 
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-4 inset-y-0 flex items-center text-slate-300 hover:text-rose-500 transition-colors"
+                                className="absolute right-4 inset-y-0 flex items-center text-red-300 hover:text-rose-500 transition-colors"
                             >
                                 <X size={14} />
                             </button>
@@ -320,7 +319,7 @@ const ApplicationsTable = () => {
                             color: 'var(--primary-color)',
                             borderColor: 'var(--primary-light)'
                         }}
-                        className="whitespace-nowrap px-5 py-3 border font-extrabold rounded-[20px] text-xs shadow-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2 self-start sm:self-auto hover:opacity-90"
+                        className="whitespace-nowrap px-3 py-2 border font-extrabold rounded-[20px] text-xs neo-btn transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2 self-start sm:self-auto hover:opacity-90"
                     >
                         <Plus size={14} />
                         <span>New Applicant</span>
@@ -330,7 +329,7 @@ const ApplicationsTable = () => {
                     <button
                         onClick={() => setIsDirectAdmitOpen(true)}
                         style={{ background: 'var(--primary-color)' }}
-                        className="whitespace-nowrap px-5 py-3 text-white font-extrabold rounded-[20px] text-xs shadow-md transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2 self-start sm:self-auto"
+                        className="whitespace-nowrap px-3 py-2 text-white font-extrabold rounded-[20px] text-xs neo-btn transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2 self-start sm:self-auto"
                     >
                         <Sparkles size={14} className="animate-pulse text-indigo-200" />
                         <span>Direct Admission</span>
@@ -616,14 +615,8 @@ const ApplicationsTable = () => {
                                         <tbody className="divide-y" style={{ divideColor: 'var(--border-color-light)' }}>
                                             {loading ? (
                                                 <tr>
-                                                    <td colSpan="8" className="py-32">
-                                                        <div className="flex flex-col items-center gap-4">
-                                                            <div className="relative">
-                                                                <div className="w-12 h-12 border-4 rounded-full" style={{ borderColor: 'var(--border-color-light)' }} />
-                                                                <div className="absolute inset-0 w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--primary-color)', borderTopColor: 'transparent' }} />
-                                                            </div>
-                                                            <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>Synchronizing Records...</p>
-                                                        </div>
+                                                    <td colSpan={8} className="py-32">
+                                                        <ContentLoader message="Synchronizing Records..." />
                                                     </td>
                                                 </tr>
                                             ) : currentItems.length === 0 ? (
@@ -849,8 +842,8 @@ const ApplicationsTable = () => {
                                                 {/* Column Content */}
                                                 <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
                                                     {loading ? (
-                                                        <div className="h-full flex items-center justify-center">
-                                                            <div className="w-6 h-6 border-2 border-[var(--border-color-light)] border-t-[var(--primary-color)] rounded-full animate-spin" />
+                                                        <div className="h-full py-12 flex flex-col items-center justify-center">
+                                                            <ContentLoader message="Loading..." />
                                                         </div>
                                                     ) : columnApps.length === 0 ? (
                                                         <div

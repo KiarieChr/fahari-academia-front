@@ -23,6 +23,9 @@ import {
     Document, Page, Text, View, StyleSheet, Image, Font
 } from '@react-pdf/renderer';
 
+import { renderTemplate } from '../../../../../utils/templateEngine';
+import { HtmlToPdf } from '../../../../../utils/HtmlToPdf';
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const today = () => {
     const d = new Date();
@@ -161,6 +164,22 @@ const AdmissionLetterPDF = ({ admission = {}, institution = {} }) => {
         'Fee payment receipt (as specified in the Fee Structure)',
     ];
 
+    // Load and render dynamic template for the body
+    const rawTemplate = institution.admission_letter_template || `
+        <p>Dear <strong>{{guardian_name}}</strong>,</p>
+        <p><br></p>
+        <p><strong>RE: ADMISSION OF {{student_name}} — {{class_name}}</strong></p>
+        <p><br></p>
+        <p>We are pleased to inform you that, following a careful review of the application submitted on behalf of <strong>{{student_name}}</strong>, the School Admissions Committee has resolved to <strong>offer admission</strong> for the <strong>{{intake_name}}</strong> intake.</p>
+        <p><br></p>
+        <p>The student has been assigned to <strong>{{class_name}}</strong> with Admission Number <strong>{{admission_number}}</strong>. Please retain this letter as it will be required during the reporting and registration process.</p>
+        <p><br></p>
+        <p>We look forward to welcoming {{student_name}} to the school family. For any enquiries, please do not hesitate to contact the school office.</p>
+        <p><br></p>
+        <p>Yours faithfully,</p>
+    `;
+    const htmlContent = renderTemplate(rawTemplate, admission);
+
     return (
         <Document title={`Admission Letter — ${studentName}`} author={institution.name}>
             <Page size="A4" style={styles.page}>
@@ -218,47 +237,8 @@ const AdmissionLetterPDF = ({ admission = {}, institution = {} }) => {
                     {admission.guardian_email ? <Text style={styles.addressLine}>{admission.guardian_email}</Text> : null}
                 </View>
 
-                <Text style={styles.bodyText}>Dear {guardianName},</Text>
-
-                {/* ── RE: line ── */}
-                <View style={styles.reBlock}>
-                    <Text style={styles.reText}>
-                        RE: ADMISSION OF {studentName.toUpperCase()} — {className.toUpperCase()}
-                    </Text>
-                </View>
-
-                {/* ── Body ── */}
-                <Text style={styles.bodyText}>
-                    We are pleased to inform you that, following a careful review of the application submitted on behalf
-                    of <Text style={styles.bodyBold}>{studentName}</Text>, the School Admissions Committee has resolved
-                    to <Text style={styles.bodyBold}>offer admission</Text> to {institution.name || 'this institution'} for the <Text style={styles.bodyBold}>{intakeName}</Text> intake, with
-                    effect from <Text style={styles.bodyBold}>{admDate}</Text>.
-                </Text>
-                <Text style={styles.bodyText}>
-                    The student has been assigned to <Text style={styles.bodyBold}>{className}</Text> with
-                    Admission Number <Text style={styles.bodyBold}>{admNo}</Text>.
-                    Please retain this letter as it will be required during the reporting and registration process.
-                </Text>
-                <Text style={styles.bodyText}>
-                    Kindly ensure that the student reports on the date communicated at the beginning of term, accompanied
-                    by all required documents and items as listed below:
-                </Text>
-
-                {/* Required items */}
-                <Text style={styles.listTitle}>Required Documents &amp; Items:</Text>
-                {items.map((item, i) => (
-                    <View key={i} style={styles.listItem}>
-                        <Text style={styles.listBullet}>{i + 1}.</Text>
-                        <Text style={styles.listText}>{item}</Text>
-                    </View>
-                ))}
-
-                <Text style={[styles.bodyText, { marginTop: 10 }]}>
-                    We look forward to welcoming {studentName.split(' ')[0]} to the {institution.name || 'school'} family.
-                    For any enquiries, please do not hesitate to contact the school office.
-                </Text>
-
-                <Text style={styles.bodyText}>Yours faithfully,</Text>
+                {/* ── DYNAMIC BODY CONTENT ── */}
+                <HtmlToPdf html={htmlContent} />
 
                 {/* ── Signature block ── */}
                 <View style={styles.sigRow}>

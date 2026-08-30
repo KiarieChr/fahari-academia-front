@@ -115,7 +115,7 @@ const ClassStreamSetup = () => {
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl hover:shadow-[0_8px_20px_-6px_rgba(79,70,229,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all font-bold text-xs shadow-md select-none"
+                    className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl hover:shadow-[0_8px_20px_-6px_rgba(79,70,229,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all font-bold text-xs shadow-md select-none"
                 >
                     <Plus size={15} strokeWidth={3} />
                     <span>Add Grade</span>
@@ -123,20 +123,20 @@ const ClassStreamSetup = () => {
             </div>
 
             {/* Accordion List */}
-            <div className="space-y-4">
+            <div className="space-y-4 grid grid-cols-2 sm:grid-cols-1">
                 {classes.length === 0 ? (
-                    <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="text-center py-3 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                         <List className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                         <h4 className="text-sm font-bold text-slate-700">No grade classes configured</h4>
                         <p className="text-xs text-slate-400 mt-1">Structure grade classes to begin registering streams.</p>
                     </div>
                 ) : (
                     classes.map((cls) => (
-                        <div key={cls.id} className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                        <div key={cls.id} className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 mt-3">
                             <div className="flex items-center">
                                 <button
                                     onClick={() => toggleAccordion(cls.id)}
-                                    className="flex-1 px-6 py-4 flex items-center justify-between hover:bg-slate-50/40 transition-colors text-left"
+                                    className="flex-1 px-3 py-2 flex items-center justify-between hover:bg-slate-50/40 transition-colors text-left"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
@@ -164,7 +164,7 @@ const ClassStreamSetup = () => {
                             </div>
 
                             {expandedClassId === cls.id && (
-                                <div className="px-6 py-5 border-t border-slate-150 bg-slate-50/40">
+                                <div className="px-3 py-2 border-t border-slate-150 bg-slate-50/40">
                                     <div className="mb-2">
                                         <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Allocated Streams & Sections</h5>
                                         <div className="flex flex-wrap items-center gap-2.5">

@@ -417,8 +417,8 @@ const FirstTimeSetup = () => {
                   }`}>
                     <div className="relative flex items-center justify-center shrink-0 mt-0.5">
                         <input type="checkbox" name="agreeTerms" checked={formData.agreeTerms} onChange={handleChange}
-                            className="peer h-5 w-5 appearance-none rounded shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff] focus:outline-none checked:bg-[#e0e5ec] transition-all cursor-pointer" />
-                        <Check className="absolute w-3 h-3 text-indigo-500 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" strokeWidth={3} />
+                            className="h-5 w-5 appearance-none rounded shadow-[inset_2px_2px_4px_#c3c8ce,inset_-2px_-2px_4px_#ffffff] focus:outline-none checked:bg-[#e0e5ec] transition-all cursor-pointer" />
+                        <Check className={`absolute w-3 h-3 text-indigo-500 pointer-events-none transition-opacity ${formData.agreeTerms ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
                     </div>
                     <span className="text-sm text-gray-600 font-medium leading-relaxed">
                       I agree to the <Link to="/terms" className="text-indigo-500 hover:underline font-bold">Terms of Service</Link> and <Link to="/privacy" className="text-indigo-500 hover:underline font-bold">Privacy Policy</Link>

@@ -37,14 +37,7 @@ const IntakeFunnel = ({ stats }) => {
     const maxCount = Math.max(...counts, 1);
 
     return (
-        <div
-            style={{
-                background: 'var(--card-bg)',
-                borderColor: 'var(--border-color-light)',
-                boxShadow: 'var(--shadow-card)',
-            }}
-            className="border rounded-[28px] p-6 sm:p-8"
-        >
+        <div className="neo-card rounded-[28px] p-6 sm:p-8">
             {/* Header */}
             <div className="flex items-start justify-between mb-8">
                 <div>

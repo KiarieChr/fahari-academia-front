@@ -41,8 +41,23 @@ const MODULE_PERMISSIONS = {
     settings: ['accounts.view_user', 'auth.view_group'],
 };
 
+const SIDEBAR_TO_SYSTEM_MODULE = {
+    students: 'student_management',
+    timetables: 'timetable',
+    academics: 'academics',
+    fees: 'fees',
+    finance: 'finance',
+    procurement: 'procurement',
+    inventory: 'inventory',
+    fleet: 'fleet',
+    crm: 'communication',
+    hr: 'hr',
+    payroll: 'hr',
+};
+
 export const PermissionProvider = ({ children }) => {
     const [permissions, setPermissions] = useState([]);
+    const [enabledModules, setEnabledModules] = useState([]);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -60,6 +75,7 @@ export const PermissionProvider = ({ children }) => {
             const profile = data.success ? data.profile : data;
             setUser(profile);
             setPermissions(profile.permissions || []);
+            setEnabledModules(profile.enabled_modules || []);
         } catch {
             setPermissions([]);
             setUser(null);
@@ -108,11 +124,18 @@ export const PermissionProvider = ({ children }) => {
 
     /** Check if user can access a module by key (matches any of its mapped permissions) */
     const hasModuleAccess = useCallback((moduleKey) => {
+        // First check system-level enabled modules (purchased/paid modules)
+        const sysKey = SIDEBAR_TO_SYSTEM_MODULE[moduleKey];
+        // If the module has a mapped system key and it's not in enabledModules, deny access globally
+        if (sysKey && (!enabledModules || !enabledModules.includes(sysKey))) {
+            return false;
+        }
+
         if (isSuperuser) return true;
         const requiredPerms = MODULE_PERMISSIONS[moduleKey];
         if (!requiredPerms) return true; // Unknown module = allow
         return requiredPerms.some(p => permissions.includes(p));
-    }, [permissions, isSuperuser]);
+    }, [permissions, isSuperuser, enabledModules]);
 
     return (
         <PermissionContext.Provider value={{

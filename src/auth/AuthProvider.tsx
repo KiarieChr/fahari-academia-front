@@ -4,7 +4,7 @@ import { api } from "../services/api";
 const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'academia-token';
 const USER_KEY = import.meta.env.VITE_USER_KEY || 'academia-user';
 
-const AuthContext = createContext();
+const AuthContext = createContext<any>(null);
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);

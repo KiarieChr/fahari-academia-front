@@ -1,23 +1,36 @@
 import React, { useState } from 'react';
-import { Search, Filter, MoreHorizontal, Edit, Trash2, Copy, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Edit, Trash2, Copy, Eye, CheckCircle, XCircle, ChevronDown, Book, Layers, Layout } from 'lucide-react';
 
-const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
+const SubjectsTable = ({ subjects, curricula = [], curriculumLevels = [], learningAreas = [], onEdit, onDelete }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
+    const [filterCurriculum, setFilterCurriculum] = useState('');
+    const [filterLevel, setFilterLevel] = useState('');
+    const [filterArea, setFilterArea] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
     const filtered = subjects.filter(s => {
         const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.code.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filterCategory === 'All' || s.category === filterCategory;
-        return matchesSearch && matchesFilter;
+        const matchesCategory = filterCategory === 'All' || s.category === filterCategory;
+        const matchesCurriculum = !filterCurriculum || s.curriculum === parseInt(filterCurriculum);
+        const matchesLevel = !filterLevel || s.curriculum_level === parseInt(filterLevel);
+        const matchesArea = !filterArea || s.learning_area === parseInt(filterArea);
+        
+        return matchesSearch && matchesCategory && matchesCurriculum && matchesLevel && matchesArea;
     });
 
     const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, filterCategory]);
+    }, [searchTerm, filterCategory, filterCurriculum, filterLevel, filterArea]);
+    
+    // When curriculum changes, clear dependent filters
+    React.useEffect(() => {
+        setFilterLevel('');
+        setFilterArea('');
+    }, [filterCurriculum]);
 
     const paginatedSubjects = filtered.slice(
         (currentPage - 1) * itemsPerPage,
@@ -27,29 +40,90 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
     const getStatusColor = (status) => {
         return status === 'Active' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' : 'text-slate-500 bg-slate-100 dark:bg-slate-800';
     };
+    
+    // Compute available options for context-aware dropdowns
+    const availableLevels = filterCurriculum 
+        ? curriculumLevels.filter(l => l.curriculum === parseInt(filterCurriculum))
+        : curriculumLevels;
+        
+    const availableAreas = filterCurriculum
+        ? learningAreas.filter(a => a.curriculum === parseInt(filterCurriculum))
+        : learningAreas;
 
     return (
         <div className="neo-card border-none overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
             {/* Toolbar */}
-            <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center bg-transparent">
-                <div className="relative w-full md:w-96">
+            <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-transparent">
+                <div className="relative w-full md:w-72 lg:w-80 flex-shrink-0">
                     <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         style={{ paddingLeft: '30px'}}
-                        placeholder="Search subjects by name or code..."
+                        placeholder="Search subjects..."
                         className="w-full pr-4 py-2 neo-pressed border-none rounded-xl text-sm focus:outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
-                    <div className="relative">
+                <div className="flex flex-wrap gap-3 flex-1 justify-start md:justify-end">
+                    {/* Curriculum Filter */}
+                    <div className="relative min-w-[150px]">
+                        <Book size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <select
+                            style={{ paddingLeft: '32px' }}
+                            className="w-full pr-8 py-2 neo-pressed border-none rounded-xl text-sm focus:outline-none appearance-none font-medium text-slate-600 bg-transparent"
+                            value={filterCurriculum}
+                            onChange={(e) => setFilterCurriculum(e.target.value)}
+                        >
+                            <option value="">All Curriculums</option>
+                            {curricula.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+
+                    {/* Curriculum Level Filter */}
+                    <div className="relative min-w-[150px]">
+                        <Layers size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <select
+                            style={{ paddingLeft: '32px' }}
+                            className="w-full pr-8 py-2 neo-pressed border-none rounded-xl text-sm focus:outline-none appearance-none font-medium text-slate-600 bg-transparent"
+                            value={filterLevel}
+                            onChange={(e) => setFilterLevel(e.target.value)}
+                        >
+                            <option value="">All Levels</option>
+                            {availableLevels.map(l => (
+                                <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+
+                    {/* Learning Area Filter */}
+                    <div className="relative min-w-[160px]">
+                        <Layout size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <select
+                            style={{ paddingLeft: '32px' }}
+                            className="w-full pr-8 py-2 neo-pressed border-none rounded-xl text-sm focus:outline-none appearance-none font-medium text-slate-600 bg-transparent"
+                            value={filterArea}
+                            onChange={(e) => setFilterArea(e.target.value)}
+                        >
+                            <option value="">All Learning Areas</option>
+                            {availableAreas.map(a => (
+                                <option key={a.id} value={a.id}>{a.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+
+                    {/* Category Filter */}
+                    <div className="relative min-w-[140px]">
                         <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <select
-                            style= {{paddingLeft: '30px'}}
-                            className="pr-3 py-2 px-2 neo-pressed border-none rounded-xl text-sm focus:outline-none appearance-none font-medium"
+                            style={{ paddingLeft: '32px' }}
+                            className="w-full pr-8 py-2 neo-pressed border-none rounded-xl text-sm focus:outline-none appearance-none font-medium text-slate-600 bg-transparent"
                             value={filterCategory}
                             onChange={(e) => setFilterCategory(e.target.value)}
                         >
@@ -58,6 +132,7 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
                             <option value="Optional">Optional</option>
                             <option value="Elective">Elective</option>
                         </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     </div>
                 </div>
             </div>
@@ -94,7 +169,7 @@ const SubjectsTable = ({ subjects, onEdit, onDelete }) => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">
-                                        {subject.curriculum}
+                                        {subject.curriculumName}
                                     </td>
                                     
                                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">

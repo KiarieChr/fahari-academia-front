@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import { Search, Filter, Plus, FileText, CheckCircle, AlertOctagon } from 'lucide-react';
 import { egpService } from '../../../services/egpService';
+import ContentLoader from '../../../components/common/ContentLoader';
 
 const TenderManagement = () => {
     const [tenders, setTenders] = useState([]);
@@ -62,7 +63,7 @@ const TenderManagement = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
-                                <tr><td colSpan="7" className="p-8 text-center text-gray-500">Loading...</td></tr>
+                                <tr><td colSpan="7" className="p-8"><div className="flex justify-center"><ContentLoader size="md" message="Loading..." /></div></td></tr>
                             ) : tenders.length === 0 ? (
                                 <tr><td colSpan="7" className="p-8 text-center text-gray-500">No active tenders.</td></tr>
                             ) : (

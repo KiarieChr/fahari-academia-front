@@ -8,7 +8,8 @@ const RolesTable = ({
     onSelectRole,
     onEditRole,
     onDeleteRole,
-    onCloneRole
+    onCloneRole,
+    onAssignPermissions
 }) => {
     return (
         <div className="list-group list-group-flush">
@@ -48,6 +49,11 @@ const RolesTable = ({
                                 <li>
                                     <button className="dropdown-item" onClick={() => onCloneRole(role)}>
                                         <Copy size={14} className="me-2" /> Duplcate
+                                    </button>
+                                </li>
+                                <li>
+                                    <button className="dropdown-item" onClick={() => onAssignPermissions(role)}>
+                                        <Shield size={14} className="me-2" /> Assign Permissions
                                     </button>
                                 </li>
                                 {!role.isSystemRole && (
