@@ -1,1 +1,0 @@
-import{j as e}from"./ui-vMFa3nTH.js";import"./vendor-BDwHIWx6.js";const r=()=>e.jsxs("div",{className:"p-6",children:[e.jsx("h1",{className:"text-2xl font-bold mb-4",children:"Fee Balances"}),e.jsx("p",{className:"text-gray-600",children:"Placeholder for parent fee balances view."})]});export{r as default};

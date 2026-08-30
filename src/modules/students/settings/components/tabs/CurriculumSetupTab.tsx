@@ -1,7 +1,7 @@
 import React from 'react';
-import CurriculumSetup from '../CurriculumSetup';
+import CurriculumSetup from '../../../../academics/settings/components/CurriculumSetup';
 import CurriculumLevelSetup from '../CurriculumLevelSetup';
-import ClassStreamSetup from '../ClassStreamSetup';
+import ClassStreamSetup from '../../../../academics/settings/components/ClassStreamSetup';
 
 const CurriculumSetupTab = () => {
     return (

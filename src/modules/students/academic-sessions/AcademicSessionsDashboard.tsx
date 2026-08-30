@@ -11,7 +11,7 @@ import {
 import { inputClass, labelClass } from '../../../components/ui/FormField';
 import Modal from '../../../components/common/Modal';
 import studentSettingsService from '../../../services/studentSettingsService';
-import AcademicSetupTab from '../../../academics/settings/components/tabs/AcademicSetupTab';
+import AcademicSetupTab from '../../academics/settings/components/tabs/AcademicSetupTab';
 
 /* ────── Status badge colors ────── */
 const STATUS_COLORS = {
