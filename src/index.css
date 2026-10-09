@@ -1059,7 +1059,7 @@ td {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg-light);
+  background: var(--neo-bg-color);
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;

@@ -6,14 +6,8 @@ import {
 export const settingsCategories = [
     { id: 'leave', label: 'Leave Settings', icon: Calendar, description: 'Manage leave types, accruals, and holidays.' },
     { id: 'attendance-policy', label: 'Attendance Policy', icon: Zap, description: 'Configure clocking methods, geofence, and employee profiles.' },
-    { id: 'attendance', label: 'Attendance Rules', icon: Clock, description: 'Configure shifts, working hours, and grace periods.' },
-    { id: 'performance', label: 'Performance', icon: Award, description: 'Setup review cycles, KPIs, and scoring models.' },
-    { id: 'recruitment', label: 'Recruitment', icon: Users, description: 'Define hiring stages and interview panels.' },
-    { id: 'payroll', label: 'Payroll Rules', icon: DollarSign, description: 'Salary structures, allowances, and deductions.' },
-    { id: 'employees', label: 'Employee Mgmt', icon: UserCog, description: 'Job titles, departments, and employment types.' },
-    { id: 'roles', label: 'Roles & Permissions', icon: Shield, description: 'Manage access control and user roles.' },
+    { id: 'employees', label: 'Employee Management', icon: UserCog, description: 'Job titles, departments, and employment types.' },
     { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Configure email alerts and system notifications.' },
-    { id: 'integrations', label: 'Integrations', icon: Box, description: 'Connect with third-party tools and APIs.' },
     { id: 'audit', label: 'Audit Logs', icon: FileText, description: 'View system activity and changes history.' },
 ];
 

@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import ApplicationDetailsModal from './ApplicationDetailsModal';
-import ExistingParentDialog from './ExistingParentDialog';
+import StudentAdmissionModal from './StudentAdmissionModal';
 import DirectAdmissionModal from './DirectAdmissionModal';
 import LazyImage from '../../../../components/common/LazyImage';
 import ContentLoader from '../../../../components/common/ContentLoader';
@@ -213,15 +213,18 @@ const ApplicationsTable = () => {
                         const result = await studentManagementService.checkGuardianEmail(guardianEmail);
                         if (result.exists) {
                             setParentInfo(result);
-                            setPendingAdmitApp(app);
-                            setParentDialogOpen(true);
-                            return;
+                        } else {
+                            setParentInfo(null);
                         }
                     } catch (checkError) {
                         console.warn('Guardian email check failed:', checkError);
+                        setParentInfo(null);
                     }
+                } else {
+                    setParentInfo(null);
                 }
-                await proceedWithAdmission(app.id);
+                setPendingAdmitApp(app);
+                setParentDialogOpen(true);
             } else if (action === 'Reject') {
                 await studentManagementService.updateApplication(app.id, { application_status: 'rejected' });
                 toast.success('Application Rejected');
@@ -1010,15 +1013,17 @@ const ApplicationsTable = () => {
                 }}
             />
 
-            {/* Existing Parent Dialog */}
-            <ExistingParentDialog
-                isOpen={parentDialogOpen}
-                onClose={() => { setParentDialogOpen(false); setPendingAdmitApp(null); }}
-                parentInfo={parentInfo}
-                onUseExisting={(id) => proceedWithAdmission(pendingAdmitApp.id, { existing_parent_user_id: id })}
-                onCreateNew={() => proceedWithAdmission(pendingAdmitApp.id)}
-                loading={admitting}
-            />
+            {/* Admission Confirmation Modal */}
+            {pendingAdmitApp && (
+                <StudentAdmissionModal 
+                    isOpen={parentDialogOpen}
+                    onClose={() => { setParentDialogOpen(false); setPendingAdmitApp(null); }}
+                    applicant={pendingAdmitApp}
+                    parentInfo={parentInfo}
+                    onConfirm={(extraData) => proceedWithAdmission(pendingAdmitApp.id, extraData)}
+                    loading={admitting}
+                />
+            )}
 
             {/* Direct Admission Modal */}
             <DirectAdmissionModal

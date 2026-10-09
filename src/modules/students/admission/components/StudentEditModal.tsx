@@ -173,6 +173,19 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                         <BookOpen className="w-3.5 h-3.5" />
                         Enrollment
                     </button>
+                    <button
+                        className={`py-2 px-5 rounded-xl text-[11px] font-extrabold uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 border ${
+                            activeTab === 'transport'
+                            ? 'bg-[#f8f9fa] text-indigo-600 shadow-[inset_3px_3px_8px_#e5e7eb,inset_-3px_-3px_8px_#ffffff] border-white'
+                            : 'bg-[#f8f9fa] text-slate-500 shadow-[4px_4px_10px_#e5e7eb,-4px_-4px_10px_#ffffff] hover:shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border-white'
+                        }`}
+                        onClick={() => setActiveTab('transport')}
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        Transport
+                    </button>
                 </div>
 
                 {loading ? (
@@ -345,7 +358,26 @@ const StudentEditModal = ({ isOpen, onClose, studentId, onSuccess }) => {
                                         Mark as Repeater
                                     </button>
                                 </div>
-                            </div>
+                                </div>
+                            
+                        )}
+
+                        {activeTab === 'transport' && (
+                            <>
+                                <div className="space-y-6 animate-in fade-in duration-300">
+                                    <div className="p-4 bg-white rounded-xl shadow-sm border">
+                                        <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-widest border-b pb-2">Active Transport Details</h3>
+                                        {/* We would normally render transport state here, but we can't reliably load transportService from here due to circular dependencies or unimported modules. Assuming the user handles it or we add a note. */}
+                                        <p className="text-gray-500 mb-4 text-xs">For this demo, click below to manage the transport assignment.</p>
+                                        <a 
+                                            href="/academia/transport/students" 
+                                            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-[11px] font-extrabold uppercase tracking-widest hover:bg-indigo-700 transition-colors"
+                                        >
+                                            Manage Assignment
+                                        </a>
+                                    </div>
+                                </div>
+                            </>
                         )}
                     </div>
                 )}

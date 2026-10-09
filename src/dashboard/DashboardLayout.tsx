@@ -24,6 +24,7 @@ import {
     Sparkles,
     MessageSquare,
     SettingsIcon,
+    Bus,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { toast } from 'react-toastify';
@@ -153,6 +154,7 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Accounts Payable', path: '/dashboard/finance/payable' },
                 { label: 'Accounts Receivable', path: '/dashboard/finance/receivable' },
                 { label: 'Chart of Accounts', path: '/dashboard/finance/chart' },
+                { label: 'Admission Fees Config', path: '/dashboard/finance/admission-fees' },
                 { label: 'Journals', path: '/dashboard/finance/journals' },
                 { label: 'Finance Report', path: '/dashboard/finance/reports' },
                 { label: 'Finance Settings', path: '/dashboard/finance/settings' }
@@ -192,6 +194,17 @@ const DashboardLayout = ({ children, title }) => {
                 { label: 'Maintenance', path: '/dashboard/fleet/maintenance' },
                 { label: 'Expenses', path: '/dashboard/fleet/expenses' },
                 { label: 'Financial Analytics', path: '/dashboard/fleet/analytics' },
+            ]
+        },
+        {
+            icon: Bus,
+            label: 'Student Transport',
+            path: '/academia/transport',
+            module: 'transport',
+            subItems: [
+                { label: 'Routes & Stops', path: '/academia/transport/routes' },
+                { label: 'Student Assignments', path: '/academia/transport/students' },
+                { label: 'Fee Configurations', path: '/academia/transport/settings' }
             ]
         },
         { sectionLabel: 'CRM & ENGAGEMENT' },

@@ -557,6 +557,8 @@ export const api = {
             api.put(`/api/timetable/periods/${id}/`, data),
         deletePeriod: (id) =>
             api.delete(`/api/timetable/periods/${id}/`),
+        seedPeriods: () =>
+            api.post('/api/timetable/periods/seed/'),
         // Work Allocations
         getAllocations: (params = {}) =>
             api.get('/api/timetable/allocations/', { params }),
@@ -621,9 +623,14 @@ export const api = {
             api.get(`/api/timetable/room/${roomId}/full/`),
         getMonthlyView: (params) =>
             api.get('/api/timetable/monthly-view/', { params }),
-        // Teachers (from users API)
+        // Rooms
+        getRooms: (params = {}) =>
+            api.get('/api/timetable/rooms/', { params }),
+        createRoom: (data) =>
+            api.post('/api/timetable/rooms/', data),
+        // Teachers (from workforce API)
         getTeachers: (params = {}) =>
-            api.get('/api/users/', { params: { is_lecturer: true, ...params } }),
+            api.get('/workforce/api/employees/', { params }),
     },
 
     // ─── Planned Lessons ─── Generation layer ────────────────────

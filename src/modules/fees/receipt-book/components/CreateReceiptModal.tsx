@@ -317,11 +317,11 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
     const receiptTypes = ['Student Fee', 'Student Non-Fee', 'General', 'Sponsor', 'Customer Import'];
 
     return (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-scrollable">
-                <div className="modal-content neo-card border-none neo-bg">
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+            <div className="modal-dialog modal-lg modal-dialog-scrollable" style={{ zIndex: 1060 }}>
+                <div className="modal-content bg-white border border-gray-200 shadow-xl rounded-xl">
                     <div className="modal-header border-bottom-0">
-                        <h5 className="modal-title">Create New Receipt</h5>
+                        <h5 className="modal-title font-bold text-gray-800">Create New Receipt</h5>
                         <button type="button" className="btn-close" onClick={handleClose}></button>
                     </div>
                     <div className="modal-body">
@@ -428,10 +428,10 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
                             />
                         )}
                     </div>
-                    <div className="modal-footer border-top-0 bg-transparent">
+                    <div className="modal-footer border-top-0">
                         <button
                             type="button"
-                            className="neo-btn"
+                            className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
                             onClick={handleClose}
                             disabled={isLoading}
                         >
@@ -443,7 +443,7 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
                             <>
                                 <button
                                     type="button"
-                                    className="neo-btn"
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                                     onClick={() => handleSave('Draft')}
                                     disabled={isLoading}
                                 >
@@ -454,7 +454,7 @@ const CreateReceiptModal = ({ show, onClose, onSave, lastReceiptNumber }) => {
                                 </button>
                                 <button
                                     type="button"
-                                    className="neo-btn neo-btn-accent"
+                                    className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
                                     onClick={() => handleSave('Issued')}
                                     disabled={isLoading}
                                 >

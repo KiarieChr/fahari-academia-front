@@ -60,11 +60,15 @@ const AttendancePolicySettings = () => {
                 api.get('/workforce/api/employees/'),
                 api.get('/workforce/api/employee-attendance-access-profiles/'),
             ]);
-            setPolicies(policiesRes.results || policiesRes || []);
-            setEmployees(employeesRes.results || employeesRes || []);
-            setAccessProfiles(profilesRes.results || profilesRes || []);
-            const campusData = campusesRes.results || campusesRes || [];
+            const policiesData = Array.isArray(policiesRes?.results) ? policiesRes.results : (Array.isArray(policiesRes) ? policiesRes : []);
+            const campusData = Array.isArray(campusesRes?.results) ? campusesRes.results : (Array.isArray(campusesRes) ? campusesRes : []);
+            const employeesData = Array.isArray(employeesRes?.results) ? employeesRes.results : (Array.isArray(employeesRes) ? employeesRes : []);
+            const profilesData = Array.isArray(profilesRes?.results) ? profilesRes.results : (Array.isArray(profilesRes) ? profilesRes : []);
+
+            setPolicies(policiesData);
             setCampuses(campusData);
+            setEmployees(employeesData);
+            setAccessProfiles(profilesData);
             
             const initialForms = {};
             campusData.forEach(c => {

@@ -71,7 +71,7 @@ const FilterDropdown = ({
     };
 
     return (
-        <div ref={containerRef} className={`relative ${className}`}>
+        <div ref={containerRef} className={`relative z-30 ${className}`}>
             {/* Trigger */}
             <button
                 onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -117,11 +117,7 @@ const FilterDropdown = ({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.15 }}
-                        className="
-                            absolute z-50 top-full left-0 right-0 mt-1
-                            ${variant === 'neo' ? 'neo-card border-none' : 'bg-white border border-gray-200'} rounded-lg shadow-lg
-                            max-h-64 overflow-hidden
-                        "
+                        className={`absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-hidden`}
                     >
                         {/* Search */}
                         {searchable && (

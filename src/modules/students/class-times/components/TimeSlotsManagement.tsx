@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import Modal from '../../../../components/common/Modal';
+import { toast } from 'react-toastify';
 import { Input, Select, FormField, inputClass } from '../../../../components/ui/FormField';
 
 const DAY_CHOICES = [
@@ -124,12 +125,30 @@ const TimeSlotsManagement = ({
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Timetable Slots</h3>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                >
-                    <Plus size={16} /> Add Slot
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={async () => {
+                            if (window.confirm('Are you sure you want to seed default time periods? This might override existing defaults.')) {
+                                try {
+                                    const { timetableApi } = await import('../services/timetableApi');
+                                    await timetableApi.periods.seed();
+                                    toast.success('Time periods seeded successfully! Please refresh to see changes.');
+                                } catch (e) {
+                                    toast.error('Failed to seed time periods: ' + (e.data?.detail || e.message || 'Make sure the backend supports this endpoint.'));
+                                }
+                            }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+                    >
+                        Seed Periods
+                    </button>
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                        <Plus size={16} /> Add Slot
+                    </button>
+                </div>
             </div>
 
             {slots.length === 0 ? (

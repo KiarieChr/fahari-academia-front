@@ -115,6 +115,11 @@ export const timetableApi = {
             apiClient.delete(`/api/timetable/rooms/${id}/`),
     },
 
+    // ─── PERIODS ────────────────────────────────────────────────────────────────
+    periods: {
+        seed: () => apiClient.post('/api/timetable/periods/seed/'),
+    },
+
     // ─── TIMETABLE SLOTS (CORE) ───────────────────────────────────────────────
     slots: {
         list: (params = {}) =>

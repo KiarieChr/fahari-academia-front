@@ -1,0 +1,1 @@
+import{j as i}from"./ui-D7UIfga5.js";import{r as o}from"./vendor-BSV_y8ne.js";const t=o.createContext(null),d=({children:s,onNewApplicant:e,onImport:r})=>i.jsx(t.Provider,{value:{openNewApplicant:e,openImport:r},children:s}),p=()=>{const s=o.useContext(t);if(!s)throw new Error("useAdmission must be used inside AdmissionProvider");return s};export{d as A,p as u};

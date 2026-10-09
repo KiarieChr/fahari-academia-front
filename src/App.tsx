@@ -74,6 +74,7 @@ const Journals = Loadable(lazy(() => import('./modules/finance/Journals')));
 const FinanceReports = Loadable(lazy(() => import('./modules/finance/FinanceReports')));
 const FinanceSettingsDashboard = Loadable(lazy(() => import('./modules/finance/settings/FinanceSettingsDashboard')));
 const BudgetingDashboard = Loadable(lazy(() => import('./modules/finance/budgeting/BudgetingDashboard')));
+const AdmissionFeeConfig = Loadable(lazy(() => import('./modules/finance/AdmissionFeeConfig')));
 
 /* --- Procurement Module (Lazy loaded) --- */
 const Procurement = Loadable(lazy(() => import('./modules/procurement/Procurement')));
@@ -156,6 +157,11 @@ const ChildDetail = Loadable(lazy(() => import('./modules/parent-portal/ChildDet
 const ParentFeeBalances = Loadable(lazy(() => import('./modules/parent-portal/ParentFeeBalances')));
 const ChildAssignments = Loadable(lazy(() => import('./modules/parent-portal/ChildAssignments')));
 
+/* --- Transport Module (Lazy loaded) --- */
+const RouteManagement = Loadable(lazy(() => import('./modules/transport/RouteManagement').then(m => ({ default: m.RouteManagement }))));
+const FeeStructureConfig = Loadable(lazy(() => import('./modules/transport/FeeStructureConfig').then(m => ({ default: m.FeeStructureConfig }))));
+const StudentAssignments = Loadable(lazy(() => import('./modules/transport/StudentAssignments').then(m => ({ default: m.StudentAssignments }))));
+
 /* --- Role-based route guard --- */
 import RoleBasedRoute from './auth/RoleBasedRoute';
 import ProtectedRoute from './auth/ProtectedRoute';
@@ -178,6 +184,11 @@ function App() {
             <Route path="/create-institution" element={<CreateInstitutionWizard />} />
 
             <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
+            
+            {/* Transport Module */}
+            <Route path="/academia/transport/routes" element={<ProtectedRoute><RouteManagement /></ProtectedRoute>} />
+            <Route path="/academia/transport/settings" element={<ProtectedRoute><FeeStructureConfig /></ProtectedRoute>} />
+            <Route path="/academia/transport/students" element={<ProtectedRoute><StudentAssignments /></ProtectedRoute>} />
 
             {/* Students Module */}
             <Route path="/dashboard/students" element={<ProtectedRoute><PermissionGate module="students"><StudentManagement /></PermissionGate></ProtectedRoute>} />
@@ -245,6 +256,7 @@ function App() {
             <Route path="/dashboard/finance/payable" element={<ProtectedRoute><PermissionGate module="finance"><AccountsPayableDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/receivable" element={<ProtectedRoute><PermissionGate module="finance"><AccountsReceivableDashboard /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/chart" element={<ProtectedRoute><PermissionGate module="finance"><ChartOfAccounts /></PermissionGate></ProtectedRoute>} />
+            <Route path="/dashboard/finance/admission-fees" element={<ProtectedRoute><PermissionGate module="finance"><AdmissionFeeConfig /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/journals" element={<ProtectedRoute><PermissionGate module="finance"><Journals /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/reports" element={<ProtectedRoute><PermissionGate module="finance"><FinanceReports /></PermissionGate></ProtectedRoute>} />
             <Route path="/dashboard/finance/settings" element={<ProtectedRoute><PermissionGate module="finance"><FinanceSettingsDashboard /></PermissionGate></ProtectedRoute>} />

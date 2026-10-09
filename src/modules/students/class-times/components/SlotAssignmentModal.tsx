@@ -1,34 +1,28 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AlertTriangle, Check, Loader2, Clock, User, MapPin, BookOpen, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AlertTriangle, Check, Loader2, User, MapPin, BookOpen, ChevronDown } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { timetableApi } from '../services/timetableApi';
 import Modal from '../../../../components/common/Modal';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-/**
- * SlotAssignmentModal — Modal for creating/editing timetable slots.
- * 
- * Features:
- * - Subject dropdown filtered by work allocation
- * - Auto-fill teacher based on selected subject's allocation
- * - Room dropdown with type filtering
- * - Teacher availability preview
- * - Real-time conflict validation
- * - Loading states and error feedback
- * 
- * Props:
- *  @param {boolean} isOpen - Whether modal is visible
- *  @param {Function} onClose - Callback to close modal
- *  @param {Object} slot - Existing slot for editing (null for new)
- *  @param {Object} defaultValues - Default day/time values for new slot
- *  @param {number} classSessionId - Current class session ID
- *  @param {Array} subjects - Available subjects list
- *  @param {Array} teachers - Available teachers list
- *  @param {Array} rooms - Available rooms list
- *  @param {Array} workAllocations - Teacher-subject assignments for this class
- *  @param {Function} onSave - Callback when slot is saved (slot data)
- *  @param {Function} onDelete - Callback when slot is deleted
- */
+const slotSchema = z.object({
+    subject: z.string().min(1, 'Subject is required'),
+    teacher: z.string().optional(),
+    room: z.string().optional(),
+    day_of_week: z.number().min(0).max(6),
+    start_time: z.string().min(1, 'Start time is required'),
+    end_time: z.string().min(1, 'End time is required'),
+}).refine(data => {
+    if (!data.start_time || !data.end_time) return true;
+    return data.start_time < data.end_time;
+}, {
+    message: "End time must be after start time",
+    path: ["end_time"]
+});
+
 const SlotAssignmentModal = ({
     isOpen,
     onClose,
@@ -42,30 +36,39 @@ const SlotAssignmentModal = ({
     onSave,
     onDelete,
 }) => {
-    // Form state
-    const [formData, setFormData] = useState({
-        subject: '',
-        teacher: '',
-        room: '',
-        day_of_week: 0,
-        start_time: '',
-        end_time: '',
-    });
-
     const [loading, setLoading] = useState(false);
     const [validating, setValidating] = useState(false);
     const [conflicts, setConflicts] = useState([]);
-    const [errors, setErrors] = useState({});
+    const [submitError, setSubmitError] = useState('');
     const [teacherAvailability, setTeacherAvailability] = useState(null);
 
     const isEditing = !!slot?.id;
 
-    // Initialize form data
+    const {
+        register,
+        handleSubmit,
+        watch,
+        setValue,
+        reset,
+        formState: { errors }
+    } = useForm({
+        resolver: zodResolver(slotSchema),
+        defaultValues: {
+            subject: '',
+            teacher: '',
+            room: '',
+            day_of_week: 0,
+            start_time: '',
+            end_time: '',
+        }
+    });
+
+    const formValues = watch();
+
     useEffect(() => {
         if (isOpen) {
             if (slot) {
-                // Editing existing slot
-                setFormData({
+                reset({
                     subject: slot.subject?.toString() || slot.subject_id?.toString() || '',
                     teacher: slot.teacher?.toString() || slot.teacher_id?.toString() || '',
                     room: slot.room?.toString() || slot.room_id?.toString() || '',
@@ -74,8 +77,7 @@ const SlotAssignmentModal = ({
                     end_time: slot.end_time || '',
                 });
             } else if (defaultValues) {
-                // New slot with defaults
-                setFormData({
+                reset({
                     subject: '',
                     teacher: '',
                     room: '',
@@ -84,8 +86,7 @@ const SlotAssignmentModal = ({
                     end_time: defaultValues.end_time || '',
                 });
             } else {
-                // Fresh new slot
-                setFormData({
+                reset({
                     subject: '',
                     teacher: '',
                     room: '',
@@ -95,15 +96,14 @@ const SlotAssignmentModal = ({
                 });
             }
             setConflicts([]);
-            setErrors({});
+            setSubmitError('');
             setTeacherAvailability(null);
         }
-    }, [isOpen, slot, defaultValues]);
+    }, [isOpen, slot, defaultValues, reset]);
 
-    // Filter subjects by work allocation (only subjects assigned to this class)
     const filteredSubjects = useMemo(() => {
         if (!workAllocations || workAllocations.length === 0) {
-            return subjects; // Show all if no allocations defined
+            return subjects;
         }
         const allocatedSubjectIds = new Set(
             workAllocations.map(wa => wa.subject?.toString() || wa.subject_id?.toString())
@@ -111,32 +111,30 @@ const SlotAssignmentModal = ({
         return subjects.filter(s => allocatedSubjectIds.has(s.id?.toString()));
     }, [subjects, workAllocations]);
 
-    // Auto-fill teacher when subject changes (based on work allocation)
     useEffect(() => {
-        if (formData.subject && workAllocations.length > 0) {
+        if (formValues.subject && workAllocations.length > 0) {
             const allocation = workAllocations.find(
-                wa => (wa.subject?.toString() || wa.subject_id?.toString()) === formData.subject
+                wa => (wa.subject?.toString() || wa.subject_id?.toString()) === formValues.subject
             );
             if (allocation) {
                 const teacherId = allocation.teacher?.toString() || allocation.teacher_id?.toString();
-                if (teacherId) {
-                    setFormData(prev => ({ ...prev, teacher: teacherId }));
+                if (teacherId && formValues.teacher !== teacherId) {
+                    setValue('teacher', teacherId, { shouldValidate: true });
                 }
             }
         }
-    }, [formData.subject, workAllocations]);
+    }, [formValues.subject, workAllocations, setValue, formValues.teacher]);
 
-    // Load teacher availability when teacher changes
     useEffect(() => {
         const loadAvailability = async () => {
-            if (!formData.teacher || !formData.day_of_week) {
+            if (!formValues.teacher || formValues.day_of_week === undefined) {
                 setTeacherAvailability(null);
                 return;
             }
             try {
                 const data = await timetableApi.getTeacherAvailability(
-                    formData.teacher,
-                    formData.day_of_week
+                    formValues.teacher,
+                    formValues.day_of_week
                 );
                 setTeacherAvailability(data);
             } catch (err) {
@@ -145,13 +143,16 @@ const SlotAssignmentModal = ({
             }
         };
         loadAvailability();
-    }, [formData.teacher, formData.day_of_week]);
+    }, [formValues.teacher, formValues.day_of_week]);
 
-    // Real-time conflict checking (debounced)
     useEffect(() => {
         const checkConflicts = async () => {
-            if (!formData.subject || !formData.day_of_week === undefined || !formData.start_time || !formData.end_time) {
+            if (!formValues.subject || formValues.day_of_week === undefined || !formValues.start_time || !formValues.end_time) {
                 setConflicts([]);
+                return;
+            }
+            
+            if (formValues.start_time >= formValues.end_time) {
                 return;
             }
 
@@ -159,12 +160,12 @@ const SlotAssignmentModal = ({
             try {
                 const result = await timetableApi.checkConflict({
                     class_session: classSessionId,
-                    subject: formData.subject,
-                    teacher: formData.teacher || null,
-                    room: formData.room || null,
-                    day_of_week: formData.day_of_week,
-                    start_time: formData.start_time,
-                    end_time: formData.end_time,
+                    subject: formValues.subject,
+                    teacher: formValues.teacher || null,
+                    room: formValues.room || null,
+                    day_of_week: formValues.day_of_week,
+                    start_time: formValues.start_time,
+                    end_time: formValues.end_time,
                     exclude_slot_id: slot?.id,
                 });
                 setConflicts(result.conflicts || []);
@@ -177,115 +178,63 @@ const SlotAssignmentModal = ({
 
         const debounceTimer = setTimeout(checkConflicts, 300);
         return () => clearTimeout(debounceTimer);
-    }, [formData, classSessionId, slot?.id]);
+    }, [formValues.subject, formValues.teacher, formValues.room, formValues.day_of_week, formValues.start_time, formValues.end_time, classSessionId, slot?.id]);
 
-    // Form validation
-    const validateForm = useCallback(() => {
-        const newErrors = {};
-
-        if (!formData.subject) {
-            newErrors.subject = 'Subject is required';
-        }
-        if (!formData.start_time) {
-            newErrors.start_time = 'Start time is required';
-        }
-        if (!formData.end_time) {
-            newErrors.end_time = 'End time is required';
-        }
-        if (formData.start_time && formData.end_time && formData.start_time >= formData.end_time) {
-            newErrors.end_time = 'End time must be after start time';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }, [formData]);
-
-    // Handle field changes
-    const handleChange = useCallback((field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        // Clear field error on change
-        if (errors[field]) {
-            setErrors(prev => {
-                const updated = { ...prev };
-                delete updated[field];
-                return updated;
-            });
-        }
-    }, [errors]);
-
-    // Handle form submission
-    const handleSubmit = useCallback(async (e) => {
-        e?.preventDefault();
-
-        if (!validateForm()) return;
-
-        // Block if hard conflicts exist
+    const onSubmit = async (data) => {
         const hardConflicts = conflicts.filter(c => c.type === 'hard' || c.severity === 'hard');
         if (hardConflicts.length > 0) {
-            setErrors(prev => ({
-                ...prev,
-                submit: 'Cannot save: Hard conflicts must be resolved first',
-            }));
+            setSubmitError('Cannot save: Hard conflicts must be resolved first');
             return;
         }
 
         setLoading(true);
+        setSubmitError('');
         try {
             await onSave?.({
                 id: slot?.id,
                 class_session: classSessionId,
-                subject: parseInt(formData.subject, 10),
-                teacher: formData.teacher ? parseInt(formData.teacher, 10) : null,
-                room: formData.room ? parseInt(formData.room, 10) : null,
-                day_of_week: formData.day_of_week,
-                start_time: formData.start_time,
-                end_time: formData.end_time,
+                subject: parseInt(data.subject, 10),
+                teacher: data.teacher ? parseInt(data.teacher, 10) : null,
+                room: data.room ? parseInt(data.room, 10) : null,
+                day_of_week: data.day_of_week,
+                start_time: data.start_time,
+                end_time: data.end_time,
             });
             onClose?.();
         } catch (err) {
-            setErrors(prev => ({
-                ...prev,
-                submit: err.message || 'Failed to save slot',
-            }));
+            setSubmitError(err.message || 'Failed to save slot');
         } finally {
             setLoading(false);
         }
-    }, [formData, slot, classSessionId, conflicts, validateForm, onSave, onClose]);
+    };
 
-    // Handle delete
-    const handleDelete = useCallback(async () => {
+    const handleDelete = async () => {
         if (!slot?.id) return;
-
         if (!window.confirm('Are you sure you want to delete this slot?')) return;
 
         setLoading(true);
+        setSubmitError('');
         try {
             await onDelete?.(slot);
             onClose?.();
         } catch (err) {
-            setErrors(prev => ({
-                ...prev,
-                submit: err.message || 'Failed to delete slot',
-            }));
+            setSubmitError(err.message || 'Failed to delete slot');
         } finally {
             setLoading(false);
         }
-    }, [slot, onDelete, onClose]);
+    };
 
-    // Check if teacher is available
     const isTeacherAvailable = useMemo(() => {
-        if (!teacherAvailability || !formData.start_time || !formData.end_time) {
+        if (!teacherAvailability || !formValues.start_time || !formValues.end_time) {
             return null;
         }
-        // Check if the slot time falls within teacher's available periods
         const available = teacherAvailability.available_periods || [];
         return available.some(period =>
-            formData.start_time >= period.start_time &&
-            formData.end_time <= period.end_time
+            formValues.start_time >= period.start_time &&
+            formValues.end_time <= period.end_time
         );
-    }, [teacherAvailability, formData.start_time, formData.end_time]);
+    }, [teacherAvailability, formValues.start_time, formValues.end_time]);
 
-    // Render conflict badges
     const renderConflicts = () => {
         if (conflicts.length === 0) return null;
 
@@ -352,166 +301,151 @@ const SlotAssignmentModal = ({
                 </div>
             }
         >
-            <form id="slot-assignment-form" onSubmit={handleSubmit}>
+            <form id="slot-assignment-form" onSubmit={handleSubmit(onSubmit)}>
                 <div className="px-7 py-6 space-y-5 max-h-[60vh] overflow-y-auto">
-                            {/* Day and Time Row */}
-                            <div className="grid grid-cols-3 gap-4">
-                                {/* Day Select */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Day
-                                    </label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.day_of_week}
-                                            onChange={e => handleChange('day_of_week', parseInt(e.target.value, 10))}
-                                            className="w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
-                                        >
-                                            {DAY_NAMES.slice(0, 6).map((day, idx) => (
-                                                <option key={idx} value={idx}>{day}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                    </div>
-                                </div>
-
-                                {/* Start Time */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Start *
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={formData.start_time}
-                                        onChange={e => handleChange('start_time', e.target.value)}
-                                        className={`w-full h-11 px-4 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors ${errors.start_time ? 'border-red-400' : 'border-slate-300 dark:border-slate-600'}`}
-                                    />
-                                    {errors.start_time && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.start_time}</p>
-                                    )}
-                                </div>
-
-                                {/* End Time */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        End *
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={formData.end_time}
-                                        onChange={e => handleChange('end_time', e.target.value)}
-                                        className={`w-full h-11 px-4 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors ${errors.end_time ? 'border-red-400' : 'border-slate-300 dark:border-slate-600'}`}
-                                    />
-                                    {errors.end_time && (
-                                        <p className="text-xs text-red-500 mt-1">{errors.end_time}</p>
-                                    )}
-                                </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Day
+                            </label>
+                            <div className="relative">
+                                <select
+                                    {...register('day_of_week', { valueAsNumber: true })}
+                                    className="w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
+                                >
+                                    {DAY_NAMES.slice(0, 6).map((day, idx) => (
+                                        <option key={idx} value={idx}>{day}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             </div>
+                        </div>
 
-                            {/* Subject Select */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    <BookOpen size={14} className="inline mr-1.5 -mt-0.5" />
-                                    Subject *
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        value={formData.subject}
-                                        onChange={e => handleChange('subject', e.target.value)}
-                                        className={`w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors ${errors.subject ? 'border-red-400' : 'border-slate-300 dark:border-slate-600'}`}
-                                    >
-                                        <option value="">Select subject...</option>
-                                        {filteredSubjects.map(subject => (
-                                            <option key={subject.id} value={subject.id}>
-                                                {subject.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                </div>
-                                {errors.subject && (
-                                    <p className="text-xs text-red-500 mt-1">{errors.subject}</p>
-                                )}
-                                {workAllocations.length > 0 && filteredSubjects.length < subjects.length && (
-                                    <p className="text-xs text-slate-400 mt-1">
-                                        Showing only subjects with assigned teachers
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Teacher Select */}
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        <User size={14} className="inline mr-1.5 -mt-0.5" />
-                                        Teacher
-                                    </label>
-                                    {isTeacherAvailable !== null && (
-                                        <span className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded-full ${isTeacherAvailable ? 'text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400' : 'text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400'}`}>
-                                            {isTeacherAvailable ? (
-                                                <><Check size={12} /> Available</>
-                                            ) : (
-                                                <><AlertTriangle size={12} /> May be busy</>
-                                            )}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="relative">
-                                    <select
-                                        value={formData.teacher}
-                                        onChange={e => handleChange('teacher', e.target.value)}
-                                        className="w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
-                                    >
-                                        <option value="">Select teacher (optional)...</option>
-                                        {teachers.map(teacher => (
-                                            <option key={teacher.id} value={teacher.id}>
-                                                {teacher.name || `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || teacher.email}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                </div>
-                            </div>
-
-                            {/* Room Select */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    <MapPin size={14} className="inline mr-1.5 -mt-0.5" />
-                                    Room
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        value={formData.room}
-                                        onChange={e => handleChange('room', e.target.value)}
-                                        className="w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
-                                    >
-                                        <option value="">Select room (optional)...</option>
-                                        {rooms.map(room => (
-                                            <option key={room.id} value={room.id}>
-                                                {room.name} {room.capacity ? `(${room.capacity})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                </div>
-                            </div>
-
-                            {/* Conflict Display */}
-                            {validating && (
-                                <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-3">
-                                    <Loader2 size={16} className="animate-spin" />
-                                    Checking conflicts...
-                                </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Start *
+                            </label>
+                            <input
+                                type="time"
+                                {...register('start_time')}
+                                className={`w-full h-11 px-4 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors ${errors.start_time ? 'border-red-400' : 'border-slate-300 dark:border-slate-600'}`}
+                            />
+                            {errors.start_time && (
+                                <p className="text-xs text-red-500 mt-1">{errors.start_time.message}</p>
                             )}
-                            {renderConflicts()}
+                        </div>
 
-                            {/* Submit Error */}
-                            {errors.submit && (
-                                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-800 dark:text-red-400 flex items-start gap-3">
-                                    <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
-                                    <span>{errors.submit}</span>
-                                </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                End *
+                            </label>
+                            <input
+                                type="time"
+                                {...register('end_time')}
+                                className={`w-full h-11 px-4 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors ${errors.end_time ? 'border-red-400' : 'border-slate-300 dark:border-slate-600'}`}
+                            />
+                            {errors.end_time && (
+                                <p className="text-xs text-red-500 mt-1">{errors.end_time.message}</p>
                             )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            <BookOpen size={14} className="inline mr-1.5 -mt-0.5" />
+                            Subject *
+                        </label>
+                        <div className="relative">
+                            <select
+                                {...register('subject')}
+                                className={`w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors ${errors.subject ? 'border-red-400' : 'border-slate-300 dark:border-slate-600'}`}
+                            >
+                                <option value="">Select subject...</option>
+                                {filteredSubjects.map(subject => (
+                                    <option key={subject.id} value={subject.id}>
+                                        {subject.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                        {errors.subject && (
+                            <p className="text-xs text-red-500 mt-1">{errors.subject.message}</p>
+                        )}
+                        {workAllocations.length > 0 && filteredSubjects.length < subjects.length && (
+                            <p className="text-xs text-slate-400 mt-1">
+                                Showing only subjects with assigned teachers
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                <User size={14} className="inline mr-1.5 -mt-0.5" />
+                                Teacher
+                            </label>
+                            {isTeacherAvailable !== null && (
+                                <span className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded-full ${isTeacherAvailable ? 'text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400' : 'text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                                    {isTeacherAvailable ? (
+                                        <><Check size={12} /> Available</>
+                                    ) : (
+                                        <><AlertTriangle size={12} /> May be busy</>
+                                    )}
+                                </span>
+                            )}
+                        </div>
+                        <div className="relative">
+                            <select
+                                {...register('teacher')}
+                                className="w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
+                            >
+                                <option value="">Select teacher (optional)...</option>
+                                {teachers.map(teacher => (
+                                    <option key={teacher.id} value={teacher.id}>
+                                        {teacher.name || `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || teacher.email}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            <MapPin size={14} className="inline mr-1.5 -mt-0.5" />
+                            Room
+                        </label>
+                        <div className="relative">
+                            <select
+                                {...register('room')}
+                                className="w-full h-11 px-4 pr-10 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
+                            >
+                                <option value="">Select room (optional)...</option>
+                                {rooms.map(room => (
+                                    <option key={room.id} value={room.id}>
+                                        {room.name} {room.capacity ? `(${room.capacity})` : ''}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {validating && (
+                        <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-3">
+                            <Loader2 size={16} className="animate-spin" />
+                            Checking conflicts...
+                        </div>
+                    )}
+                    {renderConflicts()}
+
+                    {submitError && (
+                        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-800 dark:text-red-400 flex items-start gap-3">
+                            <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+                            <span>{submitError}</span>
+                        </div>
+                    )}
                 </div>
             </form>
         </Modal>

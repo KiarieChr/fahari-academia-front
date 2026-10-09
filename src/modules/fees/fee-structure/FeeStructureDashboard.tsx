@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Check, X, Zap, Layers } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useReactToPrint } from 'react-to-print';
-import { useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 import FeeStructureSummaryCards from './components/FeeStructureSummaryCards';
 import ClassTermSelector from './components/ClassTermSelector';
@@ -63,12 +63,26 @@ const FeeStructureDashboard = () => {
     const [editingFeeItem, setEditingFeeItem] = useState(null);
     const [showApplyTemplateWizard, setShowApplyTemplateWizard] = useState(false);
 
-    // Initial Data Fetch
+    // React Query for classes to stay in sync
+    const { data: classesData } = useQuery({
+        queryKey: ['classes'],
+        queryFn: async () => {
+            const res = await api.get('/api/settings/classes/');
+            return Array.isArray(res) ? res : (res.results || []);
+        }
+    });
+
+    useEffect(() => {
+        if (classesData) {
+            setRefClasses(classesData.map(c => ({ id: c.id, name: c.name, level: c.level || 'Primary' })));
+        }
+    }, [classesData]);
+
+    // Initial Data Fetch (Other dependencies)
     useEffect(() => {
         const fetchRefData = async () => {
             try {
-                const [classesRes, yearsRes, termsRes, accountsRes] = await Promise.all([
-                    api.get('/api/settings/classes/'),
+                const [yearsRes, termsRes, accountsRes] = await Promise.all([
                     api.get('/api/settings/academic-years/'),
                     api.get('/api/settings/terms/'),
                     api.get('/api/finance/accounts/?type=INCOME')
@@ -80,13 +94,9 @@ const FeeStructureDashboard = () => {
                     return Array.isArray(res) ? res : (res.results || []);
                 };
 
-                const classesData = getItems(classesRes);
                 const yearsData = getItems(yearsRes);
                 const termsData = getItems(termsRes);
                 const accountsData = getItems(accountsRes);
-
-                // Map data to match UI expectations
-                setRefClasses(classesData.map(c => ({ id: c.id, name: c.name, level: c.level || 'Primary' })));
 
                 // Store Raw and UI Data
                 setRawYears(yearsData);

@@ -55,7 +55,7 @@ const WorkAllocationsPanel = ({ classSessionId, classSessionName }) => {
         const fetchOptions = async () => {
             try {
                 const [subjectData, teacherData] = await Promise.all([
-                    api.timetable.getSubjects({ is_active: true }),
+                    api.timetable.getSubjects({ is_active: true, class_session: classSessionId }),
                     api.timetable.getTeachers(),
                 ]);
                 setSubjects((subjectData.results || subjectData) || []);
@@ -64,8 +64,10 @@ const WorkAllocationsPanel = ({ classSessionId, classSessionName }) => {
                 // silent
             }
         };
-        fetchOptions();
-    }, []);
+        if (classSessionId) {
+            fetchOptions();
+        }
+    }, [classSessionId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -193,7 +195,7 @@ const WorkAllocationsPanel = ({ classSessionId, classSessionName }) => {
                                     <Select name="teacher" value={formData.teacher} onChange={handleChange}>
                                         <option value="">Select teacher...</option>
                                         {teachers.map(t => (
-                                            <option key={t.id} value={t.id}>
+                                            <option key={t.id} value={t.user?.id || t.user_id || t.id}>
                                                 {t.first_name} {t.last_name} {t.employee_id ? `(${t.employee_id})` : ''}
                                             </option>
                                         ))}

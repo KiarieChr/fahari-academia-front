@@ -1,12 +1,12 @@
 import React, { useMemo, useState, useCallback, memo } from 'react';
 import { MoreHorizontal, Plus, AlertTriangle, Trash2, Edit3, User, MapPin, Lock } from 'lucide-react';
+import { DndContext, useSensor, useSensors, PointerSensor, DragOverlay, closestCenter } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-/**
- * Subject color mapping - generates consistent colors from hex or uses predefined palette.
- */
 const SUBJECT_COLORS = {
     '#3B82F6': { bg: 'bg-blue-50', border: 'border-blue-200', accent: 'border-l-blue-500', text: 'text-blue-900', hover: 'hover:bg-blue-100' },
     '#10B981': { bg: 'bg-emerald-50', border: 'border-emerald-200', accent: 'border-l-emerald-500', text: 'text-emerald-900', hover: 'hover:bg-emerald-100' },
@@ -27,24 +27,126 @@ const getColorClasses = (hex) => {
     return SUBJECT_COLORS[hex?.toUpperCase()] ?? DEFAULT_COLOR;
 };
 
-/**
- * TimetableCell — Memoized cell component for performance.
- */
+const DraggableSlotCard = ({ entry, hasConflict, isLocked, onEdit, onDelete, isOverlay = false }) => {
+    const [showMenu, setShowMenu] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: `slot-${entry.id}`,
+        data: entry,
+        disabled: isLocked,
+    });
+
+    const style = {
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.4 : 1,
+        cursor: isLocked ? 'default' : 'grab',
+    };
+
+    const colors = getColorClasses(entry.subject_color);
+    const conflictClass = hasConflict ? 'ring-2 ring-red-500 ring-offset-1' : '';
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            {...attributes} 
+            {...listeners}
+            className={`
+                p-2.5 rounded-lg border border-l-4 shadow-sm relative transition-all duration-200
+                ${colors.bg} ${colors.border} ${colors.accent} ${colors.text} ${colors.hover}
+                ${isHovered || isOverlay ? 'shadow-md scale-[1.02]' : ''}
+                ${conflictClass}
+                ${isOverlay ? 'shadow-xl cursor-grabbing scale-[1.05]' : ''}
+            `}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => { setIsHovered(false); setShowMenu(false); }}
+            onClick={(e) => {
+                // Prevent drag from triggering click if they are just dragging
+                if (!isLocked && !isDragging) onEdit?.(entry);
+            }}
+        >
+            {hasConflict && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm z-10">
+                    <AlertTriangle size={10} className="text-white" />
+                </div>
+            )}
+
+            <div className="flex justify-between items-start mb-1.5">
+                <span className="text-xs font-bold truncate pr-2 leading-tight select-none">{entry.subject_name}</span>
+                {!isLocked && (
+                    <div className="relative z-20">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                            className={`p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+                            onPointerDown={(e) => e.stopPropagation()} // stop drag on menu click
+                        >
+                            <MoreHorizontal size={12} />
+                        </button>
+                        
+                        {showMenu && (
+                            <div className="absolute right-0 top-6 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[120px] animate-in fade-in slide-in-from-top-2 duration-150">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onEdit?.(entry); setShowMenu(false); }}
+                                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
+                                >
+                                    <Edit3 size={11} /> Edit
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onDelete?.(entry); setShowMenu(false); }}
+                                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 flex items-center gap-2"
+                                >
+                                    <Trash2 size={11} /> Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            <div className="flex justify-between items-center text-[10px] opacity-80 font-medium gap-2 select-none">
+                <span className="flex items-center gap-1 truncate">
+                    <User size={9} className="opacity-60 flex-shrink-0" />
+                    <span className="truncate">{entry.teacher_name}</span>
+                </span>
+                {entry.room_name && (
+                    <span className="flex items-center gap-1 bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded text-[9px] uppercase flex-shrink-0">
+                        <MapPin size={8} className="opacity-60" />
+                        {entry.room_name}
+                    </span>
+                )}
+            </div>
+            
+            {entry.subject_code && (
+                <div className="mt-1.5 text-[9px] uppercase tracking-wide opacity-50 font-mono select-none">
+                    {entry.subject_code}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const TimetableCell = memo(({ 
     entry, 
     periodKey, 
     periodType,
     dayIdx,
+    periodStart,
+    periodEnd,
     onEdit, 
     onDelete, 
     onAssign,
     isLocked,
     hasConflict,
 }) => {
-    const [showMenu, setShowMenu] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
-    // Break/Lunch cells
+    const { isOver, setNodeRef } = useDroppable({
+        id: `${dayIdx}-${periodKey}`,
+        data: { dayIdx, periodStart, periodEnd },
+        disabled: isLocked,
+    });
+
     if (periodType === 'Break' || periodType === 'Lunch' || periodType === 'break' || periodType === 'lunch') {
         return (
             <td className="p-2 border-b border-r border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-center">
@@ -55,14 +157,18 @@ const TimetableCell = memo(({
         );
     }
 
-    // Empty cell - show assign button on hover
-    if (!entry) {
-        return (
-            <td 
-                className="p-2 border-b border-r border-slate-200 dark:border-slate-700 relative group transition-colors hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-            >
+    return (
+        <td 
+            ref={setNodeRef}
+            className={`
+                p-2 border-b border-r border-slate-200 dark:border-slate-700 relative group transition-colors 
+                ${!entry ? 'hover:bg-blue-50/50 dark:hover:bg-blue-900/10' : 'hover:bg-slate-50/50 dark:hover:bg-slate-700/20'}
+                ${isOver ? 'bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-400 ring-inset' : ''}
+            `}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {!entry ? (
                 <div className="h-full w-full min-h-[60px] flex items-center justify-center">
                     {!isLocked && (
                         <button 
@@ -73,103 +179,14 @@ const TimetableCell = memo(({
                         </button>
                     )}
                 </div>
-            </td>
-        );
-    }
-
-    const colors = getColorClasses(entry.subject_color);
-    const conflictClass = hasConflict ? 'ring-2 ring-red-500 ring-offset-1' : '';
-
-    return (
-        <td 
-            className="p-2 border-b border-r border-slate-200 dark:border-slate-700 relative group transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-700/20"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => { setIsHovered(false); setShowMenu(false); }}
-        >
-            <div 
-                className={`
-                    p-2.5 rounded-lg border border-l-4 shadow-sm cursor-pointer 
-                    transition-all duration-200 transform
-                    ${colors.bg} ${colors.border} ${colors.accent} ${colors.text} ${colors.hover}
-                    ${isHovered ? 'shadow-md scale-[1.02]' : ''}
-                    ${conflictClass}
-                `}
-                onClick={() => !isLocked && onEdit?.(entry)}
-            >
-                {/* Conflict indicator */}
-                {hasConflict && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-                        <AlertTriangle size={10} className="text-white" />
-                    </div>
-                )}
-
-                {/* Subject name and menu */}
-                <div className="flex justify-between items-start mb-1.5">
-                    <span className="text-xs font-bold truncate pr-2 leading-tight">{entry.subject_name}</span>
-                    {!isLocked && (
-                        <div className="relative">
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                                className={`p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-                            >
-                                <MoreHorizontal size={12} />
-                            </button>
-                            
-                            {/* Dropdown menu */}
-                            {showMenu && (
-                                <div className="absolute right-0 top-6 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[120px] animate-in fade-in slide-in-from-top-2 duration-150">
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onEdit?.(entry); setShowMenu(false); }}
-                                        className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
-                                    >
-                                        <Edit3 size={11} /> Edit
-                                    </button>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onDelete?.(entry); setShowMenu(false); }}
-                                        className="w-full px-3 py-1.5 text-left text-xs hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 flex items-center gap-2"
-                                    >
-                                        <Trash2 size={11} /> Delete
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {/* Teacher and room info */}
-                <div className="flex justify-between items-center text-[10px] opacity-80 font-medium gap-2">
-                    <span className="flex items-center gap-1 truncate">
-                        <User size={9} className="opacity-60 flex-shrink-0" />
-                        <span className="truncate">{entry.teacher_name}</span>
-                    </span>
-                    {entry.room_name && (
-                        <span className="flex items-center gap-1 bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded text-[9px] uppercase flex-shrink-0">
-                            <MapPin size={8} className="opacity-60" />
-                            {entry.room_name}
-                        </span>
-                    )}
-                </div>
-
-                {/* Subject code badge (if available) */}
-                {entry.subject_code && (
-                    <div className="mt-1.5 text-[9px] uppercase tracking-wide opacity-50 font-mono">
-                        {entry.subject_code}
-                    </div>
-                )}
-            </div>
-
-            {/* Tooltip on hover */}
-            {isHovered && entry && (
-                <div className="absolute z-40 left-full ml-2 top-1/2 -translate-y-1/2 bg-slate-900 text-white rounded-lg px-3 py-2 text-xs shadow-xl pointer-events-none whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-150">
-                    <div className="font-semibold mb-1">{entry.subject_name}</div>
-                    <div className="text-slate-300 space-y-0.5">
-                        <div>Teacher: {entry.teacher_name}</div>
-                        {entry.room_name && <div>Room: {entry.room_name}</div>}
-                        <div className="text-slate-400 text-[10px] mt-1">
-                            {entry.start_time} – {entry.end_time}
-                        </div>
-                    </div>
-                </div>
+            ) : (
+                <DraggableSlotCard 
+                    entry={entry} 
+                    hasConflict={hasConflict} 
+                    isLocked={isLocked} 
+                    onEdit={onEdit} 
+                    onDelete={onDelete} 
+                />
             )}
         </td>
     );
@@ -177,19 +194,6 @@ const TimetableCell = memo(({
 
 TimetableCell.displayName = 'TimetableCell';
 
-/**
- * WeeklyTimetable — Main timetable grid component.
- * 
- * Props:
- *  @param {Object|Array} weeklyView - Slots grouped by day (dict or array format)
- *  @param {Array} slots - Flat array of all slots (for deriving time columns)
- *  @param {Array} periods - Time period definitions from backend
- *  @param {Function} onEditSlot - Callback when editing a slot
- *  @param {Function} onDeleteSlot - Callback when deleting a slot
- *  @param {Function} onAssignSlot - Callback when assigning to empty cell
- *  @param {boolean} isLocked - Whether timetable is locked for editing
- *  @param {Array} conflicts - Array of slot IDs that have conflicts
- */
 const WeeklyTimetable = ({ 
     weeklyView, 
     slots, 
@@ -199,13 +203,13 @@ const WeeklyTimetable = ({
     onEditSlot,
     onDeleteSlot,
     onAssignSlot,
+    onMoveSlot,
     isLocked = false,
     conflicts = [],
 }) => {
+    const [activeDragItem, setActiveDragItem] = useState(null);
 
-    // ── Derive unique time columns from flat slots array ──────────
     const timePeriods = useMemo(() => {
-        // Use external periods if provided (from backend TimePeriod model)
         if (externalPeriods && externalPeriods.length) {
             return externalPeriods.map(p => ({
                 id: p.id || `${p.start_time}-${p.end_time}`,
@@ -218,7 +222,6 @@ const WeeklyTimetable = ({
             })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
         }
 
-        // Derive from slots if no periods provided
         if (slots && slots.length) {
             const seen = new Set();
             const periods = [];
@@ -241,7 +244,6 @@ const WeeklyTimetable = ({
             return periods;
         }
 
-        // Static mock path (legacy)
         return (timeSlots ?? []).map((s) => ({
             id: s.id,
             key: `${s.start}-${s.end}`,
@@ -252,11 +254,8 @@ const WeeklyTimetable = ({
         }));
     }, [externalPeriods, slots, timeSlots]);
 
-    // ── Build a quick-lookup map: day → time → slot ───────────────
     const cellMap = useMemo(() => {
         const map = {};
-        
-        // Live weekly view (dict keyed by day_of_week int or string)
         if (weeklyView && typeof weeklyView === 'object' && !Array.isArray(weeklyView)) {
             Object.entries(weeklyView).forEach(([dayIdx, daySlots]) => {
                 const idx = Number(dayIdx);
@@ -269,7 +268,6 @@ const WeeklyTimetable = ({
             return map;
         }
 
-        // Static mock path (array of {day, slots})
         const mockSource = weeklyView ?? timetable ?? [];
         mockSource.forEach((row) => {
             const di = DAY_NAMES.indexOf(row.day);
@@ -291,9 +289,7 @@ const WeeklyTimetable = ({
         return map;
     }, [weeklyView, timetable, timeSlots]);
 
-    // ── Determine which days to render ───────────────────────────
     const daysToShow = useMemo(() => {
-        // Always show Mon-Fri (0-4), optionally Saturday if there's data
         if (weeklyView && typeof weeklyView === 'object' && !Array.isArray(weeklyView)) {
             const base = [0, 1, 2, 3, 4];
             if (weeklyView['5'] && weeklyView['5'].length > 0) {
@@ -306,20 +302,9 @@ const WeeklyTimetable = ({
         return indices.length > 0 ? indices : [0, 1, 2, 3, 4];
     }, [weeklyView, timetable]);
 
-    // ── Conflict check helper ─────────────────────────────────────
-    const hasConflict = useCallback((slotId) => {
-        return conflicts.includes(slotId);
-    }, [conflicts]);
-
-    // ── Event handlers ────────────────────────────────────────────
-    const handleEdit = useCallback((entry) => {
-        onEditSlot?.(entry);
-    }, [onEditSlot]);
-
-    const handleDelete = useCallback((entry) => {
-        onDeleteSlot?.(entry);
-    }, [onDeleteSlot]);
-
+    const hasConflict = useCallback((slotId) => conflicts.includes(slotId), [conflicts]);
+    const handleEdit = useCallback((entry) => onEditSlot?.(entry), [onEditSlot]);
+    const handleDelete = useCallback((entry) => onDeleteSlot?.(entry), [onDeleteSlot]);
     const handleAssign = useCallback((dayIdx, periodKey) => {
         const period = timePeriods.find(p => p.key === periodKey);
         if (period) {
@@ -331,7 +316,42 @@ const WeeklyTimetable = ({
         }
     }, [onAssignSlot, timePeriods]);
 
-    // ── Empty state ───────────────────────────────────────────────
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Require dragging 8px before activating, prevents accidental drags on click
+            },
+        })
+    );
+
+    const handleDragStart = (event) => {
+        setActiveDragItem(event.active.data.current);
+    };
+
+    const handleDragEnd = (event) => {
+        setActiveDragItem(null);
+        const { active, over } = event;
+        
+        if (!over) return;
+        
+        const draggedSlot = active.data.current;
+        const dropData = over.data.current;
+        
+        if (draggedSlot && dropData && onMoveSlot) {
+            // Check if it was dropped in the exact same spot
+            if (draggedSlot.day_of_week === dropData.dayIdx && 
+                draggedSlot.start_time === dropData.periodStart) {
+                return;
+            }
+            
+            onMoveSlot(draggedSlot.id, {
+                day_of_week: dropData.dayIdx,
+                start_time: dropData.periodStart,
+                end_time: dropData.periodEnd,
+            });
+        }
+    };
+
     if (!timePeriods.length && !daysToShow.length) {
         return (
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
@@ -348,7 +368,6 @@ const WeeklyTimetable = ({
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden animate-in fade-in duration-300">
-            {/* Lock indicator */}
             {isLocked && (
                 <div className="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center gap-2">
                     <Lock size={14} className="text-amber-600 dark:text-amber-400" />
@@ -358,84 +377,100 @@ const WeeklyTimetable = ({
                 </div>
             )}
 
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left border-collapse">
-                    <thead className="sticky top-0 z-20">
-                        <tr>
-                            {/* Corner cell */}
-                            <th className="p-4 border-b border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 min-w-[90px] sticky left-0 z-30">
-                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    Day / Period
-                                </span>
-                            </th>
-
-                            {/* Period headers */}
-                            {timePeriods.map((period, idx) => (
-                                <th
-                                    key={period.id}
-                                    className="px-2 py-3 border-b border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 min-w-[130px] text-center"
-                                >
-                                    <div className="flex flex-col items-center gap-0.5">
-                                        {period.name ? (
-                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
-                                                {period.name}
-                                            </span>
-                                        ) : (
-                                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                                                Period {idx + 1}
-                                            </span>
-                                        )}
-                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                                            {period.start} – {period.end}
-                                        </span>
-                                    </div>
+            <DndContext 
+                sensors={sensors} 
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left border-collapse min-w-[800px]">
+                        <thead className="sticky top-0 z-20">
+                            <tr>
+                                <th className="p-4 border-b border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 min-w-[90px] sticky left-0 z-30">
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        Day / Period
+                                    </span>
                                 </th>
-                            ))}
-                        </tr>
-                    </thead>
 
-                    <tbody>
-                        {daysToShow.map((dayIdx) => (
-                            <tr key={dayIdx} className="divide-slate-200 dark:divide-slate-700">
-                                {/* Day label - sticky */}
-                                <td className="p-3 border-b border-r border-slate-200 dark:border-slate-700 sticky left-0 bg-white dark:bg-slate-800 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-slate-800 dark:text-white text-sm">
-                                            {DAY_NAMES[dayIdx]}
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                                            {DAY_SHORT[dayIdx]}
-                                        </span>
-                                    </div>
-                                </td>
-
-                                {/* Period cells */}
-                                {timePeriods.map((period) => {
-                                    const entry = cellMap[dayIdx]?.[period.key];
-                                    
-                                    return (
-                                        <TimetableCell
-                                            key={`${dayIdx}-${period.key}`}
-                                            entry={entry}
-                                            periodKey={period.key}
-                                            periodType={period.type}
-                                            dayIdx={dayIdx}
-                                            onEdit={handleEdit}
-                                            onDelete={handleDelete}
-                                            onAssign={handleAssign}
-                                            isLocked={isLocked}
-                                            hasConflict={entry ? hasConflict(entry.id) : false}
-                                        />
-                                    );
-                                })}
+                                {timePeriods.map((period, idx) => (
+                                    <th
+                                        key={period.id}
+                                        className="px-2 py-3 border-b border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 min-w-[130px] text-center"
+                                    >
+                                        <div className="flex flex-col items-center gap-0.5">
+                                            {period.name ? (
+                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
+                                                    {period.name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                                                    Period {idx + 1}
+                                                </span>
+                                            )}
+                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                                                {period.start} – {period.end}
+                                            </span>
+                                        </div>
+                                    </th>
+                                ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+
+                        <tbody>
+                            {daysToShow.map((dayIdx) => (
+                                <tr key={dayIdx} className="divide-slate-200 dark:divide-slate-700">
+                                    <td className="p-3 border-b border-r border-slate-200 dark:border-slate-700 sticky left-0 bg-white dark:bg-slate-800 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-slate-800 dark:text-white text-sm">
+                                                {DAY_NAMES[dayIdx]}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                                {DAY_SHORT[dayIdx]}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    {timePeriods.map((period) => {
+                                        const entry = cellMap[dayIdx]?.[period.key];
+                                        return (
+                                            <TimetableCell
+                                                key={`${dayIdx}-${period.key}`}
+                                                entry={entry}
+                                                periodKey={period.key}
+                                                periodType={period.type}
+                                                periodStart={period.start}
+                                                periodEnd={period.end}
+                                                dayIdx={dayIdx}
+                                                onEdit={handleEdit}
+                                                onDelete={handleDelete}
+                                                onAssign={handleAssign}
+                                                isLocked={isLocked}
+                                                hasConflict={entry ? hasConflict(entry.id) : false}
+                                            />
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
+                    {activeDragItem ? (
+                        <div className="w-[120px] shadow-2xl opacity-90 cursor-grabbing">
+                            <DraggableSlotCard 
+                                entry={activeDragItem} 
+                                hasConflict={hasConflict(activeDragItem.id)} 
+                                isLocked={true} 
+                                isOverlay={true}
+                            />
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
         </div>
     );
 };
 
 export default memo(WeeklyTimetable);
-

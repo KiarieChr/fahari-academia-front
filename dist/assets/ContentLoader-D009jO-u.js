@@ -1,1 +1,0 @@
-import{j as e}from"./ui-Cs2nWgYe.js";const o=({message:n,size:s="md"})=>e.jsxs("div",{className:`content-loader-container loader-size-${s}`,children:[e.jsx("div",{className:"content-spinner"}),n&&e.jsx("div",{className:"content-loader-message",children:n})]});export{o as C};

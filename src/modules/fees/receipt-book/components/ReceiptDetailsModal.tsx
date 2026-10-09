@@ -104,16 +104,15 @@ const ReceiptDetailsModal = ({ show, receipt, onClose, onPrint, onReverse, onUpd
     const childAllocations = localReceipt.childAllocations || localReceipt.child_allocations || [];
 
     return (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-scrollable">
-                <div className="modal-content neo-card border-none neo-bg">
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+            <div className="modal-dialog modal-lg modal-dialog-scrollable" style={{ zIndex: 1060 }}>
+                <div className="modal-content bg-white border border-gray-200 shadow-xl rounded-xl">
                     <div className="modal-header border-bottom-0">
-                        <h5 className="modal-title">Receipt Details</h5>
+                        <h5 className="modal-title font-bold text-gray-800">Receipt Details</h5>
                         <button type="button" className="btn-close" onClick={onClose}></button>
                     </div>
                     <div className="modal-body">
-                        {/* Receipt Header */}
-                        <div className="neo-card border-none mb-4 p-4">
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg shadow-sm mb-4 p-4">
                             <div>
                                 <div className="d-flex justify-content-between align-items-start">
                                     <div>
@@ -384,35 +383,35 @@ const ReceiptDetailsModal = ({ show, receipt, onClose, onPrint, onReverse, onUpd
                             </div>
                         )}
                     </div>
-                    <div className="modal-footer border-top-0 bg-transparent">
-                        <button type="button" className="neo-btn px-3 py-2" onClick={onClose}>
+                    <div className="modal-footer border-top-0">
+                        <button type="button" className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors" onClick={onClose}>
                             Close
                         </button>
                         {localReceipt.status !== 'Reversed' && (
                             <>
                                 <button
                                     type="button"
-                                    className="neo-btn px-3 py-2"
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                                     onClick={() => alert('Email functionality coming soon')}
                                 >
-                                    <Mail size={16} className="me-1" />
+                                    <Mail size={16} className="me-1 d-inline-block align-text-top" />
                                     Email Receipt
                                 </button>
                                 <button
                                     type="button"
-                                    className="neo-btn neo-btn-accent py-2 px-3"
+                                    className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
                                     onClick={() => onPrint(localReceipt)}
                                 >
-                                    <Printer size={16} className="me-1" />
+                                    <Printer size={16} className="me-1 d-inline-block align-text-top" />
                                     {localReceipt.printCount > 0 ? 'Reprint' : 'Print'}
                                 </button>
                                 {canReverse && (
                                     <button
                                         type="button"
-                                        className="neo-btn py-2 px-3"
+                                        className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 font-medium rounded-lg hover:bg-red-100 transition-colors shadow-sm"
                                         onClick={() => onReverse(localReceipt)}
                                     >
-                                        <RotateCcw size={16} className="me-1" />
+                                        <RotateCcw size={16} className="me-1 d-inline-block align-text-top" />
                                         Reverse Receipt
                                     </button>
                                 )}

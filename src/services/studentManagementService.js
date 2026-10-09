@@ -62,6 +62,12 @@ export const studentManagementService = {
     },
 
     // === Admission Actions ===
+    getStudents: async (page = 1, pageSize = 10, search = '') => {
+        const response = await api.get('/api/accounts/students/', { 
+            params: { page, page_size: pageSize, search } 
+        });
+        return response;
+    },
     admitApplicant: async (applicationId, admissionData) => {
         const response = await api.post(`/api/student-management/applications/${applicationId}/admit/`, admissionData);
         return response;

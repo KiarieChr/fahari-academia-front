@@ -277,7 +277,11 @@ const ChartOfAccounts = () => {
     };
 
     const handleSave = () => {
-        fetchData(); // Refresh tree
+        // Add a small delay to ensure backend transaction is fully committed
+        // before we query the list again
+        setTimeout(() => {
+            fetchData(); // Refresh tree
+        }, 150);
     };
 
     const AccountTreeRow = ({ account, level = 0 }) => {

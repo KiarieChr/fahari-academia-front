@@ -46,7 +46,16 @@ const TeacherSchedulesTab = () => {
         const load = async () => {
             try {
                 const data = await api.timetable.getTeachers();
-                setTeachers((data.results || data) || []);
+                let dataList = data.results || data || [];
+                const teacherList = dataList.filter(emp => 
+                    emp.department?.name?.toLowerCase().includes('teach') || 
+                    emp.job_title?.name?.toLowerCase().includes('teach') ||
+                    emp.role === 'teacher' ||
+                    emp.groups?.includes('teacher')
+                );
+                
+                // Fallback: If filtering removes everyone, show all (maybe they aren't tagged)
+                setTeachers(teacherList.length > 0 ? teacherList : dataList);
             } catch {
                 toast.error('Failed to load teachers');
             } finally {
@@ -70,7 +79,7 @@ const TeacherSchedulesTab = () => {
 
     const handleSelectTeacher = (teacher) => {
         setSelectedTeacher(teacher);
-        loadSchedule(teacher.id);
+        loadSchedule(teacher.user?.id || teacher.user_id || teacher.id);
     };
 
     if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-indigo-600" size={24} /></div>;
@@ -214,11 +223,58 @@ const RoomAllocationTab = () => {
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                         <LayoutTemplate size={20} className="text-indigo-600" />
                         Rooms ({rooms.length})
                     </h3>
+                    <button
+                        onClick={async () => {
+                            const { value: formValues } = await Swal.fire({
+                                title: 'Add New Room',
+                                html: `
+                                    <input id="swal-input1" class="swal2-input" placeholder="Room Name (e.g. Science Lab 1)">
+                                    <select id="swal-input2" class="swal2-select w-full max-w-full m-0 mt-4 mx-auto block py-3">
+                                        <option value="classroom">Classroom</option>
+                                        <option value="laboratory">Laboratory</option>
+                                        <option value="hall">Hall</option>
+                                        <option value="field">Field</option>
+                                        <option value="library">Library</option>
+                                    </select>
+                                    <input id="swal-input3" class="swal2-input" type="number" placeholder="Capacity (e.g. 40)">
+                                `,
+                                focusConfirm: false,
+                                showCancelButton: true,
+                                preConfirm: () => {
+                                    return {
+                                        name: document.getElementById('swal-input1').value,
+                                        room_type: document.getElementById('swal-input2').value,
+                                        capacity: document.getElementById('swal-input3').value,
+                                    }
+                                }
+                            });
+                            
+                            if (formValues && formValues.name) {
+                                try {
+                                    await api.timetable.createRoom({
+                                        name: formValues.name,
+                                        room_type: formValues.room_type,
+                                        capacity: parseInt(formValues.capacity) || 40,
+                                        is_active: true
+                                    });
+                                    toast.success('Room added successfully');
+                                    // Refresh rooms
+                                    const data = await api.timetable.getRooms();
+                                    setRooms((data.results || data) || []);
+                                } catch (e) {
+                                    toast.error('Failed to add room: ' + (e.response?.data?.name?.[0] || e.message));
+                                }
+                            }
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                    >
+                        <Plus size={16} /> Add Room
+                    </button>
                 </div>
                 <div className="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                     {rooms.map(r => (
@@ -609,6 +665,22 @@ const TimetableDashboard = ({ noLayout = false }) => {
                             </p>
                         </div>
                         <div className="flex gap-2 flex-wrap">
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm('Are you sure you want to seed default time periods? This might override existing defaults.')) {
+                                        try {
+                                            await api.timetable.seedPeriods();
+                                            toast.success('Time periods seeded successfully! Please refresh to see changes.');
+                                            loadTimetableData();
+                                        } catch (e) {
+                                            toast.error('Failed to seed time periods: ' + (e.data?.detail || e.message || 'Backend endpoint might be missing.'));
+                                        }
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 font-medium text-sm transition-colors"
+                            >
+                                <RefreshCcw size={16} /> Seed Periods
+                            </button>
                             <button onClick={loadTimetableData} disabled={slotsLoading}
                                 className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors disabled:opacity-50">
                                 <RefreshCcw size={16} className={slotsLoading ? 'animate-spin' : ''} /> Refresh

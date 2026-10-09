@@ -1,312 +1,140 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { timetableApi, timetableCache, parseApiError } from '../services/timetableApi';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { timetableApi, parseApiError } from '../services/timetableApi';
 
-/**
- * useTimetableData — Enhanced central data hook for Class Times / Timetable dashboard.
- * 
- * Features:
- * - Intelligent caching to avoid redundant API calls
- * - Work allocation tracking for scheduling guidance
- * - Conflict checking before mutations
- * - Optimistic updates where safe
- * - Separated loading states for better UX
- * - Teacher availability integration
- * 
- * @param {Object} filters - { classSessionId, teacherId, roomId }
- */
 const useTimetableData = (filters = {}) => {
-    const { classSessionId, teacherId, roomId } = filters;
+    const { classSessionId } = filters;
+    const queryClient = useQueryClient();
 
-    // ── Reference data (loaded once, cached) ──────────────────────
-    const [subjects, setSubjects] = useState([]);
-    const [rooms, setRooms] = useState([]);
-    const [periods, setPeriods] = useState([]);
-    const [classSessions, setClassSessions] = useState([]);
-    const [teachers, setTeachers] = useState([]);
-
-    // ── Dynamic data (changes with filters) ────────────────────────
-    const [weeklyView, setWeeklyView] = useState({});
-    const [slots, setSlots] = useState([]);
-    const [allocations, setAllocations] = useState([]);
-    const [teacherAvailability, setTeacherAvailability] = useState([]);
-    const [exceptions, setExceptions] = useState([]);
-    const [lockStatus, setLockStatus] = useState(null);
-
-    // ── Analytics data ─────────────────────────────────────────────
-    const [coverage, setCoverage] = useState(null);
-    const [workloadSummary, setWorkloadSummary] = useState(null);
-
-    // ── UI state ───────────────────────────────────────────────────
-    const [loading, setLoading] = useState({ initial: true, slots: false, saving: false });
-    const [error, setError] = useState(null);
     const [lastConflict, setLastConflict] = useState(null);
 
-    // Track mounted state to prevent state updates after unmount
-    const isMounted = useRef(true);
-    useEffect(() => {
-        isMounted.current = true;
-        return () => { isMounted.current = false; };
-    }, []);
+    // ── Queries ──────────────────────────────────────────────────────────
 
-    // ──────────────────────────────────────────────────────────────
-    // REFERENCE DATA LOADERS
-    // ──────────────────────────────────────────────────────────────
-
-    const loadReferenceData = useCallback(async () => {
-        const cacheKey = 'ref_data';
-        const cached = timetableCache.get(cacheKey);
-        if (cached) {
-            setSubjects(cached.subjects);
-            setRooms(cached.rooms);
-            setPeriods(cached.periods);
-            return;
-        }
-
-        try {
+    const { data: refData, isLoading: isLoadingRefData, error: refError } = useQuery({
+        queryKey: ['timetable_ref_data'],
+        queryFn: async () => {
             const [subjectsRes, roomsRes, periodsRes] = await Promise.all([
                 timetableApi.subjects.list(),
                 timetableApi.rooms.list(),
                 timetableApi.periods.getSchedulable(),
             ]);
-
-            const data = {
+            return {
                 subjects: subjectsRes.results ?? subjectsRes,
                 rooms: roomsRes.results ?? roomsRes,
                 periods: periodsRes.results ?? periodsRes,
             };
+        },
+        staleTime: 10 * 60 * 1000,
+    });
 
-            if (isMounted.current) {
-                setSubjects(data.subjects);
-                setRooms(data.rooms);
-                setPeriods(data.periods);
-                timetableCache.set(cacheKey, data);
-            }
-        } catch (err) {
-            console.error('useTimetableData: reference data load failed', err);
-            if (isMounted.current) {
-                setError(parseApiError(err));
-            }
-        }
-    }, []);
-
-    const loadClassSessions = useCallback(async () => {
-        const cacheKey = 'class_sessions';
-        const cached = timetableCache.get(cacheKey);
-        if (cached) {
-            setClassSessions(cached);
-            return;
-        }
-
-        try {
-            // Import from main api for academics data
+    const { data: classSessions, isLoading: isLoadingSessions } = useQuery({
+        queryKey: ['class_sessions'],
+        queryFn: async () => {
             const { api } = await import('../../../../services/api');
             const res = await api.academics.getActiveSessions();
-            const sessions = res.results ?? res;
-            if (isMounted.current) {
-                setClassSessions(sessions);
-                timetableCache.set(cacheKey, sessions);
-            }
-        } catch (err) {
-            console.error('useTimetableData: sessions load failed', err);
-        }
-    }, []);
+            return res.results ?? res;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
 
-    const loadTeachers = useCallback(async () => {
-        const cacheKey = 'teachers_list';
-        const cached = timetableCache.get(cacheKey);
-        if (cached) {
-            setTeachers(cached);
-            return;
-        }
-        try {
+    const { data: teachers, isLoading: isLoadingTeachers } = useQuery({
+        queryKey: ['teachers_list'],
+        queryFn: async () => {
             const { api } = await import('../../../../services/api');
-            // Try HR employee endpoint first, fall back to users list
             let teacherList = [];
             try {
-                const res = await api.hr?.getEmployees?.({ role: 'teacher', is_active: true })
-                    ?? await api.users?.list?.({ role: 'teacher' });
-                teacherList = res?.results ?? res ?? [];
-            } catch {
-                // Fallback: load all users and filter client-side
-                const res = await api.getUsers?.() ?? { results: [] };
-                teacherList = (res.results ?? res).filter(u =>
-                    u.role === 'teacher' || u.groups?.includes('teacher')
+                // Fetch from HR employees endpoint to get actual staff data
+                const hrApi = api.hr || { getEmployees: () => api.get('/workforce/api/employees/') };
+                const res = await hrApi.getEmployees();
+                const employees = res?.results ?? res ?? [];
+                
+                // Filter specifically for teaching staff (by department name or role)
+                teacherList = employees.filter(emp => 
+                    emp.department?.name?.toLowerCase().includes('teach') || 
+                    emp.job_title?.name?.toLowerCase().includes('teach') ||
+                    emp.role === 'teacher'
                 );
-            }
-            if (isMounted.current) {
-                setTeachers(teacherList);
-                timetableCache.set(cacheKey, teacherList, 10 * 60 * 1000); // 10-min TTL
-            }
-        } catch (err) {
-            console.error('useTimetableData: teachers load failed', err);
-        }
-    }, []);
-
-    // ──────────────────────────────────────────────────────────────
-    // TIMETABLE DATA LOADERS
-    // ──────────────────────────────────────────────────────────────
-
-    const loadSlots = useCallback(async () => {
-        if (!classSessionId) {
-            setSlots([]);
-            setWeeklyView({});
-            return;
-        }
-
-        if (isMounted.current) {
-            setLoading(prev => ({ ...prev, slots: true }));
-        }
-
-        try {
-            // Load both flat slots and weekly grouped view
-            const [slotsRes, weeklyRes] = await Promise.all([
-                timetableApi.slots.list({ class_session: classSessionId }),
-                timetableApi.views.classFull(classSessionId),
-            ]);
-
-            if (isMounted.current) {
-                setSlots(slotsRes.results ?? slotsRes);
-                setWeeklyView(weeklyRes.days ?? weeklyRes);
-            }
-        } catch (err) {
-            console.error('useTimetableData: slots load failed', err);
-            // Try legacy endpoint as fallback
-            try {
-                const legacyRes = await timetableApi.slots.weeklyView(classSessionId);
-                if (isMounted.current) {
-                    setWeeklyView(legacyRes);
+                
+                // Fallback to standard users if no employees found
+                if (teacherList.length === 0) {
+                    const userRes = await api.get('/auth/users/').catch(() => ({ results: [] }));
+                    teacherList = (userRes.results ?? userRes).filter(u =>
+                        u.role === 'teacher' || u.groups?.includes('teacher')
+                    );
                 }
             } catch (e) {
-                console.error('useTimetableData: legacy weekly view also failed', e);
+                console.error("Failed to fetch teachers", e);
             }
-        } finally {
-            if (isMounted.current) {
-                setLoading(prev => ({ ...prev, slots: false }));
-            }
-        }
-    }, [classSessionId]);
+            return teacherList;
+        },
+        staleTime: 10 * 60 * 1000,
+    });
 
-    const loadAllocations = useCallback(async () => {
-        if (!classSessionId) {
-            setAllocations([]);
-            return;
-        }
+    const { data: exceptions = [] } = useQuery({
+        queryKey: ['timetable_exceptions'],
+        queryFn: async () => {
+            const res = await timetableApi.exceptions.list();
+            return res.results ?? res;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
 
-        try {
+    // Class Session specific queries
+    const { data: slotData, isLoading: isLoadingSlots } = useQuery({
+        queryKey: ['timetable_slots', classSessionId],
+        queryFn: async () => {
+            const [slotsRes, weeklyRes] = await Promise.all([
+                timetableApi.slots.list({ class_session: classSessionId }),
+                timetableApi.views.classFull(classSessionId).catch(async () => {
+                   return await timetableApi.slots.weeklyView(classSessionId);
+                })
+            ]);
+            return {
+                slots: slotsRes.results ?? slotsRes,
+                weeklyView: weeklyRes.days ?? weeklyRes,
+            };
+        },
+        enabled: !!classSessionId,
+    });
+
+    const { data: allocations = [] } = useQuery({
+        queryKey: ['timetable_allocations', classSessionId],
+        queryFn: async () => {
             const res = await timetableApi.allocations.byClass(classSessionId);
-            if (isMounted.current) {
-                setAllocations(res.results ?? res);
-            }
-        } catch (err) {
-            console.error('useTimetableData: allocations load failed', err);
-            // Allocations endpoint is new - don't fail silently but log
-        }
-    }, [classSessionId]);
+            return res.results ?? res;
+        },
+        enabled: !!classSessionId,
+    });
 
-    const loadCoverage = useCallback(async () => {
-        if (!classSessionId) {
-            setCoverage(null);
-            return;
-        }
+    const { data: coverage } = useQuery({
+        queryKey: ['timetable_coverage', classSessionId],
+        queryFn: async () => {
+            return await timetableApi.analytics.classCoverage(classSessionId);
+        },
+        enabled: !!classSessionId,
+    });
 
-        try {
-            const res = await timetableApi.analytics.classCoverage(classSessionId);
-            if (isMounted.current) {
-                setCoverage(res);
-            }
-        } catch (err) {
-            console.error('useTimetableData: coverage load failed', err);
-        }
-    }, [classSessionId]);
-
-    const loadLockStatus = useCallback(async () => {
-        if (!classSessionId) {
-            setLockStatus(null);
-            return;
-        }
-
-        try {
+    const { data: lockStatus, refetch: refetchLockStatus } = useQuery({
+        queryKey: ['timetable_lock', classSessionId],
+        queryFn: async () => {
             const res = await timetableApi.locks.get(classSessionId);
             const locks = res.results ?? res;
-            if (isMounted.current) {
-                setLockStatus(locks.length > 0 ? locks[0] : null);
-            }
-        } catch (err) {
-            // Lock may not exist - that's fine
-            if (isMounted.current) {
-                setLockStatus(null);
-            }
-        }
-    }, [classSessionId]);
+            return locks.length > 0 ? locks[0] : null;
+        },
+        enabled: !!classSessionId,
+    });
 
-    const loadExceptions = useCallback(async () => {
-        try {
-            const res = await timetableApi.exceptions.list();
-            if (isMounted.current) {
-                setExceptions(res.results ?? res);
-            }
-        } catch (err) {
-            console.error('useTimetableData: exceptions load failed', err);
-        }
-    }, []);
+    const { data: versions = [], isLoading: isLoadingVersions } = useQuery({
+        queryKey: ['timetable_versions', classSessionId],
+        queryFn: async () => {
+            const res = await timetableApi.versions.list(classSessionId);
+            return res.results ?? res;
+        },
+        enabled: !!classSessionId,
+    });
 
-    // ──────────────────────────────────────────────────────────────
-    // REFRESH FUNCTIONS
-    // ──────────────────────────────────────────────────────────────
+    // ── Mutations ────────────────────────────────────────────────────────
 
-    const refresh = useCallback(async () => {
-        setLoading(prev => ({ ...prev, initial: true }));
-        setError(null);
-
-        try {
-            await Promise.all([
-                loadReferenceData(),
-                loadClassSessions(),
-                loadTeachers(),
-                loadSlots(),
-                loadAllocations(),
-                loadCoverage(),
-                loadLockStatus(),
-                loadExceptions(),
-            ]);
-        } catch (err) {
-            if (isMounted.current) {
-                setError(parseApiError(err));
-            }
-        } finally {
-            if (isMounted.current) {
-                setLoading(prev => ({ ...prev, initial: false }));
-            }
-        }
-    }, [loadReferenceData, loadClassSessions, loadTeachers, loadSlots, loadAllocations, loadCoverage, loadLockStatus, loadExceptions]);
-
-    // Lightweight refresh (only slots, no reference data)
-    const refreshSlots = useCallback(async () => {
-        await Promise.all([loadSlots(), loadCoverage()]);
-    }, [loadSlots, loadCoverage]);
-
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
-
-    // Re-fetch slots when classSessionId changes
-    useEffect(() => {
-        if (!loading.initial) {
-            loadSlots();
-            loadAllocations();
-            loadCoverage();
-            loadLockStatus();
-        }
-    }, [classSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // ──────────────────────────────────────────────────────────────
-    // CONFLICT CHECKING
-    // ──────────────────────────────────────────────────────────────
-
-    /**
-     * Check for conflicts before creating/updating a slot.
-     * Returns: { isValid, conflicts, warnings }
-     */
     const checkConflicts = useCallback(async (slotData) => {
         try {
             const result = await timetableApi.conflicts.check(slotData);
@@ -322,16 +150,8 @@ const useTimetableData = (filters = {}) => {
         }
     }, []);
 
-    // ──────────────────────────────────────────────────────────────
-    // SLOT MUTATIONS (with conflict handling)
-    // ──────────────────────────────────────────────────────────────
-
-    const createSlot = useCallback(async (data, skipConflictCheck = false) => {
-        setLoading(prev => ({ ...prev, saving: true }));
-        setLastConflict(null);
-
-        try {
-            // Pre-validate unless skipped
+    const createSlotMutation = useMutation({
+        mutationFn: async ({ data, skipConflictCheck }) => {
             if (!skipConflictCheck) {
                 const check = await checkConflicts(data);
                 if (!check.isValid) {
@@ -340,35 +160,21 @@ const useTimetableData = (filters = {}) => {
                     throw err;
                 }
             }
-
-            const newSlot = await timetableApi.slots.create(data);
-
-            // Optimistic update
-            if (isMounted.current) {
-                setSlots(prev => [...prev, newSlot]);
-            }
-
-            // Background refresh for accurate data
-            refreshSlots();
-
-            return newSlot;
-        } catch (err) {
+            return await timetableApi.slots.create(data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['timetable_slots', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_coverage', classSessionId] });
+        },
+        onError: (err) => {
             if (err.conflicts) {
                 setLastConflict({ is_valid: false, conflicts: err.conflicts });
             }
-            throw err;
-        } finally {
-            if (isMounted.current) {
-                setLoading(prev => ({ ...prev, saving: false }));
-            }
         }
-    }, [checkConflicts, refreshSlots]);
+    });
 
-    const updateSlot = useCallback(async (id, data, skipConflictCheck = false) => {
-        setLoading(prev => ({ ...prev, saving: true }));
-        setLastConflict(null);
-
-        try {
+    const updateSlotMutation = useMutation({
+        mutationFn: async ({ id, data, skipConflictCheck }) => {
             if (!skipConflictCheck) {
                 const check = await checkConflicts({ ...data, exclude_slot_id: id });
                 if (!check.isValid) {
@@ -377,55 +183,130 @@ const useTimetableData = (filters = {}) => {
                     throw err;
                 }
             }
-
-            const updated = await timetableApi.slots.update(id, data);
-
-            // Optimistic update
-            if (isMounted.current) {
-                setSlots(prev => prev.map(s => s.id === id ? updated : s));
-            }
-
-            refreshSlots();
-            return updated;
-        } catch (err) {
+            return await timetableApi.slots.update(id, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['timetable_slots', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_coverage', classSessionId] });
+        },
+        onError: (err) => {
             if (err.conflicts) {
                 setLastConflict({ is_valid: false, conflicts: err.conflicts });
             }
-            throw err;
-        } finally {
-            if (isMounted.current) {
-                setLoading(prev => ({ ...prev, saving: false }));
+        }
+    });
+
+    const deleteSlotMutation = useMutation({
+        mutationFn: async (id) => {
+            return await timetableApi.slots.delete(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['timetable_slots', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_coverage', classSessionId] });
+        }
+    });
+
+    const replaceSlotMutation = useMutation({
+        mutationFn: async ({ id, data }) => {
+            return await timetableApi.slots.replace(id, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['timetable_slots', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_coverage', classSessionId] });
+        },
+        onError: (err) => {
+            if (err.conflicts) {
+                setLastConflict({ is_valid: false, conflicts: err.conflicts });
             }
         }
-    }, [checkConflicts, refreshSlots]);
+    });
 
-    const deleteSlot = useCallback(async (id) => {
-        setLoading(prev => ({ ...prev, saving: true }));
+    // Reference mutations
+    const createSubject = async (data) => {
+        const created = await timetableApi.subjects.create(data);
+        queryClient.invalidateQueries({ queryKey: ['timetable_ref_data'] });
+        return created;
+    };
+    const updateSubject = async (id, data) => {
+        const updated = await timetableApi.subjects.update(id, data);
+        queryClient.invalidateQueries({ queryKey: ['timetable_ref_data'] });
+        return updated;
+    };
+    const deleteSubject = async (id) => {
+        await timetableApi.subjects.delete(id);
+        queryClient.invalidateQueries({ queryKey: ['timetable_ref_data'] });
+    };
 
-        try {
-            await timetableApi.slots.delete(id);
+    const createRoom = async (data) => {
+        const created = await timetableApi.rooms.create(data);
+        queryClient.invalidateQueries({ queryKey: ['timetable_ref_data'] });
+        return created;
+    };
+    const updateRoom = async (id, data) => {
+        const updated = await timetableApi.rooms.update(id, data);
+        queryClient.invalidateQueries({ queryKey: ['timetable_ref_data'] });
+        return updated;
+    };
+    const deleteRoom = async (id) => {
+        await timetableApi.rooms.delete(id);
+        queryClient.invalidateQueries({ queryKey: ['timetable_ref_data'] });
+    };
 
-            // Optimistic removal
-            if (isMounted.current) {
-                setSlots(prev => prev.filter(s => s.id !== id));
-            }
+    // Actions
+    const autoFillRemaining = async (preferences = {}) => {
+        if (!classSessionId) return null;
+        const result = await timetableApi.scheduling.generate({
+            class_session: classSessionId,
+            mode: 'semi_auto',
+            preferences: {
+                prefer_morning: true,
+                spread_subjects: true,
+                ...preferences,
+            },
+        });
+        queryClient.invalidateQueries({ queryKey: ['timetable_slots', classSessionId] });
+        queryClient.invalidateQueries({ queryKey: ['timetable_coverage', classSessionId] });
+        return result;
+    };
 
-            refreshSlots();
-        } finally {
-            if (isMounted.current) {
-                setLoading(prev => ({ ...prev, saving: false }));
-            }
+    const toggleLock = async () => {
+        let newLock;
+        if (!lockStatus) {
+            newLock = await timetableApi.locks.create({
+                class_session: classSessionId,
+                lock_level: 'locked',
+            });
+        } else if (lockStatus.is_editable) {
+            await timetableApi.locks.lock(lockStatus.id);
+        } else {
+            await timetableApi.locks.unlock(lockStatus.id);
         }
-    }, [refreshSlots]);
+        refetchLockStatus();
+        return newLock || lockStatus;
+    };
 
-    // ──────────────────────────────────────────────────────────────
-    // ALLOCATION HELPERS
-    // ──────────────────────────────────────────────────────────────
+    const createSnapshot = async (label, description = '') => {
+        if (!classSessionId) return null;
+        const res = await timetableApi.versions.createSnapshot({
+            class_session: classSessionId,
+            label,
+            description,
+        });
+        queryClient.invalidateQueries({ queryKey: ['timetable_versions', classSessionId] });
+        return res;
+    };
 
-    /**
-     * Get available slots for a specific work allocation.
-     * Used by the assignment modal.
-     */
+    const restoreSnapshotMutation = useMutation({
+        mutationFn: async (versionId) => {
+            return await timetableApi.versions.restore(versionId);
+        },
+        onSuccess: () => {
+            refresh();
+        }
+    });
+
+    const restoreSnapshot = (versionId) => restoreSnapshotMutation.mutateAsync(versionId);
+
     const getAvailableSlots = useCallback(async (allocationId) => {
         try {
             return await timetableApi.allocations.availableSlots(allocationId);
@@ -435,162 +316,56 @@ const useTimetableData = (filters = {}) => {
         }
     }, []);
 
-    /**
-     * Find allocations that still need slots scheduled.
-     */
-    const unscheduledAllocations = useMemo(() => {
-        return allocations.filter(a => a.remaining_lessons > 0);
-    }, [allocations]);
-
-    // ──────────────────────────────────────────────────────────────
-    // SCHEDULING ACTIONS
-    // ──────────────────────────────────────────────────────────────
-
-    const autoFillRemaining = useCallback(async (preferences = {}) => {
-        if (!classSessionId) return null;
-
-        setLoading(prev => ({ ...prev, saving: true }));
-
-        try {
-            const result = await timetableApi.scheduling.generate({
-                class_session: classSessionId,
-                mode: 'semi_auto',
-                preferences: {
-                    prefer_morning: true,
-                    spread_subjects: true,
-                    ...preferences,
-                },
-            });
-
-            await refreshSlots();
-            return result;
-        } finally {
-            if (isMounted.current) {
-                setLoading(prev => ({ ...prev, saving: false }));
-            }
+    const refresh = () => {
+        queryClient.invalidateQueries({ queryKey: ['timetable_ref_data'] });
+        queryClient.invalidateQueries({ queryKey: ['class_sessions'] });
+        queryClient.invalidateQueries({ queryKey: ['teachers_list'] });
+        queryClient.invalidateQueries({ queryKey: ['timetable_exceptions'] });
+        if (classSessionId) {
+            queryClient.invalidateQueries({ queryKey: ['timetable_slots', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_allocations', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_coverage', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_lock', classSessionId] });
         }
-    }, [classSessionId, refreshSlots]);
+    };
 
-    // ──────────────────────────────────────────────────────────────
-    // LOCK MANAGEMENT
-    // ──────────────────────────────────────────────────────────────
-
-    const toggleLock = useCallback(async () => {
-        if (!lockStatus) {
-            // Create lock if doesn't exist
-            const newLock = await timetableApi.locks.create({
-                class_session: classSessionId,
-                lock_level: 'locked',
-            });
-            setLockStatus(newLock);
-            return newLock;
+    const refreshSlots = () => {
+        if (classSessionId) {
+            queryClient.invalidateQueries({ queryKey: ['timetable_slots', classSessionId] });
+            queryClient.invalidateQueries({ queryKey: ['timetable_coverage', classSessionId] });
         }
-
-        if (lockStatus.is_editable) {
-            await timetableApi.locks.lock(lockStatus.id);
-        } else {
-            await timetableApi.locks.unlock(lockStatus.id);
-        }
-
-        await loadLockStatus();
-        return lockStatus;
-    }, [classSessionId, lockStatus, loadLockStatus]);
-
-    // ──────────────────────────────────────────────────────────────
-    // VERSION MANAGEMENT
-    // ──────────────────────────────────────────────────────────────
-
-    const createSnapshot = useCallback(async (label, description = '') => {
-        if (!classSessionId) return null;
-
-        return await timetableApi.versions.createSnapshot({
-            class_session: classSessionId,
-            label,
-            description,
-        });
-    }, [classSessionId]);
-
-    // ──────────────────────────────────────────────────────────────
-    // DERIVED STATE
-    // ──────────────────────────────────────────────────────────────
-
-    const isLocked = useMemo(() => {
-        return lockStatus && !lockStatus.is_editable;
-    }, [lockStatus]);
-
-    const coveragePercentage = useMemo(() => {
-        return coverage?.summary?.overall_percentage ?? 0;
-    }, [coverage]);
-
-    // ──────────────────────────────────────────────────────────────
-    // SUBJECT/ROOM MUTATIONS (unchanged from original)
-    // ──────────────────────────────────────────────────────────────
-
-    const createSubject = async (data) => {
-        const created = await timetableApi.subjects.create(data);
-        setSubjects(prev => [...prev, created]);
-        timetableCache.invalidate('ref_data');
-        return created;
     };
 
-    const updateSubject = async (id, data) => {
-        const updated = await timetableApi.subjects.update(id, data);
-        setSubjects(prev => prev.map(s => s.id === id ? updated : s));
-        timetableCache.invalidate('ref_data');
-        return updated;
-    };
+    const isLocked = lockStatus && !lockStatus.is_editable;
+    const coveragePercentage = coverage?.summary?.overall_percentage ?? 0;
+    const unscheduledAllocations = allocations.filter(a => a.remaining_lessons > 0);
 
-    const deleteSubject = async (id) => {
-        await timetableApi.subjects.delete(id);
-        setSubjects(prev => prev.filter(s => s.id !== id));
-        timetableCache.invalidate('ref_data');
-    };
-
-    const createRoom = async (data) => {
-        const created = await timetableApi.rooms.create(data);
-        setRooms(prev => [...prev, created]);
-        timetableCache.invalidate('ref_data');
-        return created;
-    };
-
-    const updateRoom = async (id, data) => {
-        const updated = await timetableApi.rooms.update(id, data);
-        setRooms(prev => prev.map(r => r.id === id ? updated : r));
-        timetableCache.invalidate('ref_data');
-        return updated;
-    };
-
-    const deleteRoom = async (id) => {
-        await timetableApi.rooms.delete(id);
-        setRooms(prev => prev.filter(r => r.id !== id));
-        timetableCache.invalidate('ref_data');
-    };
-
-    // ──────────────────────────────────────────────────────────────
-    // RETURN
-    // ──────────────────────────────────────────────────────────────
-
+    const isInitialLoading = isLoadingRefData || isLoadingSessions || isLoadingTeachers;
+    const isSaving = createSlotMutation.isPending || updateSlotMutation.isPending || deleteSlotMutation.isPending;
+    
     return {
         // Reference data
-        subjects,
-        rooms,
-        periods,
-        classSessions,
-        teachers,
+        subjects: refData?.subjects || [],
+        rooms: refData?.rooms || [],
+        periods: refData?.periods || [],
+        classSessions: classSessions || [],
+        teachers: teachers || [],
 
         // Timetable data
-        weeklyView,
-        slots,
+        weeklyView: slotData?.weeklyView || {},
+        slots: slotData?.slots || [],
         allocations,
-        workAllocations: allocations, // alias used by ClassTimesDashboard → SlotAssignmentModal
+        workAllocations: allocations, // alias
         exceptions,
         coverage,
+        versions,
 
         // State
-        loading: loading.initial,
-        loadingSlots: loading.slots,
-        saving: loading.saving,
-        error,
+        loading: isInitialLoading,
+        loadingSlots: isLoadingSlots,
+        loadingVersions: isLoadingVersions,
+        saving: isSaving,
+        error: refError ? parseApiError(refError) : null,
         lastConflict,
         lockStatus,
         isLocked,
@@ -603,10 +378,11 @@ const useTimetableData = (filters = {}) => {
         checkConflicts,
         getAvailableSlots,
 
-        // Slot mutations
-        createSlot,
-        updateSlot,
-        deleteSlot,
+        // Slot mutations (wrapped to match original signature)
+        createSlot: (data, skipConflictCheck = false) => createSlotMutation.mutateAsync({ data, skipConflictCheck }),
+        updateSlot: (id, data, skipConflictCheck = false) => updateSlotMutation.mutateAsync({ id, data, skipConflictCheck }),
+        deleteSlot: (id) => deleteSlotMutation.mutateAsync(id),
+        replaceSlot: (id, data) => replaceSlotMutation.mutateAsync({ id, data }),
 
         // Subject mutations
         createSubject,
@@ -622,8 +398,8 @@ const useTimetableData = (filters = {}) => {
         autoFillRemaining,
         toggleLock,
         createSnapshot,
+        restoreSnapshot,
     };
 };
 
 export default useTimetableData;
-

@@ -215,9 +215,8 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     options={studentOptions}
                     onChange={handleStudentChange}
                     searchable={true}
-                    variant="neo"
                     disabled={disabled || loadingStudents}
-                    className="w-100"
+                    className="w-100 bg-white"
                 />
             </div>
 
@@ -226,7 +225,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Payer Name <span className="text-danger">*</span></label>
                 <input
                     type="text"
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     value={data.payerName || ''}
                     onChange={(e) => handleChange('payerName', e.target.value)}
                     placeholder="Parent/Guardian name"
@@ -238,7 +237,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
             {/* Student Balance (Replaces Fee Category) */}
             <div className="col-md-6">
                 <label className="form-label">Current Balance</label>
-                <div className={`form-control neo-input border-none d-flex justify-content-between align-items-center ${studentBalance > 0 ? 'text-danger' : studentBalance < 0 ? 'text-success' : ''}`} style={{ height: '40px' }}>
+                <div className={`form-control d-flex justify-content-between align-items-center ${studentBalance > 0 ? 'text-danger' : studentBalance < 0 ? 'text-success' : ''}`} style={{ height: '40px' }}>
                     <span>
                         {checkingBalance ? (
                             <span><span className="spinner-border spinner-border-sm me-2" />Checking...</span>
@@ -261,7 +260,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Term</label>
                 <input
                     type="text"
-                    className="form-control bg-light neo-input border-none"
+                    className="form-control bg-light"
                     value={data.term || currentTerm || ''}
                     readOnly
                     style={{ height: '40px' }}
@@ -273,7 +272,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Academic Year</label>
                 <input
                     type="text"
-                    className="form-control bg-light neo-input border-none"
+                    className="form-control bg-light"
                     value={data.year || currentYear || ''}
                     readOnly
                     style={{ height: '40px' }}
@@ -285,7 +284,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Amount Paid (KES) <span className="text-danger">*</span></label>
                 <input
                     type="number"
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     value={data.amount || ''}
                     onChange={(e) => handleAmountChange(e.target.value)}
                     placeholder="0.00"
@@ -305,7 +304,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                     options={paymentMethodOptions}
                     onChange={(val) => handleChange('paymentMethodId', val)}
                     disabled={disabled}
-                    className="w-100"
+                    className="w-100 bg-white"
                 />
             </div>
 
@@ -316,7 +315,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
                 </label>
                 <input
                     type="text"
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     value={data.reference || ''}
                     onChange={(e) => handleChange('reference', e.target.value)}
                     placeholder={
@@ -332,7 +331,7 @@ const StudentFeeReceiptForm = ({ data, onChange, disabled }) => {
             <div className="col-md-12">
                 <label className="form-label">Notes</label>
                 <textarea
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     rows="2"
                     value={data.notes || ''}
                     onChange={(e) => handleChange('notes', e.target.value)}

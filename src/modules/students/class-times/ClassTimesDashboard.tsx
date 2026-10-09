@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
 
 import { motion } from 'framer-motion';
@@ -16,6 +17,7 @@ import TeacherScheduleView from './components/TeacherScheduleView';
 import RoomAllocationView from './components/RoomAllocationView';
 import ConflictPanel from './components/ConflictPanel';
 import SlotAssignmentModal from './components/SlotAssignmentModal';
+import TimetableSnapshotsPanel from './components/TimetableSnapshotsPanel';
 
 import useTimetableData from './hooks/useTimetableData';
 import { timetableApi } from './services/timetableApi';
@@ -26,6 +28,7 @@ const TABS = [
     { id: 'slots', label: 'Time Slots', icon: Settings },
     { id: 'teachers', label: 'Teacher Schedules', icon: Users },
     { id: 'rooms', label: 'Room Allocation', icon: LayoutTemplate },
+    { id: 'snapshots', label: 'Snapshots', icon: RefreshCcw },
 ];
 
 const ClassTimesDashboard = () => {
@@ -47,13 +50,13 @@ const ClassTimesDashboard = () => {
 
     const {
         subjects, rooms, classSessions, exceptions, teachers,
-        weeklyView, slots, workAllocations, conflictErrors,
-        loading, error, refresh,
-        createSlot, updateSlot, deleteSlot,
+        weeklyView, slots, workAllocations, conflictErrors, versions,
+        loading, loadingVersions, error, refresh,
+        createSlot, updateSlot, deleteSlot, replaceSlot,
         createSlotWithConflictCheck, updateSlotWithConflictCheck,
         createSubject, updateSubject, deleteSubject,
         createRoom, updateRoom, deleteRoom,
-        clearConflictErrors,
+        clearConflictErrors, createSnapshot, restoreSnapshot,
     } = useTimetableData(filters);
 
     // ── Open modal for new slot ─────────────────────────────────
@@ -91,6 +94,16 @@ const ClassTimesDashboard = () => {
         setEditingSlot(null);
     }, [deleteSlot]);
 
+    // ── Handle slot move (Drag and Drop) ────────────────────────
+    const handleMoveSlot = useCallback(async (slotId, dropData) => {
+        try {
+            await replaceSlot(slotId, dropData);
+        } catch (err) {
+            console.error('Failed to move slot:', err);
+            toast.error(err.message || 'Failed to move slot. It may have conflicts.');
+        }
+    }, [replaceSlot]);
+
     // ── Handle close modal ──────────────────────────────────────
     const handleCloseModal = useCallback(() => {
         setModalOpen(false);
@@ -102,7 +115,7 @@ const ClassTimesDashboard = () => {
     // ── Auto-generate timetable ─────────────────────────────────
     const handleGenerateTimetable = useCallback(async () => {
         if (!filters.classSessionId) {
-            alert('Please select a class first');
+            toast.warning('Please select a class first');
             return;
         }
         setGenerating(true);
@@ -118,7 +131,7 @@ const ClassTimesDashboard = () => {
             refresh();
         } catch (err) {
             console.error('Generation failed:', err);
-            alert(err.message || 'Failed to generate timetable');
+            toast.error(err.message || 'Failed to generate timetable');
         } finally {
             setGenerating(false);
         }
@@ -169,6 +182,7 @@ const ClassTimesDashboard = () => {
                                 onEditSlot={handleEditSlot}
                                 onDeleteSlot={handleDeleteSlot}
                                 onAssignSlot={handleAssignSlot}
+                                onMoveSlot={handleMoveSlot}
                                 conflicts={conflictErrors?.map(e => e.slotId).filter(Boolean) || []}
                             />
                         </div>
@@ -184,6 +198,7 @@ const ClassTimesDashboard = () => {
                             onEditSlot={handleEditSlot}
                             onDeleteSlot={handleDeleteSlot}
                             onAssignSlot={handleAssignSlot}
+                            onMoveSlot={handleMoveSlot}
                             conflicts={conflictErrors?.map(e => e.slotId).filter(Boolean) || []}
                         />
                     </div>
@@ -217,6 +232,15 @@ const ClassTimesDashboard = () => {
                         onDeleteRoom={deleteRoom}
                     />
                 );
+            case 'snapshots':
+                return (
+                    <TimetableSnapshotsPanel 
+                        versions={versions}
+                        loading={loadingVersions}
+                        onCreateSnapshot={createSnapshot}
+                        onRestoreSnapshot={restoreSnapshot}
+                    />
+                );
             default:
                 return null;
         }
@@ -234,6 +258,24 @@ const ClassTimesDashboard = () => {
                         <p className="text-slate-500 dark:text-slate-400">Configure lesson periods, schedules, and class allocations.</p>
                     </div>
                     <div className="flex gap-3 flex-wrap">
+                        <button
+                            onClick={async () => {
+                                if (window.confirm('Are you sure you want to seed default time periods? This might override existing defaults.')) {
+                                    try {
+                                        const { timetableApi } = await import('./services/timetableApi');
+                                        await timetableApi.periods.seed();
+                                        toast.success('Time periods seeded successfully! Please refresh to see changes.');
+                                        refresh();
+                                    } catch (e) {
+                                        toast.error('Failed to seed time periods: ' + (e.data?.detail || e.message || 'Backend endpoint might be missing.'));
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-xl font-bold shadow-sm hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                        >
+                            <RefreshCcw size={18} />
+                            Seed Periods
+                        </button>
                         <button
                             onClick={refresh}
                             disabled={loading}

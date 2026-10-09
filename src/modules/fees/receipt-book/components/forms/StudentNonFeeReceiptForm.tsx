@@ -47,7 +47,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
     };
 
     const handleStudentChange = (studentId) => {
-        const student = students.find(s => String(s.id) === String(studentId));
+        const student = students.find(s => String(s.student) === String(studentId));
         if (student) {
             onChange(prev => ({
                 ...prev,
@@ -62,10 +62,9 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
         }
     };
 
-    // Transform data for FilterDropdown
     const studentOptions = students.map(s => ({
-        value: s.id,
-        label: `${s.name} - ${s.admission_number || s.admissionNo} (${s.class_name || s.class || 'N/A'})`,
+        value: s.student,
+        label: `${s.student_name} - ${s.admission_number} (${s.class_name || 'N/A'})`,
         icon: User
     }));
 
@@ -92,9 +91,8 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
                     options={studentOptions}
                     onChange={handleStudentChange}
                     searchable={true}
-                    variant="neo"
                     disabled={disabled || isLoadingData}
-                    className="w-100"
+                    className="w-100 bg-white"
                 />
             </div>
 
@@ -103,7 +101,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Payer Name <span className="text-danger">*</span></label>
                 <input
                     type="text"
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     value={data.payerName || ''}
                     onChange={(e) => handleChange('payerName', e.target.value)}
                     placeholder="Parent/Guardian name"
@@ -130,9 +128,8 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
                         }));
                     }}
                     searchable={true}
-                    variant="neo"
                     disabled={disabled || isLoadingData}
-                    className="w-100"
+                    className="w-100 bg-white"
                 />
             </div>
 
@@ -141,7 +138,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Description <span className="text-danger">*</span></label>
                 <input
                     type="text"
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     value={data.description || ''}
                     onChange={(e) => handleChange('description', e.target.value)}
                     placeholder="e.g., Full uniform set, Science trip to Nairobi, etc."
@@ -156,7 +153,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
                 <label className="form-label">Amount (KES) <span className="text-danger">*</span></label>
                 <input
                     type="number"
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     value={data.amount || ''}
                     onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
                     placeholder="0.00"
@@ -185,7 +182,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
                         }));
                     }}
                     disabled={disabled || isLoadingData}
-                    className="w-100"
+                    className="w-100 bg-white"
                 />
             </div>
 
@@ -196,7 +193,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
                 </label>
                 <input
                     type="text"
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     value={data.reference || ''}
                     onChange={(e) => handleChange('reference', e.target.value)}
                     placeholder="Reference number"
@@ -209,7 +206,7 @@ const StudentNonFeeReceiptForm = ({ data, onChange, disabled }) => {
             <div className="col-md-12">
                 <label className="form-label">Notes</label>
                 <textarea
-                    className="form-control neo-input border-none"
+                    className="form-control"
                     rows="2"
                     value={data.notes || ''}
                     onChange={(e) => handleChange('notes', e.target.value)}

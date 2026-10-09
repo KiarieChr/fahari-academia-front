@@ -6,8 +6,10 @@ import {
     Calendar, AlertTriangle, Upload, Trash2, Camera, UserCheck
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { studentManagementService } from '../../../../services/studentManagementService';
 import { institutionService } from '../../../../services/institutionService';
+import { api } from '../../../../services/api';
 import DateInput from '../../../../components/common/DateInput';
 
 const CREATE_STEPS = [
@@ -47,24 +49,29 @@ const NewApplicantForm = ({ onClose }) => {
     });
 
     // Fetch form options on load
+    const queryClient = useQueryClient();
+    const { data: gradesData } = useQuery({
+        queryKey: ['classes'],
+        queryFn: () => studentManagementService.getGrades(),
+    });
+
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const [intakes, curriculums, classes, campusesRes, enquiriesRes, levelsRes] = await Promise.all([
+                const [intakes, curriculums, campusesRes, enquiriesRes, levelsRes] = await Promise.all([
                     studentManagementService.getIntakes(),
                     studentManagementService.getCurriculums(),
-                    studentManagementService.getGrades(),
                     institutionService.getCampuses(),
                     studentManagementService.getEnquiries(),
                     api.get('/api/academics/curriculum-levels/')
                 ]);
-                setOptions({
+                setOptions(prev => ({
+                    ...prev,
                     intakes: intakes.results || intakes,
                     curriculums: curriculums.results || curriculums,
                     curriculumLevels: levelsRes.results || levelsRes || [],
-                    classes: classes.results || classes,
                     campuses: campusesRes.results || campusesRes || []
-                });
+                }));
 
                 const enqList = enquiriesRes.data || enquiriesRes || [];
                 const activeEnquiries = (Array.isArray(enqList) ? enqList : enqList.results || [])
@@ -77,6 +84,15 @@ const NewApplicantForm = ({ onClose }) => {
         };
         fetchOptions();
     }, []);
+
+    useEffect(() => {
+        if (gradesData) {
+            setOptions(prev => ({
+                ...prev,
+                classes: gradesData.results || gradesData
+            }));
+        }
+    }, [gradesData]);
 
     const handleImportEnquiry = (enquiryId) => {
         if (!enquiryId) {

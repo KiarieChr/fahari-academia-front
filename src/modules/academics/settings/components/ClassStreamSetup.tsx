@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, List, ChevronDown, ChevronUp, Trash2, Tag, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useQueryClient } from '@tanstack/react-query';
 import studentSettingsService from '../../../../services/studentSettingsService';
 import Modal from '../../../../components/common/Modal';
 import { inputClass, labelClass } from '../../../../components/ui/FormField';
 
 const ClassStreamSetup = () => {
+    const queryClient = useQueryClient();
     const [classes, setClasses] = useState([]);
     const [curricula, setCurricula] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -47,6 +49,7 @@ const ClassStreamSetup = () => {
         try {
             await studentSettingsService.createClass(newClass);
             toast.success('Class added successfully');
+            queryClient.invalidateQueries({ queryKey: ['classes'] });
             setIsModalOpen(false);
             setNewClass({ name: '', curriculum: curricula[0]?.id || '', level_order: classes.length + 1 });
             fetchData();

@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, User, Bell, Shield, Database, FileText, Lock } from 'lucide-react';
+import { Settings, Database, Server } from 'lucide-react';
 import DashboardLayout from '../../../dashboard/DashboardLayout';
+import { toast } from 'react-toastify';
+import { api } from '../../../services/apiClient';
 import '../../../dashboard/dashboard.css';
 
 import SettingsSidebar from './components/SettingsSidebar';
 import SettingsSection from './components/SettingsSection';
 import SettingsForm from './components/SettingsForm';
-import RolePermissionManager from './components/RolePermissionManager';
-import IntegrationSettings from './components/IntegrationSettings';
 import AuditLogTable from './components/AuditLogTable';
 import EmployeeManagementSettings from './components/EmployeeManagementSettings';
 import AttendancePolicySettings from './components/AttendancePolicySettings';
 
-import { settingsCategories, leaveSettingsData as generalSettings, rolesData as rolePermissions, integrationSettingsData as integrationSettings, auditLogsData as auditLogs } from './data/hrSettingsData';
+import { settingsCategories, leaveSettingsData as generalSettings, auditLogsData as auditLogs } from './data/hrSettingsData';
 
 const HRSettingsDashboard = ({ noLayout = false }) => {
-    const [activeCategory, setActiveCategory] = useState('general');
+    const [activeCategory, setActiveCategory] = useState('leave');
 
     const renderContent = () => {
         switch (activeCategory) {
-            case 'general':
+            case 'leave':
                 return (
                     <SettingsSection
-                        title="General Configuration"
-                        description="Manage basic HR module settings and preferences."
+                        title="Leave Settings"
+                        description="Manage basic HR leave module settings and preferences."
                     >
                         <SettingsForm fields={generalSettings.generalRules} />
                     </SettingsSection>
@@ -38,22 +38,24 @@ const HRSettingsDashboard = ({ noLayout = false }) => {
                         <AttendancePolicySettings />
                     </SettingsSection>
                 );
-            case 'roles':
+            case 'employees':
                 return (
                     <SettingsSection
-                        title="Roles & Permissions"
-                        description="Define user roles and restrict access to sensitive data."
+                        title="Employee Management"
+                        description="Manage job titles, departments, and employment configurations."
                     >
-                        <RolePermissionManager roles={rolePermissions} />
+                        <EmployeeManagementSettings />
                     </SettingsSection>
                 );
-            case 'integrations':
+            case 'notifications':
                 return (
                     <SettingsSection
-                        title="System Integrations"
-                        description="Manage connections with external services and APIs."
+                        title="Notifications"
+                        description="Configure email alerts and system notifications."
                     >
-                        <IntegrationSettings integrations={integrationSettings} />
+                        <div className="p-8 text-center text-slate-500 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                            Notification settings module coming soon.
+                        </div>
                     </SettingsSection>
                 );
             case 'audit':
@@ -63,15 +65,6 @@ const HRSettingsDashboard = ({ noLayout = false }) => {
                         description="Track system activities and security events."
                     >
                         <AuditLogTable logs={auditLogs} />
-                    </SettingsSection>
-                );
-            case 'employees':
-                return (
-                    <SettingsSection
-                        title="Employee Management"
-                        description="Manage job titles, departments, and employment configurations."
-                    >
-                        <EmployeeManagementSettings />
                     </SettingsSection>
                 );
             default:
@@ -86,9 +79,43 @@ const HRSettingsDashboard = ({ noLayout = false }) => {
 
     const content = (
             <div className="dashboard-home">
-                <div className="dashboard-header">
+                <div className="dashboard-header flex justify-between items-center w-full">
+                    <div>
                         <h1>HR Settings</h1>
                         <p className="settings-subtitle">Configure global preferences and system defaults.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={async () => {
+                                if (window.confirm('Are you sure you want to seed default leave types?')) {
+                                    try {
+                                        await api.post('/api/hr/leave-types/populate/');
+                                        toast.success('Leave types seeded successfully');
+                                    } catch (e) {
+                                        toast.error('Failed to seed leave types: ' + (e.response?.data?.error || e.message));
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl font-medium shadow-sm hover:bg-blue-100 transition-colors text-sm"
+                        >
+                            <Database size={16} /> Seed Leave Types
+                        </button>
+                        <button 
+                            onClick={async () => {
+                                if (window.confirm('Are you sure you want to seed payroll data (grades, steps, cycles)?')) {
+                                    try {
+                                        await api.post('/api/hr/payroll-settings/seed/');
+                                        toast.success('Payroll data seeded successfully');
+                                    } catch (e) {
+                                        toast.error('Failed to seed payroll data: ' + (e.response?.data?.error || e.message));
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-medium shadow-sm hover:bg-emerald-100 transition-colors text-sm"
+                        >
+                            <Server size={16} /> Seed Payroll Data
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-5 w-full items-start">
